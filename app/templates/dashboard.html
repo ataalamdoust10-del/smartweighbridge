@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}داشبورد{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>داشبورد</h1>
+    <p>خوش آمدید، {{ user }}</p>
+  </div>
+  <a class="btn primary" href="/weigh">+ ثبت وزن جدید</a>
+</div>
+
+<div class="cards">
+  <div class="card"><span>تعداد ثبت‌ها</span><strong>{{ total }}</strong></div>
+  <div class="card"><span>مجموع وزن</span><strong>{{ total_weight }} kg</strong></div>
+  <div class="card">
+    <span>باسکول</span>
+    <strong>{{ state.scale_id }}</strong>
+    <small class="{{ 'ok' if state.stable else 'warn' }}">
+      {{ '🟢 پایدار' if state.stable else '🟡 ناپایدار' }}
+    </small>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-title">آخرین وزن‌کشی‌ها</div>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>قبض</th><th>پلاک</th><th>وزن</th><th>تاریخ</th><th>وضعیت</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td><a href="/weighments/{{ r.ticket_number }}">#{{ "%06d"|format(r.ticket_number) }}</a></td>
+        <td>{{ r.plate }}</td>
+        <td>{{ r.weight }} {{ r.unit }}</td>
+        <td>{{ r.created_at[:19].replace('T',' ') }}</td>
+        <td><span class="badge ok">ذخیره شد</span></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">هنوز رکوردی ثبت نشده است.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

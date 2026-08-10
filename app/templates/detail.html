@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}قبض #{{ row.ticket_number }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>قبض #{{ "%06d"|format(row.ticket_number) }}</h1><p>جزئیات وزن‌کشی</p></div>
+  <button class="btn" onclick="window.print()">🖨️ چاپ</button>
+</div>
+
+<div class="ticket card">
+  <div class="ticket-photo">
+    {% if row.photo_filename %}
+      <img src="/uploads/{{ row.photo_filename }}" alt="Truck">
+    {% else %}
+      <div class="no-photo">بدون عکس</div>
+    {% endif %}
+  </div>
+  <div class="ticket-info">
+    <div><span>پلاک</span><strong>{{ row.plate }}</strong></div>
+    <div><span>وزن</span><strong>{{ row.weight }} {{ row.unit }}</strong></div>
+    <div><span>باسکول</span><strong>{{ row.scale_id }}</strong></div>
+    <div><span>اپراتور</span><strong>{{ row.operator }}</strong></div>
+    <div><span>تاریخ و ساعت</span><strong>{{ row.created_at[:19].replace('T',' ') }}</strong></div>
+    <div><span>وضعیت</span><strong>✅ {{ row.status }}</strong></div>
+  </div>
+</div>
+
+<div class="card print-ticket">
+  <h2>SMART WEIGHBRIDGE</h2>
+  <p>Ticket #{{ "%06d"|format(row.ticket_number) }}</p>
+  <hr>
+  <p>Plate: <b>{{ row.plate }}</b></p>
+  <p>Weight: <b>{{ row.weight }} {{ row.unit }}</b></p>
+  <p>Scale: {{ row.scale_id }}</p>
+  <p>Date: {{ row.created_at[:19].replace('T',' ') }}</p>
+</div>
+{% endblock %}

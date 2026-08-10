@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}سوابق{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>سوابق باسکول</h1><p>جستجوی پلاک یا شماره قبض</p></div>
+</div>
+
+<form class="search" method="get">
+  <input name="q" value="{{ q }}" placeholder="پلاک یا شماره قبض">
+  <button class="btn primary">جستجو</button>
+  <a class="btn" href="/records">پاک کردن</a>
+</form>
+
+<div class="card">
+<div class="table-wrap">
+<table>
+<thead><tr><th>قبض</th><th>پلاک</th><th>وزن</th><th>باسکول</th><th>زمان</th><th>عکس</th></tr></thead>
+<tbody>
+{% for r in rows %}
+<tr>
+  <td><a href="/weighments/{{ r.ticket_number }}">#{{ "%06d"|format(r.ticket_number) }}</a></td>
+  <td>{{ r.plate }}</td>
+  <td>{{ r.weight }} {{ r.unit }}</td>
+  <td>{{ r.scale_id }}</td>
+  <td>{{ r.created_at[:19].replace('T',' ') }}</td>
+  <td>{{ '📷' if r.photo_filename else '—' }}</td>
+</tr>
+{% else %}
+<tr><td colspan="6">موردی پیدا نشد.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endblock %}

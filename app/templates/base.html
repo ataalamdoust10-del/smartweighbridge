@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Smart Weighbridge{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">⚖️ Smart Weighbridge</div>
+  {% if user %}
+  <nav>
+    <a href="/dashboard">داشبورد</a>
+    <a href="/weigh">ثبت وزن</a>
+    <a href="/records">سوابق</a>
+    <a href="/logout">خروج</a>
+  </nav>
+  {% endif %}
+</header>
+<main class="container">
+{% block content %}{% endblock %}
+</main>
+</body>
+</html>
