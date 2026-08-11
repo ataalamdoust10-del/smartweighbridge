@@ -1,45 +1,75 @@
 {% extends "base.html" %}
-{% block title %}داشبورد{% endblock %}
+{% block title %}{{ _('dashboard') }}{% endblock %}
+
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>داشبورد</h1>
-    <p>خوش آمدید، {{ user }}</p>
+    <h1>{{ _('dashboard') }}</h1>
+    <p>{{ _('welcome') }}، {{ user }}</p>
   </div>
-  <a class="btn primary" href="/weigh">+ ثبت وزن جدید</a>
+
+  <a class="btn primary" href="/weigh">+ {{ _('new_weighment') }}</a>
 </div>
 
 <div class="cards">
-  <div class="card"><span>تعداد ثبت‌ها</span><strong>{{ total }}</strong></div>
-  <div class="card"><span>مجموع وزن</span><strong>{{ total_weight }} kg</strong></div>
   <div class="card">
-    <span>باسکول</span>
+    <span>{{ _('records_count') }}</span>
+    <strong>{{ total }}</strong>
+  </div>
+
+  <div class="card">
+    <span>{{ _('total_weight') }}</span>
+    <strong>{{ total_weight }} kg</strong>
+  </div>
+
+  <div class="card">
+    <span>{{ _('scale') }}</span>
     <strong>{{ state.scale_id }}</strong>
-    <small class="{{ 'ok' if state.stable else 'warn' }}">
-      {{ '🟢 پایدار' if state.stable else '🟡 ناپایدار' }}
-    </small>
+    <div class="{{ 'stable' if state.stable else 'unstable' }}">
+      {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
+    </div>
   </div>
 </div>
 
 <div class="card">
-  <div class="section-title">آخرین وزن‌کشی‌ها</div>
+  <div class="section-title">{{ _('latest_weighments') }}</div>
+
   <div class="table-wrap">
-  <table>
-    <thead><tr><th>قبض</th><th>پلاک</th><th>وزن</th><th>تاریخ</th><th>وضعیت</th></tr></thead>
-    <tbody>
-    {% for r in rows %}
-      <tr>
-        <td><a href="/weighments/{{ r.ticket_number }}">#{{ "%06d"|format(r.ticket_number) }}</a></td>
-        <td>{{ r.plate }}</td>
-        <td>{{ r.weight }} {{ r.unit }}</td>
-        <td>{{ r.created_at[:19].replace('T',' ') }}</td>
-        <td><span class="badge ok">ذخیره شد</span></td>
-      </tr>
-    {% else %}
-      <tr><td colspan="5">هنوز رکوردی ثبت نشده است.</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+    <table>
+      <thead>
+        <tr>
+          <th>{{ _('ticket') }}</th>
+          <th>{{ _('plate') }}</th>
+          <th>{{ _('weight') }}</th>
+          <th>{{ _('date') }}</th>
+          <th>{{ _('status') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>
+            <a href="/weighments/{{ r.ticket_number }}">#{{ "%06d"|format(r.ticket_number) }}</a>
+          </td>
+          <td>{{ r.plate }}</td>
+          <td>{{ r.weight }} {{ r.unit }}</td>
+          <td>
+            {# اگر created_at ایزو باشد #}
+            {{ (r.created_at|string)[:19].replace('T',' ') }}
+          </td>
+          <td>
+            <span class="badge">
+              {% if r.status == 'SAVED' %}
+                {{ _('saved') }}
+              {% else %}
+                {{ r.status }}
+              {% endif %}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}

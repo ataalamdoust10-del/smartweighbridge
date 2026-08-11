@@ -1,6 +1,9 @@
+# app/i18n.py
+
 TRANSLATIONS = {
     "fa": {
         "app_name": "Smart Weighbridge",
+
         "login": "ورود",
         "login_subtitle": "سیستم مدیریت باسکول",
         "username": "نام کاربری",
@@ -8,16 +11,30 @@ TRANSLATIONS = {
         "submit_login": "ورود",
 
         "dashboard": "داشبورد",
+        "welcome": "خوش آمدید",
+        "new_weighment": "ثبت وزن جدید",
+        "records_count": "تعداد ثبت‌ها",
+        "total_weight": "مجموع وزن",
+        "scale": "باسکول",
+        "stable": "پایدار",
+        "waiting": "ناپایدار",
+        "latest_weighments": "آخرین وزن‌کشی‌ها",
+
+        "ticket": "قبض",
+        "plate": "پلاک",
+        "weight": "وزن",
+        "date": "تاریخ",
+        "status": "وضعیت",
+        "saved": "ذخیره شد",
+
         "weigh": "ثبت وزن",
         "records": "سوابق",
         "logout": "خروج",
-
-        # (اختیاری برای بعد)
-        "new_weighment": "ثبت وزن جدید",
     },
 
     "en": {
         "app_name": "Smart Weighbridge",
+
         "login": "Login",
         "login_subtitle": "Weighbridge management system",
         "username": "Username",
@@ -25,16 +42,30 @@ TRANSLATIONS = {
         "submit_login": "Sign in",
 
         "dashboard": "Dashboard",
+        "welcome": "Welcome",
+        "new_weighment": "New weighment",
+        "records_count": "Records count",
+        "total_weight": "Total weight",
+        "scale": "Scale",
+        "stable": "Stable",
+        "waiting": "Waiting",
+        "latest_weighments": "Latest weighments",
+
+        "ticket": "Ticket",
+        "plate": "Plate",
+        "weight": "Weight",
+        "date": "Date",
+        "status": "Status",
+        "saved": "Saved",
+
         "weigh": "Weigh",
         "records": "Records",
         "logout": "Logout",
-
-        # (optional)
-        "new_weighment": "New weighment",
     },
 
     "hy": {
         "app_name": "Խելացի Կշռակայան",
+
         "login": "Մուտք",
         "login_subtitle": "Կշռակայանի կառավարման համակարգ",
         "username": "Օգտանուն",
@@ -42,12 +73,25 @@ TRANSLATIONS = {
         "submit_login": "Մուտք գործել",
 
         "dashboard": "Վահանակ",
+        "welcome": "Բարի գալուստ",
+        "new_weighment": "Նոր կշռում",
+        "records_count": "Գրառումների քանակը",
+        "total_weight": "Ընդհանուր քաշ",
+        "scale": "Կշեռք",
+        "stable": "Կայուն",
+        "waiting": "Սպասում",
+        "latest_weighments": "Վերջին կշռումները",
+
+        "ticket": "Տոմս",
+        "plate": "Համարանիշ",
+        "weight": "Քաշ",
+        "date": "Ամսաթիվ",
+        "status": "Կարգավիճակ",
+        "saved": "Պահպանված է",
+
         "weigh": "Կշռում",
         "records": "Գրառումներ",
         "logout": "Ելք",
-
-        # (optional)
-        "new_weighment": "Նոր կշռում",
     },
 }
 
