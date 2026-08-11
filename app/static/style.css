@@ -1,1 +1,106 @@
-*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f4f6f8;color:#17202a}.topbar{background:#101827;color:#fff;padding:14px 5%;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-size:20px;font-weight:800}.topbar nav{display:flex;gap:16px;flex-wrap:wrap}.topbar a{color:#dbeafe;text-decoration:none}.container{max-width:1200px;margin:0 auto;padding:28px 18px}.page-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}.page-head h1{margin:0 0 6px}.page-head p{margin:0;color:#667085}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 6px 20px #10182812;margin-bottom:20px}.card span{display:block;color:#667085}.card strong{display:block;font-size:26px;margin:8px 0}.section-title{font-weight:800;font-size:18px;margin-bottom:14px}.btn{display:inline-block;border:0;border-radius:10px;padding:12px 18px;background:#e7ebf0;color:#17202a;text-decoration:none;cursor:pointer;font-weight:700}.btn.primary{background:#2563eb;color:#fff}.btn.full{width:100%}.login-card{max-width:420px;margin:7vh auto;background:#fff;padding:32px;border-radius:20px;box-shadow:0 10px 35px #10182818;text-align:center}.logo{font-size:48px}.login-card h1{margin-bottom:4px}.login-card p{color:#667085;margin-top:0}.login-card label,.card form label{display:block;text-align:right;font-weight:700;margin:14px 0 7px}.login-card input,.card input,.search input{width:100%;padding:13px;border:1px solid #d0d5dd;border-radius:10px;font-size:16px}.login-card .btn{margin-top:20px}.alert{padding:12px;border-radius:10px;margin:12px 0}.danger{background:#fee4e2;color:#b42318}.ok{color:#067647}.warn{color:#b54708}.badge{padding:5px 9px;border-radius:999px;background:#dcfae6}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:700px}th,td{padding:13px 10px;border-bottom:1px solid #eaecf0;text-align:right}th{color:#667085;font-size:13px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}.scale-box{text-align:center;padding:20px}.scale-box span{font-size:16px}.scale-box strong{font-size:64px;line-height:1.1}.scale-box b{font-size:24px}.scale-box #stable{font-weight:800;margin:15px}.stable{color:#067647}.unstable{color:#b54708}.camera{padding:8px!important}.hint{color:#667085;font-size:13px}.ticket{display:grid;grid-template-columns:1fr 1fr;gap:30px}.ticket-photo img{width:100%;max-height:420px;object-fit:contain;border-radius:12px;background:#f2f4f7}.no-photo{height:250px;display:grid;place-items:center;background:#f2f4f7;border-radius:12px;color:#667085}.ticket-info>div{padding:14px 0;border-bottom:1px solid #eaecf0}.ticket-info strong{font-size:18px}.search{display:flex;gap:10px;margin-bottom:20px}.search input{max-width:500px}.print-ticket{max-width:500px}.print-ticket h2{text-align:center}@media(max-width:760px){.topbar{align-items:flex-start;flex-direction:column}.cards,.grid-2,.ticket{grid-template-columns:1fr}.page-head{align-items:flex-start;flex-direction:column}.scale-box strong{font-size:48px}.container{padding:18px 12px}.search{flex-direction:column}.search input{max-width:none}}@media print{.topbar,.page-head,.ticket-photo{display:none!important}.container{padding:0}.card{box-shadow:none}.print-ticket{display:block!important}}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:#f4f6f8;color:#17202a}
+
+/* Topbar */
+.topbar{background:#101827;color:#fff;padding:14px 5%;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{font-size:20px;font-weight:800}
+.topbar nav{display:flex;gap:16px;flex-wrap:wrap}
+.topbar a{color:#dbeafe;text-decoration:none}
+
+/* Language switch */
+.lang-switch{display:flex;gap:10px;align-items:center;font-size:14px}
+.lang-switch a{color:#fff;text-decoration:none;opacity:.85;padding:4px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.25)}
+.lang-switch a:hover{opacity:1;border-color:rgba(255,255,255,.6)}
+
+/* Layout */
+.container{max-width:1200px;margin:0 auto;padding:28px 18px}
+.page-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}
+.page-head h1{margin:0 0 6px}
+.page-head p{margin:0;color:#667085}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}
+.card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 6px 20px #10182812;margin-bottom:20px}
+.card span{display:block;color:#667085}
+.card strong{display:block;font-size:26px;margin:8px 0}
+.section-title{font-weight:800;font-size:18px;margin-bottom:14px}
+
+/* Buttons */
+.btn{display:inline-block;border:0;border-radius:10px;padding:12px 18px;background:#e7ebf0;color:#17202a;text-decoration:none;cursor:pointer;font-weight:700}
+.btn.primary{background:#2563eb;color:#fff}
+.btn.full{width:100%}
+
+/* Login */
+.login-card{max-width:420px;margin:7vh auto;background:#fff;padding:32px;border-radius:20px;box-shadow:0 10px 35px #10182818;text-align:center}
+.logo{font-size:48px}
+
+/* برای لوگوی تصویری */
+.company-logo{width:190px;max-width:70%;height:auto;display:block;margin:0 auto}
+
+.login-card h1{margin-bottom:4px}
+.login-card p{color:#667085;margin-top:0}
+.login-card label,.card form label{display:block;text-align:right;font-weight:700;margin:14px 0 7px}
+.login-card input,.card input,.search input{width:100%;padding:13px;border:1px solid #d0d5dd;border-radius:10px;font-size:16px}
+.login-card .btn{margin-top:20px}
+
+/* Alerts */
+.alert{padding:12px;border-radius:10px;margin:12px 0}
+.danger{background:#fee4e2;color:#b42318}
+.ok{color:#067647}
+.warn{color:#b54708}
+.badge{padding:5px 9px;border-radius:999px;background:#dcfae6}
+
+/* Table */
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th,td{padding:13px 10px;border-bottom:1px solid #eaecf0;text-align:right}
+th{color:#667085;font-size:13px}
+
+/* Weigh page */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.scale-box{text-align:center;padding:20px}
+.scale-box span{font-size:16px}
+.scale-box strong{font-size:64px;line-height:1.1}
+.scale-box b{font-size:24px}
+.scale-box #stable{font-weight:800;margin:15px}
+.stable{color:#067647}
+.unstable{color:#b54708}
+.camera{padding:8px!important}
+.hint{color:#667085;font-size:13px}
+
+/* Ticket */
+.ticket{display:grid;grid-template-columns:1fr 1fr;gap:30px}
+.ticket-photo img{width:100%;max-height:420px;object-fit:contain;border-radius:12px;background:#f2f4f7}
+.no-photo{height:250px;display:grid;place-items:center;background:#f2f4f7;border-radius:12px;color:#667085}
+.ticket-info>div{padding:14px 0;border-bottom:1px solid #eaecf0}
+.ticket-info strong{font-size:18px}
+
+/* Search */
+.search{display:flex;gap:10px;margin-bottom:20px}
+.search input{max-width:500px}
+.print-ticket{max-width:500px}
+.print-ticket h2{text-align:center}
+
+/* --- LTR support (English/Armenian) --- */
+html[dir="ltr"] .login-card label,
+html[dir="ltr"] .card form label{ text-align:left }
+
+html[dir="ltr"] th,
+html[dir="ltr"] td{ text-align:left }
+
+/* Responsive */
+@media(max-width:760px){
+  .topbar{align-items:flex-start;flex-direction:column}
+  .cards,.grid-2,.ticket{grid-template-columns:1fr}
+  .page-head{align-items:flex-start;flex-direction:column}
+  .scale-box strong{font-size:48px}
+  .container{padding:18px 12px}
+  .search{flex-direction:column}
+  .search input{max-width:none}
+}
+
+/* Print */
+@media print{
+  .topbar,.page-head,.ticket-photo{display:none!important}
+  .container{padding:0}
+  .card{box-shadow:none}
+  .print-ticket{display:block!important}
+}

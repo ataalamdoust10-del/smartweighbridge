@@ -10,6 +10,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
+from jinja2 import pass_context
+
+# i18n import (works both locally and on Railway)
+try:
+    from .i18n import translate, get_dir
+except ImportError:
+    from i18n import translate, get_dir
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "weighbridge.db"
 UPLOAD_DIR = BASE_DIR / "uploads"
@@ -20,6 +29,9 @@ PASSWORD = os.getenv("SWB_PASSWORD", "admin123")
 SECRET = os.getenv("SWB_SECRET", "CHANGE-ME-IN-PRODUCTION")
 DEVICE_TOKEN = os.getenv("SWB_DEVICE_TOKEN", "CHANGE-ME-DEVICE")
 
+SUPPORTED_LANGS = {"fa", "en", "hy"}
+DEFAULT_LANG = "fa"
+
 app = FastAPI(title="Smart Weighbridge v1")
 app.add_middleware(SessionMiddleware, secret_key=SECRET, max_age=60 * 60 * 12)
 
@@ -28,6 +40,38 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 templates = Jinja2Templates(directory=BASE_DIR / "app" / "templates")
 
 
+# ---------- Language middleware ----------
+@app.middleware("http")
+async def set_language(request: Request, call_next):
+    lang = request.cookies.get("lang", DEFAULT_LANG)
+    if lang not in SUPPORTED_LANGS:
+        lang = DEFAULT_LANG
+    request.state.lang = lang
+    request.state.dir = get_dir(lang)
+    response = await call_next(request)
+    return response
+
+
+@app.get("/lang/{lang_code}")
+def change_lang(lang_code: str, request: Request):
+    if lang_code not in SUPPORTED_LANGS:
+        lang_code = DEFAULT_LANG
+    back = request.headers.get("referer") or "/"
+    resp = RedirectResponse(url=back, status_code=303)
+    resp.set_cookie("lang", lang_code, max_age=60 * 60 * 24 * 365, samesite="lax")
+    return resp
+
+
+@pass_context
+def _(ctx, key: str) -> str:
+    req = ctx.get("request")
+    lang = getattr(req.state, "lang", DEFAULT_LANG) if req else DEFAULT_LANG
+    return translate(lang, key)
+
+templates.env.globals["_"] = _
+
+
+# ---------- DB ----------
 def db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -68,6 +112,7 @@ def init_db():
 init_db()
 
 
+# ---------- Auth ----------
 def logged_in(request: Request) -> bool:
     return bool(request.session.get("user"))
 
@@ -82,6 +127,7 @@ def next_ticket(conn):
     return int(row["n"])
 
 
+# ---------- Routes ----------
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     if not logged_in(request):
@@ -99,6 +145,8 @@ async def login(request: Request, username: str = Form(...), password: str = For
     if username == USERNAME and password == PASSWORD:
         request.session["user"] = username
         return RedirectResponse("/dashboard", status_code=303)
+
+    # فعلاً پیام خطا فارسیه؛ بعداً ترجمه‌اش می‌کنیم
     return templates.TemplateResponse(
         "login.html",
         {"request": request, "error": "نام کاربری یا رمز عبور اشتباه است."},
@@ -116,13 +164,12 @@ async def logout(request: Request):
 async def dashboard(request: Request):
     require_login(request)
     conn = db()
-    rows = conn.execute(
-        "SELECT * FROM weighments ORDER BY id DESC LIMIT 20"
-    ).fetchall()
+    rows = conn.execute("SELECT * FROM weighments ORDER BY id DESC LIMIT 20").fetchall()
     state = conn.execute("SELECT * FROM scale_state WHERE id=1").fetchone()
     total = conn.execute("SELECT COUNT(*) AS c FROM weighments").fetchone()["c"]
     total_weight = conn.execute("SELECT COALESCE(SUM(weight),0) AS s FROM weighments").fetchone()["s"]
     conn.close()
+
     return templates.TemplateResponse(
         "dashboard.html",
         {
@@ -195,9 +242,7 @@ async def create_weighment(
 async def detail(request: Request, ticket: int):
     require_login(request)
     conn = db()
-    row = conn.execute(
-        "SELECT * FROM weighments WHERE ticket_number=?", (ticket,)
-    ).fetchone()
+    row = conn.execute("SELECT * FROM weighments WHERE ticket_number=?", (ticket,)).fetchone()
     conn.close()
     if not row:
         raise HTTPException(404, "Ticket not found")
@@ -222,6 +267,7 @@ async def records(request: Request, q: str = ""):
     else:
         rows = conn.execute("SELECT * FROM weighments ORDER BY id DESC").fetchall()
     conn.close()
+
     return templates.TemplateResponse(
         "records.html",
         {"request": request, "rows": rows, "q": q, "user": request.session["user"]},

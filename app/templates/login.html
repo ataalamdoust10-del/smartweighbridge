@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}ورود{% endblock %}
+{% block title %}{{ _('login') }}{% endblock %}
 
 {% block content %}
 <div class="login-card">
@@ -7,21 +7,21 @@
     <img src="/static/img/company-logo.png" alt="Company Logo" class="company-logo">
   </div>
 
-  <h1>Smart Weighbridge</h1>
-  <p>سیستم مدیریت باسکول</p>
+  <h1>{{ _('app_name') }}</h1>
+  <p>{{ _('login_subtitle') }}</p>
 
   {% if error %}
     <div class="alert danger">{{ error }}</div>
   {% endif %}
 
   <form method="post" action="/login">
-    <label>نام کاربری</label>
+    <label>{{ _('username') }}</label>
     <input name="username" required autocomplete="username">
 
-    <label>رمز عبور</label>
+    <label>{{ _('password') }}</label>
     <input type="password" name="password" required autocomplete="current-password">
 
-    <button class="btn primary full">ورود</button>
+    <button class="btn primary full">{{ _('submit_login') }}</button>
   </form>
 </div>
 {% endblock %}
