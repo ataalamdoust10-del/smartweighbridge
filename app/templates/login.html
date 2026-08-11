@@ -1,16 +1,26 @@
 {% extends "base.html" %}
 {% block title %}ورود{% endblock %}
+
 {% block content %}
 <div class="login-card">
-  <div class="logo">⚖️</div>
+  <div class="logo">
+    <img src="/static/img/company-logo.png" alt="Company Logo" class="company-logo">
+  </div>
+
   <h1>Smart Weighbridge</h1>
   <p>سیستم مدیریت باسکول</p>
-  {% if error %}<div class="alert danger">{{ error }}</div>{% endif %}
+
+  {% if error %}
+    <div class="alert danger">{{ error }}</div>
+  {% endif %}
+
   <form method="post" action="/login">
     <label>نام کاربری</label>
     <input name="username" required autocomplete="username">
+
     <label>رمز عبور</label>
     <input type="password" name="password" required autocomplete="current-password">
+
     <button class="btn primary full">ورود</button>
   </form>
 </div>
