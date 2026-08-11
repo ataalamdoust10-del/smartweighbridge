@@ -1,32 +1,81 @@
+{% extends "base.html" %}
+{% block title %}ثبت وزن{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>ثبت وزن کامیون</h1>
+    <p>اطلاعات را بررسی و ثبت کنید.</p>
+  </div>
+</div>
+
+<div class="grid-2">
+  <!-- فرم ثبت -->
+  <section class="card">
+    <form method="post" action="/weigh" enctype="multipart/form-data">
+      <label>پلاک کامیون</label>
+      <input name="plate" placeholder="مثلاً 12A345" required>
+
+      <label>وزن (kg)</label>
+      <input id="weightInput" name="weight" type="number" min="0" step="0.01" value="{{ state.weight }}" required>
+
+      <label>عکس کامیون</label>
+      <input class="camera" type="file" name="photo" accept="image/*" capture="environment">
+
+      <p class="hint">در گوشی، با انتخاب این قسمت دوربین باز می‌شود.</p>
+
+      <button class="btn primary full" type="submit">ثبت وزن و عکس</button>
+    </form>
+  </section>
+
+  <!-- نمایش وزن باسکول -->
+  <section class="card">
+    <div class="scale-box">
+      <span>وزن فعلی باسکول</span>
+      <strong id="liveWeight">{{ state.weight }}</strong>
+      <b>kg</b>
+
+      <div id="stable" class="{{ 'stable' if state.stable else 'unstable' }}">
+        {{ '🟢 STABLE' if state.stable else '🟡 WAITING' }}
+      </div>
+
+      <small id="scaleStatus">SCALE: {{ state.scale_id }}</small>
+    </div>
+  </section>
+</div>
+
 <script>
+document.addEventListener('DOMContentLoaded', () => {
   const wi = document.getElementById('weightInput');
   const lw = document.getElementById('liveWeight');
   const s  = document.getElementById('stable');
   const ss = document.getElementById('scaleStatus');
 
-  // وقتی کاربر تایپ می‌کند، عدد سمت راست هم همان را نشان بده
+  if (!wi || !lw || !s || !ss) return;
+
+  // تایپ دستی -> سمت راست هم همان را نشان بده
   wi.addEventListener('input', () => {
     lw.textContent = wi.value ? wi.value : '0';
   });
 
   async function refreshWeight() {
     try {
-      const r = await fetch('/api/scale/weight');
+      const r = await fetch('/api/scale/weight', { cache: 'no-store' });
       const d = await r.json();
 
-      // فقط وقتی کاربر داخل input تایپ نمی‌کند، وزن باسکول را نمایش بده
+      // اگر کاربر در حال تایپ نیست، وزن باسکول را نمایش بده
       if (document.activeElement !== wi) {
         lw.textContent = (d.weight ?? 0);
       }
 
-      ss.textContent = 'SCALE: ' + (d.scale_id ?? 'SCALE-01');
-
+      ss.textContent = 'SCALE: ' + (d.scale_id ?? '');
       s.textContent = d.stable ? '🟢 STABLE' : '🟡 WAITING';
       s.className = d.stable ? 'stable' : 'unstable';
-
     } catch (e) {}
   }
 
   setInterval(refreshWeight, 1000);
   refreshWeight();
+});
 </script>
+{% endblock %}
