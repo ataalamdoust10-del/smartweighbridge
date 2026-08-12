@@ -104,6 +104,18 @@ def init_db():
 
     INSERT OR IGNORE INTO scale_state(id, scale_id, weight, stable, updated_at)
     VALUES(1, 'SCALE-01', 0, 0, datetime('now'));
+
+    -- NEW: multiple photos table
+    CREATE TABLE IF NOT EXISTS weighment_photos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        weighment_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (weighment_id) REFERENCES weighments(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_weighment_photos_weighment_id
+    ON weighment_photos(weighment_id);
     """)
     conn.commit()
     conn.close()
@@ -153,6 +165,7 @@ async def login(request: Request, username: str = Form(...), password: str = For
         status_code=401,
     )
 
+
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
@@ -199,7 +212,7 @@ async def create_weighment(
     request: Request,
     plate: str = Form(...),
     weight: float = Form(...),
-    photo: UploadFile | None = File(None),
+    photos: list[UploadFile] | None = File(None),
 ):
     require_login(request)
 
@@ -209,28 +222,48 @@ async def create_weighment(
     if weight < 0 or weight > 1000000:
         return RedirectResponse("/weigh?error=weight", status_code=303)
 
-    filename = None
-    if photo and photo.filename:
-        allowed = {".jpg", ".jpeg", ".png", ".webp"}
-        ext = Path(photo.filename).suffix.lower()
-        if ext not in allowed:
-            return RedirectResponse("/weigh?error=photo", status_code=303)
-        filename = f"{uuid.uuid4().hex}{ext}"
-        target = UPLOAD_DIR / filename
-        content = await photo.read()
-        if len(content) > 10 * 1024 * 1024:
-            return RedirectResponse("/weigh?error=photo_size", status_code=303)
-        target.write_bytes(content)
+    # ---- save multiple photos ----
+    photo_filenames: list[str] = []
+    allowed = {".jpg", ".jpeg", ".png", ".webp"}
+
+    if photos:
+        for photo in photos:
+            if not photo or not photo.filename:
+                continue
+
+            ext = Path(photo.filename).suffix.lower()
+            if ext not in allowed:
+                return RedirectResponse("/weigh?error=photo", status_code=303)
+
+            content = await photo.read()
+            if len(content) > 10 * 1024 * 1024:
+                return RedirectResponse("/weigh?error=photo_size", status_code=303)
+
+            filename = f"{uuid.uuid4().hex}{ext}"
+            (UPLOAD_DIR / filename).write_bytes(content)
+            photo_filenames.append(filename)
 
     conn = db()
     ticket = next_ticket(conn)
     now = datetime.now(timezone.utc).isoformat()
-    conn.execute(
+
+    # compatibility: keep first photo in old column too
+    first_photo = photo_filenames[0] if photo_filenames else None
+
+    cur = conn.execute(
         """INSERT INTO weighments
            (ticket_number, plate, weight, unit, photo_filename, scale_id, operator, created_at, status)
            VALUES (?, ?, ?, 'kg', ?, 'SCALE-01', ?, ?, 'SAVED')""",
-        (ticket, plate, weight, filename, request.session["user"], now),
+        (ticket, plate, weight, first_photo, request.session["user"], now),
     )
+    weighment_id = cur.lastrowid
+
+    for fn in photo_filenames:
+        conn.execute(
+            "INSERT INTO weighment_photos(weighment_id, filename, created_at) VALUES (?, ?, ?)",
+            (weighment_id, fn, now),
+        )
+
     conn.commit()
     conn.close()
 
@@ -241,13 +274,27 @@ async def create_weighment(
 async def detail(request: Request, ticket: int):
     require_login(request)
     conn = db()
-    row = conn.execute("SELECT * FROM weighments WHERE ticket_number=?", (ticket,)).fetchone()
-    conn.close()
+    row = conn.execute(
+        "SELECT * FROM weighments WHERE ticket_number=?", (ticket,)
+    ).fetchone()
+
     if not row:
+        conn.close()
         raise HTTPException(404, "Ticket not found")
+
+    photos_rows = conn.execute(
+        "SELECT filename FROM weighment_photos WHERE weighment_id=? ORDER BY id ASC",
+        (row["id"],),
+    ).fetchall()
+    conn.close()
+
+    photos = [r["filename"] for r in photos_rows]
+    if not photos and row["photo_filename"]:
+        photos = [row["photo_filename"]]
+
     return templates.TemplateResponse(
         "detail.html",
-        {"request": request, "row": row, "user": request.session["user"]},
+        {"request": request, "row": row, "photos": photos, "user": request.session["user"]},
     )
 
 

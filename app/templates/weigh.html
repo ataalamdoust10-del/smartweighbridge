@@ -20,7 +20,11 @@
       <input id="weightInput" name="weight" type="number" min="0" step="0.01" value="{{ state.weight }}" required>
 
       <label>{{ _('truck_photo') }}</label>
-      <input class="camera" type="file" name="photo" accept="image/*" capture="environment">
+
+      <!-- چند عکس: هر بار یک عکس انتخاب شود، یک ورودی جدید اضافه می‌شود -->
+      <div id="photosWrap">
+        <input class="camera photo-input" type="file" name="photos" accept="image/*" capture="environment">
+      </div>
 
       <p class="hint">{{ _('hint_camera') }}</p>
 
@@ -46,34 +50,32 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // --- weight live part (همون قبلی) ---
   const wi = document.getElementById('weightInput');
   const lw = document.getElementById('liveWeight');
   const s  = document.getElementById('stable');
   const ss = document.getElementById('scaleStatus');
 
-  if (!wi || !lw || !s || !ss) return;
-
   const STABLE_TEXT  = {{ _('stable')|tojson }};
   const WAITING_TEXT = {{ _('waiting')|tojson }};
   const SCALE_LABEL  = {{ _('scale')|tojson }};
 
-  // تایپ دستی -> سمت راست هم همان را نشان بده
-  wi.addEventListener('input', () => {
-    lw.textContent = wi.value ? wi.value : '0';
-  });
+  if (wi && lw) {
+    wi.addEventListener('input', () => {
+      lw.textContent = wi.value ? wi.value : '0';
+    });
+  }
 
   async function refreshWeight() {
     try {
       const r = await fetch('/api/scale/weight', { cache: 'no-store' });
       const d = await r.json();
 
-      // اگر کاربر در حال تایپ نیست، وزن باسکول را نمایش بده
       if (document.activeElement !== wi) {
         lw.textContent = (d.weight ?? 0);
       }
 
       ss.textContent = SCALE_LABEL + ': ' + (d.scale_id ?? '');
-
       s.textContent = d.stable ? ('🟢 ' + STABLE_TEXT) : ('🟡 ' + WAITING_TEXT);
       s.className = d.stable ? 'stable' : 'unstable';
     } catch (e) {}
@@ -81,6 +83,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setInterval(refreshWeight, 1000);
   refreshWeight();
+
+  // --- multi camera inputs (این قسمت جدید) ---
+  const wrap = document.getElementById('photosWrap');
+  if (!wrap) return;
+
+  function addPhotoInput() {
+    const inp = document.createElement('input');
+    inp.type = 'file';
+    inp.name = 'photos';
+    inp.accept = 'image/*';
+    inp.capture = 'environment';
+    inp.className = 'camera photo-input';
+
+    inp.addEventListener('change', onPhotoSelected);
+    wrap.appendChild(inp);
+  }
+
+  function onPhotoSelected() {
+    const inputs = wrap.querySelectorAll('input[type="file"][name="photos"]');
+    const last = inputs[inputs.length - 1];
+    // اگر آخرین input فایل گرفت، یک input جدید زیرش اضافه کن
+    if (last && last.files && last.files.length > 0) {
+      addPhotoInput();
+    }
+  }
+
+  const first = wrap.querySelector('input[type="file"][name="photos"]');
+  if (first) first.addEventListener('change', onPhotoSelected);
 });
 </script>
 {% endblock %}
