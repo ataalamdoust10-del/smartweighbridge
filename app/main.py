@@ -146,13 +146,12 @@ async def login(request: Request, username: str = Form(...), password: str = For
         request.session["user"] = username
         return RedirectResponse("/dashboard", status_code=303)
 
-    # فعلاً پیام خطا فارسیه؛ بعداً ترجمه‌اش می‌کنیم
+    error_msg = translate(getattr(request.state, "lang", DEFAULT_LANG), "login_error")
     return templates.TemplateResponse(
         "login.html",
-        {"request": request, "error": "نام کاربری یا رمز عبور اشتباه است."},
+        {"request": request, "error": error_msg},
         status_code=401,
     )
-
 
 @app.get("/logout")
 async def logout(request: Request):
