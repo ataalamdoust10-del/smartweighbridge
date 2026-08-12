@@ -1,11 +1,11 @@
 {% extends "base.html" %}
-{% block title %}ثبت وزن{% endblock %}
+{% block title %}{{ _('weigh') }}{% endblock %}
 
 {% block content %}
 <div class="page-head">
   <div>
-    <h1>ثبت وزن کامیون</h1>
-    <p>اطلاعات را بررسی و ثبت کنید.</p>
+    <h1>{{ _('weigh_truck_title') }}</h1>
+    <p>{{ _('weigh_subtitle') }}</p>
   </div>
 </div>
 
@@ -13,33 +13,33 @@
   <!-- فرم ثبت -->
   <section class="card">
     <form method="post" action="/weigh" enctype="multipart/form-data">
-      <label>پلاک کامیون</label>
+      <label>{{ _('truck_plate') }}</label>
       <input name="plate" placeholder="مثلاً 12A345" required>
 
-      <label>وزن (kg)</label>
+      <label>{{ _('weight_kg') }}</label>
       <input id="weightInput" name="weight" type="number" min="0" step="0.01" value="{{ state.weight }}" required>
 
-      <label>عکس کامیون</label>
+      <label>{{ _('truck_photo') }}</label>
       <input class="camera" type="file" name="photo" accept="image/*" capture="environment">
 
-      <p class="hint">در گوشی، با انتخاب این قسمت دوربین باز می‌شود.</p>
+      <p class="hint">{{ _('hint_camera') }}</p>
 
-      <button class="btn primary full" type="submit">ثبت وزن و عکس</button>
+      <button class="btn primary full" type="submit">{{ _('submit_weigh') }}</button>
     </form>
   </section>
 
   <!-- نمایش وزن باسکول -->
   <section class="card">
     <div class="scale-box">
-      <span>وزن فعلی باسکول</span>
+      <span>{{ _('current_scale_weight') }}</span>
       <strong id="liveWeight">{{ state.weight }}</strong>
       <b>kg</b>
 
       <div id="stable" class="{{ 'stable' if state.stable else 'unstable' }}">
-        {{ '🟢 STABLE' if state.stable else '🟡 WAITING' }}
+        {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
       </div>
 
-      <small id="scaleStatus">SCALE: {{ state.scale_id }}</small>
+      <small id="scaleStatus">{{ _('scale') }}: {{ state.scale_id }}</small>
     </div>
   </section>
 </div>
@@ -52,6 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const ss = document.getElementById('scaleStatus');
 
   if (!wi || !lw || !s || !ss) return;
+
+  const STABLE_TEXT  = {{ _('stable')|tojson }};
+  const WAITING_TEXT = {{ _('waiting')|tojson }};
+  const SCALE_LABEL  = {{ _('scale')|tojson }};
 
   // تایپ دستی -> سمت راست هم همان را نشان بده
   wi.addEventListener('input', () => {
@@ -68,8 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lw.textContent = (d.weight ?? 0);
       }
 
-      ss.textContent = 'SCALE: ' + (d.scale_id ?? '');
-      s.textContent = d.stable ? '🟢 STABLE' : '🟡 WAITING';
+      ss.textContent = SCALE_LABEL + ': ' + (d.scale_id ?? '');
+
+      s.textContent = d.stable ? ('🟢 ' + STABLE_TEXT) : ('🟡 ' + WAITING_TEXT);
       s.className = d.stable ? 'stable' : 'unstable';
     } catch (e) {}
   }

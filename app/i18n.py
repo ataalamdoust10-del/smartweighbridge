@@ -46,6 +46,16 @@ TRANSLATIONS = {
         "operator": "اپراتور",
         "datetime": "تاریخ و ساعت",
         "no_photo": "بدون عکس",
+
+        # Weigh page (ثبت وزن)
+        "weigh_truck_title": "ثبت وزن کامیون",
+        "weigh_subtitle": "اطلاعات را بررسی و ثبت کنید.",
+        "current_scale_weight": "وزن فعلی باسکول",
+        "truck_plate": "پلاک کامیون",
+        "weight_kg": "وزن (کیلوگرم)",
+        "truck_photo": "عکس کامیون",
+        "hint_camera": "در گوشی، با انتخاب این قسمت دوربین باز می‌شود.",
+        "submit_weigh": "ثبت وزن و عکس",
     },
 
     "en": {
@@ -84,6 +94,15 @@ TRANSLATIONS = {
         "operator": "Operator",
         "datetime": "Date & time",
         "no_photo": "No photo",
+
+        "weigh_truck_title": "Truck weigh-in",
+        "weigh_subtitle": "Review and submit the information.",
+        "current_scale_weight": "Current scale weight",
+        "truck_plate": "Truck plate",
+        "weight_kg": "Weight (kg)",
+        "truck_photo": "Truck photo",
+        "hint_camera": "On mobile, selecting this will open the camera.",
+        "submit_weigh": "Submit weight & photo",
     },
 
     "hy": {
@@ -122,6 +141,15 @@ TRANSLATIONS = {
         "operator": "Օպերատոր",
         "datetime": "Ամսաթիվ և ժամ",
         "no_photo": "Առանց լուսանկարի",
+
+        "weigh_truck_title": "Բեռնատարի կշռում",
+        "weigh_subtitle": "Ստուգեք տվյալները և ուղարկեք։",
+        "current_scale_weight": "Ընթացիկ կշիռը",
+        "truck_plate": "Մեքենայի համար",
+        "weight_kg": "Քաշ (կգ)",
+        "truck_photo": "Մեքենայի լուսանկար",
+        "hint_camera": "Հեռախոսով ընտրելիս տեսախցիկը կբացվի։",
+        "submit_weigh": "Ուղարկել",
     },
 }
 
