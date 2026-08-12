@@ -12,7 +12,6 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from jinja2 import pass_context
 
-# i18n import (works both locally and on Railway)
 try:
     from .i18n import translate, get_dir
 except ImportError:
@@ -40,7 +39,6 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 templates = Jinja2Templates(directory=BASE_DIR / "app" / "templates")
 
 
-# ---------- Language middleware ----------
 @app.middleware("http")
 async def set_language(request: Request, call_next):
     lang = request.cookies.get("lang", DEFAULT_LANG)
@@ -71,7 +69,6 @@ def _(ctx, key: str) -> str:
 templates.env.globals["_"] = _
 
 
-# ---------- DB ----------
 def db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -104,18 +101,6 @@ def init_db():
 
     INSERT OR IGNORE INTO scale_state(id, scale_id, weight, stable, updated_at)
     VALUES(1, 'SCALE-01', 0, 0, datetime('now'));
-
-    -- NEW: multiple photos table
-    CREATE TABLE IF NOT EXISTS weighment_photos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        weighment_id INTEGER NOT NULL,
-        filename TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        FOREIGN KEY (weighment_id) REFERENCES weighments(id)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_weighment_photos_weighment_id
-    ON weighment_photos(weighment_id);
     """)
     conn.commit()
     conn.close()
@@ -124,7 +109,6 @@ def init_db():
 init_db()
 
 
-# ---------- Auth ----------
 def logged_in(request: Request) -> bool:
     return bool(request.session.get("user"))
 
@@ -139,7 +123,6 @@ def next_ticket(conn):
     return int(row["n"])
 
 
-# ---------- Routes ----------
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     if not logged_in(request):
@@ -212,7 +195,7 @@ async def create_weighment(
     request: Request,
     plate: str = Form(...),
     weight: float = Form(...),
-    photos: list[UploadFile] | None = File(None),
+    photo: UploadFile | None = File(None),
 ):
     require_login(request)
 
@@ -222,48 +205,28 @@ async def create_weighment(
     if weight < 0 or weight > 1000000:
         return RedirectResponse("/weigh?error=weight", status_code=303)
 
-    # ---- save multiple photos ----
-    photo_filenames: list[str] = []
-    allowed = {".jpg", ".jpeg", ".png", ".webp"}
-
-    if photos:
-        for photo in photos:
-            if not photo or not photo.filename:
-                continue
-
-            ext = Path(photo.filename).suffix.lower()
-            if ext not in allowed:
-                return RedirectResponse("/weigh?error=photo", status_code=303)
-
-            content = await photo.read()
-            if len(content) > 10 * 1024 * 1024:
-                return RedirectResponse("/weigh?error=photo_size", status_code=303)
-
-            filename = f"{uuid.uuid4().hex}{ext}"
-            (UPLOAD_DIR / filename).write_bytes(content)
-            photo_filenames.append(filename)
+    filename = None
+    if photo and photo.filename:
+        allowed = {".jpg", ".jpeg", ".png", ".webp"}
+        ext = Path(photo.filename).suffix.lower()
+        if ext not in allowed:
+            return RedirectResponse("/weigh?error=photo", status_code=303)
+        filename = f"{uuid.uuid4().hex}{ext}"
+        target = UPLOAD_DIR / filename
+        content = await photo.read()
+        if len(content) > 10 * 1024 * 1024:
+            return RedirectResponse("/weigh?error=photo_size", status_code=303)
+        target.write_bytes(content)
 
     conn = db()
     ticket = next_ticket(conn)
     now = datetime.now(timezone.utc).isoformat()
-
-    # compatibility: keep first photo in old column too
-    first_photo = photo_filenames[0] if photo_filenames else None
-
-    cur = conn.execute(
+    conn.execute(
         """INSERT INTO weighments
            (ticket_number, plate, weight, unit, photo_filename, scale_id, operator, created_at, status)
            VALUES (?, ?, ?, 'kg', ?, 'SCALE-01', ?, ?, 'SAVED')""",
-        (ticket, plate, weight, first_photo, request.session["user"], now),
+        (ticket, plate, weight, filename, request.session["user"], now),
     )
-    weighment_id = cur.lastrowid
-
-    for fn in photo_filenames:
-        conn.execute(
-            "INSERT INTO weighment_photos(weighment_id, filename, created_at) VALUES (?, ?, ?)",
-            (weighment_id, fn, now),
-        )
-
     conn.commit()
     conn.close()
 
@@ -277,24 +240,14 @@ async def detail(request: Request, ticket: int):
     row = conn.execute(
         "SELECT * FROM weighments WHERE ticket_number=?", (ticket,)
     ).fetchone()
-
+    conn.close()
     if not row:
-        conn.close()
         raise HTTPException(404, "Ticket not found")
 
-    photos_rows = conn.execute(
-        "SELECT filename FROM weighment_photos WHERE weighment_id=? ORDER BY id ASC",
-        (row["id"],),
-    ).fetchall()
-    conn.close()
-
-    photos = [r["filename"] for r in photos_rows]
-    if not photos and row["photo_filename"]:
-        photos = [row["photo_filename"]]
-
+    # اگر پروژه‌ات چندعکسی شد، اینجا باید photos هم پاس بدی (الان تک‌عکس است)
     return templates.TemplateResponse(
         "detail.html",
-        {"request": request, "row": row, "photos": photos, "user": request.session["user"]},
+        {"request": request, "row": row, "photos": ([row["photo_filename"]] if row["photo_filename"] else []), "user": request.session["user"]},
     )
 
 
@@ -318,6 +271,61 @@ async def records(request: Request, q: str = ""):
         "records.html",
         {"request": request, "rows": rows, "q": q, "user": request.session["user"]},
     )
+
+
+# ---------- DELETE ROUTE ----------
+@app.post("/weighments/{ticket}/delete")
+async def delete_weighment(request: Request, ticket: int, next: str = Form("/records")):
+    require_login(request)
+
+    if not next.startswith("/"):
+        next = "/records"
+
+    conn = db()
+    row = conn.execute(
+        "SELECT * FROM weighments WHERE ticket_number=?",
+        (ticket,),
+    ).fetchone()
+
+    if not row:
+        conn.close()
+        return RedirectResponse(next, status_code=303)
+
+    weighment_id = row["id"]
+
+    filenames = []
+
+    # اگر جدول چندعکس وجود داشت، همه عکس‌های مربوط به این قبض را هم حذف می‌کنیم
+    has_photos_table = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='weighment_photos'"
+    ).fetchone()
+
+    if has_photos_table:
+        photos_rows = conn.execute(
+            "SELECT filename FROM weighment_photos WHERE weighment_id=?",
+            (weighment_id,),
+        ).fetchall()
+        filenames = [r["filename"] for r in photos_rows]
+        conn.execute("DELETE FROM weighment_photos WHERE weighment_id=?", (weighment_id,))
+
+    # تک‌عکس قدیمی
+    if not filenames and row["photo_filename"]:
+        filenames = [row["photo_filename"]]
+
+    conn.execute("DELETE FROM weighments WHERE id=?", (weighment_id,))
+    conn.commit()
+    conn.close()
+
+    # حذف فایل‌ها از uploads
+    for fn in filenames:
+        try:
+            p = UPLOAD_DIR / fn
+            if p.exists():
+                p.unlink()
+        except Exception:
+            pass
+
+    return RedirectResponse(next, status_code=303)
 
 
 @app.get("/api/scale/weight")

@@ -27,6 +27,7 @@
           <th>{{ _('weight') }}</th>
           <th>{{ _('date') }}</th>
           <th>{{ _('status') }}</th>
+          <th>{{ _('actions') }}</th>
         </tr>
       </thead>
       <tbody>
@@ -47,10 +48,21 @@
               {% endif %}
             </span>
           </td>
+          <td>
+            <form method="post"
+                  action="/weighments/{{ r.ticket_number }}/delete"
+                  onsubmit="return confirm({{ _('confirm_delete')|tojson }});"
+                  style="margin:0;">
+              <input type="hidden" name="next" value="/records{% if q %}?q={{ q|urlencode }}{% endif %}">
+              <button class="btn" type="submit" style="background:#fee4e2;color:#b42318;">
+                {{ _('delete') }}
+              </button>
+            </form>
+          </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="5">{{ _('no_results') }}</td>
+          <td colspan="6">{{ _('no_results') }}</td>
         </tr>
         {% endfor %}
       </tbody>

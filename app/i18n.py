@@ -47,7 +47,7 @@ TRANSLATIONS = {
         "datetime": "تاریخ و ساعت",
         "no_photo": "بدون عکس",
 
-        # Weigh page (ثبت وزن)
+        # Weigh page
         "weigh_truck_title": "ثبت وزن کامیون",
         "weigh_subtitle": "اطلاعات را بررسی و ثبت کنید.",
         "current_scale_weight": "وزن فعلی باسکول",
@@ -57,19 +57,23 @@ TRANSLATIONS = {
         "hint_camera": "در گوشی، با انتخاب این قسمت دوربین باز می‌شود.",
         "submit_weigh": "ثبت وزن و عکس",
 
-        # Records page (سوابق)
+        # Records page
         "records_title": "سوابق",
         "records_subtitle": "جستجو و مشاهده همه ثبت‌ها",
         "search": "جستجو",
         "search_placeholder": "پلاک یا شماره قبض...",
         "clear": "پاک کردن",
         "no_results": "موردی پیدا نشد.",
+
+        # Delete
+        "actions": "عملیات",
+        "delete": "حذف",
+        "confirm_delete": "آیا از حذف این قبض مطمئن هستید؟",
     },
 
     "en": {
         "app_name": "Smart Weighbridge",
 
-        # Login
         "login": "Login",
         "login_subtitle": "Weighbridge management system",
         "username": "Username",
@@ -77,13 +81,11 @@ TRANSLATIONS = {
         "submit_login": "Sign in",
         "login_error": "Invalid username or password.",
 
-        # Nav
         "dashboard": "Dashboard",
         "weigh": "Weigh",
         "records": "Records",
         "logout": "Logout",
 
-        # Dashboard
         "welcome": "Welcome",
         "new_weighment": "New weighment",
         "records_count": "Records count",
@@ -93,7 +95,6 @@ TRANSLATIONS = {
         "waiting": "Waiting",
         "latest_weighments": "Latest weighments",
 
-        # Common table/fields
         "ticket": "Ticket",
         "plate": "Plate",
         "weight": "Weight",
@@ -101,14 +102,12 @@ TRANSLATIONS = {
         "status": "Status",
         "saved": "Saved",
 
-        # Detail (ticket page)
         "weighment_details": "Weighment details",
         "print": "Print",
         "operator": "Operator",
         "datetime": "Date & time",
         "no_photo": "No photo",
 
-        # Weigh page
         "weigh_truck_title": "Truck weigh-in",
         "weigh_subtitle": "Review and submit the information.",
         "current_scale_weight": "Current scale weight",
@@ -118,19 +117,21 @@ TRANSLATIONS = {
         "hint_camera": "On mobile, selecting this will open the camera.",
         "submit_weigh": "Submit weight & photo",
 
-        # Records page
         "records_title": "Records",
         "records_subtitle": "Search and view all weighments",
         "search": "Search",
         "search_placeholder": "Plate or ticket number...",
         "clear": "Clear",
         "no_results": "No results found.",
+
+        "actions": "Actions",
+        "delete": "Delete",
+        "confirm_delete": "Are you sure you want to delete this ticket?",
     },
 
     "hy": {
         "app_name": "Խելացի Կշռակայան",
 
-        # Login
         "login": "Մուտք",
         "login_subtitle": "Կշռակայանի կառավարման համակարգ",
         "username": "Օգտանուն",
@@ -138,13 +139,11 @@ TRANSLATIONS = {
         "submit_login": "Մուտք գործել",
         "login_error": "Սխալ օգտանուն կամ գաղտնաբառ։",
 
-        # Nav
         "dashboard": "Վահանակ",
         "weigh": "Կշռում",
         "records": "Գրառումներ",
         "logout": "Ելք",
 
-        # Dashboard
         "welcome": "Բարի գալուստ",
         "new_weighment": "Նոր կշռում",
         "records_count": "Գրառումների քանակը",
@@ -154,7 +153,6 @@ TRANSLATIONS = {
         "waiting": "Սպասում",
         "latest_weighments": "Վերջին կշռումները",
 
-        # Common table/fields
         "ticket": "Տոմս",
         "plate": "Համարանիշ",
         "weight": "Քաշ",
@@ -162,14 +160,12 @@ TRANSLATIONS = {
         "status": "Կարգավիճակ",
         "saved": "Պահպանված է",
 
-        # Detail (ticket page)
         "weighment_details": "Կշռման մանրամասներ",
         "print": "Տպել",
         "operator": "Օպերատոր",
         "datetime": "Ամսաթիվ և ժամ",
         "no_photo": "Առանց լուսանկարի",
 
-        # Weigh page
         "weigh_truck_title": "Բեռնատարի կշռում",
         "weigh_subtitle": "Ստուգեք տվյալները և ուղարկեք։",
         "current_scale_weight": "Ընթացիկ կշիռը",
@@ -179,13 +175,16 @@ TRANSLATIONS = {
         "hint_camera": "Հեռախոսով ընտրելիս տեսախցիկը կբացվի։",
         "submit_weigh": "Ուղարկել",
 
-        # Records page
         "records_title": "Գրառումներ",
         "records_subtitle": "Որոնել և դիտել բոլոր կշռումները",
         "search": "Որոնում",
         "search_placeholder": "Համարանիշ կամ տոմս...",
         "clear": "Մաքրել",
         "no_results": "Արդյունք չկա։",
+
+        "actions": "Գործողություններ",
+        "delete": "Ջնջել",
+        "confirm_delete": "Վստա՞հ եք, որ ցանկանում եք ջնջել այս տոմսը։",
     },
 }
 
