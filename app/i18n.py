@@ -56,11 +56,20 @@ TRANSLATIONS = {
         "truck_photo": "عکس کامیون",
         "hint_camera": "در گوشی، با انتخاب این قسمت دوربین باز می‌شود.",
         "submit_weigh": "ثبت وزن و عکس",
+
+        # Records page (سوابق)
+        "records_title": "سوابق",
+        "records_subtitle": "جستجو و مشاهده همه ثبت‌ها",
+        "search": "جستجو",
+        "search_placeholder": "پلاک یا شماره قبض...",
+        "clear": "پاک کردن",
+        "no_results": "موردی پیدا نشد.",
     },
 
     "en": {
         "app_name": "Smart Weighbridge",
 
+        # Login
         "login": "Login",
         "login_subtitle": "Weighbridge management system",
         "username": "Username",
@@ -68,11 +77,13 @@ TRANSLATIONS = {
         "submit_login": "Sign in",
         "login_error": "Invalid username or password.",
 
+        # Nav
         "dashboard": "Dashboard",
         "weigh": "Weigh",
         "records": "Records",
         "logout": "Logout",
 
+        # Dashboard
         "welcome": "Welcome",
         "new_weighment": "New weighment",
         "records_count": "Records count",
@@ -82,6 +93,7 @@ TRANSLATIONS = {
         "waiting": "Waiting",
         "latest_weighments": "Latest weighments",
 
+        # Common table/fields
         "ticket": "Ticket",
         "plate": "Plate",
         "weight": "Weight",
@@ -89,12 +101,14 @@ TRANSLATIONS = {
         "status": "Status",
         "saved": "Saved",
 
+        # Detail (ticket page)
         "weighment_details": "Weighment details",
         "print": "Print",
         "operator": "Operator",
         "datetime": "Date & time",
         "no_photo": "No photo",
 
+        # Weigh page
         "weigh_truck_title": "Truck weigh-in",
         "weigh_subtitle": "Review and submit the information.",
         "current_scale_weight": "Current scale weight",
@@ -103,11 +117,20 @@ TRANSLATIONS = {
         "truck_photo": "Truck photo",
         "hint_camera": "On mobile, selecting this will open the camera.",
         "submit_weigh": "Submit weight & photo",
+
+        # Records page
+        "records_title": "Records",
+        "records_subtitle": "Search and view all weighments",
+        "search": "Search",
+        "search_placeholder": "Plate or ticket number...",
+        "clear": "Clear",
+        "no_results": "No results found.",
     },
 
     "hy": {
         "app_name": "Խելացի Կշռակայան",
 
+        # Login
         "login": "Մուտք",
         "login_subtitle": "Կշռակայանի կառավարման համակարգ",
         "username": "Օգտանուն",
@@ -115,11 +138,13 @@ TRANSLATIONS = {
         "submit_login": "Մուտք գործել",
         "login_error": "Սխալ օգտանուն կամ գաղտնաբառ։",
 
+        # Nav
         "dashboard": "Վահանակ",
         "weigh": "Կշռում",
         "records": "Գրառումներ",
         "logout": "Ելք",
 
+        # Dashboard
         "welcome": "Բարի գալուստ",
         "new_weighment": "Նոր կշռում",
         "records_count": "Գրառումների քանակը",
@@ -129,6 +154,7 @@ TRANSLATIONS = {
         "waiting": "Սպասում",
         "latest_weighments": "Վերջին կշռումները",
 
+        # Common table/fields
         "ticket": "Տոմս",
         "plate": "Համարանիշ",
         "weight": "Քաշ",
@@ -136,12 +162,14 @@ TRANSLATIONS = {
         "status": "Կարգավիճակ",
         "saved": "Պահպանված է",
 
+        # Detail (ticket page)
         "weighment_details": "Կշռման մանրամասներ",
         "print": "Տպել",
         "operator": "Օպերատոր",
         "datetime": "Ամսաթիվ և ժամ",
         "no_photo": "Առանց լուսանկարի",
 
+        # Weigh page
         "weigh_truck_title": "Բեռնատարի կշռում",
         "weigh_subtitle": "Ստուգեք տվյալները և ուղարկեք։",
         "current_scale_weight": "Ընթացիկ կշիռը",
@@ -150,6 +178,14 @@ TRANSLATIONS = {
         "truck_photo": "Մեքենայի լուսանկար",
         "hint_camera": "Հեռախոսով ընտրելիս տեսախցիկը կբացվի։",
         "submit_weigh": "Ուղարկել",
+
+        # Records page
+        "records_title": "Գրառումներ",
+        "records_subtitle": "Որոնել և դիտել բոլոր կշռումները",
+        "search": "Որոնում",
+        "search_placeholder": "Համարանիշ կամ տոմս...",
+        "clear": "Մաքրել",
+        "no_results": "Արդյունք չկա։",
     },
 }
 
@@ -158,15 +194,12 @@ RTL_LANGS = {"fa"}
 def translate(lang: str, key: str) -> str:
     lang = lang if lang in SUPPORTED_LANGS else DEFAULT_LANG
 
-    # 1) selected language
     if key in TRANSLATIONS.get(lang, {}):
         return TRANSLATIONS[lang][key]
 
-    # 2) fallback to default lang
     if key in TRANSLATIONS.get(DEFAULT_LANG, {}):
         return TRANSLATIONS[DEFAULT_LANG][key]
 
-    # 3) fallback to key
     return key
 
 def get_dir(lang: str) -> str:

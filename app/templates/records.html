@@ -1,35 +1,60 @@
 {% extends "base.html" %}
-{% block title %}سوابق{% endblock %}
+{% block title %}{{ _('records') }}{% endblock %}
+
 {% block content %}
 <div class="page-head">
-  <div><h1>سوابق باسکول</h1><p>جستجوی پلاک یا شماره قبض</p></div>
+  <div>
+    <h1>{{ _('records_title') }}</h1>
+    <p>{{ _('records_subtitle') }}</p>
+  </div>
 </div>
 
-<form class="search" method="get">
-  <input name="q" value="{{ q }}" placeholder="پلاک یا شماره قبض">
-  <button class="btn primary">جستجو</button>
-  <a class="btn" href="/records">پاک کردن</a>
+<form class="search" method="get" action="/records">
+  <input name="q" value="{{ q }}" placeholder="{{ _('search_placeholder') }}" autocomplete="off">
+  <button class="btn primary" type="submit">{{ _('search') }}</button>
+  {% if q %}
+    <a class="btn" href="/records">{{ _('clear') }}</a>
+  {% endif %}
 </form>
 
 <div class="card">
-<div class="table-wrap">
-<table>
-<thead><tr><th>قبض</th><th>پلاک</th><th>وزن</th><th>باسکول</th><th>زمان</th><th>عکس</th></tr></thead>
-<tbody>
-{% for r in rows %}
-<tr>
-  <td><a href="/weighments/{{ r.ticket_number }}">#{{ "%06d"|format(r.ticket_number) }}</a></td>
-  <td>{{ r.plate }}</td>
-  <td>{{ r.weight }} {{ r.unit }}</td>
-  <td>{{ r.scale_id }}</td>
-  <td>{{ r.created_at[:19].replace('T',' ') }}</td>
-  <td>{{ '📷' if r.photo_filename else '—' }}</td>
-</tr>
-{% else %}
-<tr><td colspan="6">موردی پیدا نشد.</td></tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ _('ticket') }}</th>
+          <th>{{ _('plate') }}</th>
+          <th>{{ _('weight') }}</th>
+          <th>{{ _('date') }}</th>
+          <th>{{ _('status') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>
+            <a href="/weighments/{{ r.ticket_number }}">#{{ "%06d"|format(r.ticket_number) }}</a>
+          </td>
+          <td>{{ r.plate }}</td>
+          <td>{{ r.weight }} {{ r.unit }}</td>
+          <td>{{ (r.created_at|string)[:19].replace('T',' ') }}</td>
+          <td>
+            <span class="badge">
+              {% if r.status == 'SAVED' %}
+                {{ _('saved') }}
+              {% else %}
+                {{ r.status }}
+              {% endif %}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">{{ _('no_results') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}
