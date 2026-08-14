@@ -57,6 +57,15 @@ TRANSLATIONS = {
         "hint_camera": "در گوشی، با انتخاب این قسمت دوربین باز می‌شود.",
         "submit_weigh": "ثبت وزن و عکس",
 
+        # NEW (Weigh page - extra UI strings)
+        "plate_placeholder": "مثلاً 12A345",
+        "copy_scale_weight": "کپی وزن باسکول",
+        "copy_scale_weight_title": "کپی وزن باسکول داخل فیلد وزن",
+        "clear_form": "پاک کردن",
+        "clear_form_title": "پاک کردن فرم",
+        "live_on": "LIVE: ON",
+        "live_off": "LIVE: OFF",
+
         # Records page
         "records_title": "سوابق",
         "records_subtitle": "جستجو و مشاهده همه ثبت‌ها",
@@ -117,6 +126,15 @@ TRANSLATIONS = {
         "hint_camera": "On mobile, selecting this will open the camera.",
         "submit_weigh": "Submit weight & photo",
 
+        # NEW (Weigh page - extra UI strings)
+        "plate_placeholder": "e.g. 12A345",
+        "copy_scale_weight": "Copy scale weight",
+        "copy_scale_weight_title": "Copy live scale weight into the weight field",
+        "clear_form": "Clear",
+        "clear_form_title": "Clear the form",
+        "live_on": "LIVE: ON",
+        "live_off": "LIVE: OFF",
+
         "records_title": "Records",
         "records_subtitle": "Search and view all weighments",
         "search": "Search",
@@ -174,6 +192,15 @@ TRANSLATIONS = {
         "truck_photo": "Մեքենայի լուսանկար",
         "hint_camera": "Հեռախոսով ընտրելիս տեսախցիկը կբացվի։",
         "submit_weigh": "Ուղարկել",
+
+        # NEW (Weigh page - extra UI strings)
+        "plate_placeholder": "օր. 12A345",
+        "copy_scale_weight": "Պատճենել կշեռքի քաշը",
+        "copy_scale_weight_title": "Պատճենել ընթացիկ քաշը քաշի դաշտում",
+        "clear_form": "Մաքրել",
+        "clear_form_title": "Մաքրել ձևը",
+        "live_on": "LIVE: ON",
+        "live_off": "LIVE: OFF",
 
         "records_title": "Գրառումներ",
         "records_subtitle": "Որոնել և դիտել բոլոր կշռումները",
