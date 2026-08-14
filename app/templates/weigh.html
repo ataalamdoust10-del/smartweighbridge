@@ -1,7 +1,23 @@
 {% extends "base.html" %}
+
 {% block title %}{{ _('weigh') }}{% endblock %}
 
 {% block content %}
+<style>
+  #photosWrap .photo-input{ display:block; margin-top:10px; }
+  .mini-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:10px; flex-wrap:wrap; }
+  .mini-actions .btn{ padding:10px 12px; border-radius:10px; font-weight:800; }
+  .photo-preview{ margin-top:12px; display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+  .photo-item{ position:relative; }
+  .photo-item img{ width:100%; height:160px; object-fit:cover; border-radius:12px; background:#f2f4f7; border:1px solid #eaecf0; }
+  .photo-item button{ position:absolute; top:8px; left:8px; border:0; border-radius:10px; padding:6px 10px; cursor:pointer; background:rgba(0,0,0,.55); color:#fff; font-weight:900; line-height:1; }
+  .conn{ margin-top:8px; font-size:13px; color:#667085; }
+  .dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-left:6px; vertical-align:middle; }
+  .dot.ok{ background:#16a34a; }
+  .dot.bad{ background:#f59e0b; }
+  @media(max-width:760px){ .photo-preview{ grid-template-columns:1fr; } }
+</style>
+
 <div class="page-head">
   <div>
     <h1>{{ _('weigh_truck_title') }}</h1>
@@ -10,55 +26,61 @@
 </div>
 
 <div class="grid-2">
-  <!-- فرم ثبت -->
   <section class="card">
-    <form method="post" action="/weigh" enctype="multipart/form-data">
+    <form method="post" action="/weigh" enctype="multipart/form-data" id="weighForm">
       <label>{{ _('truck_plate') }}</label>
-      <input name="plate" placeholder="مثلاً 12A345" required>
+      <input id="plateInput" name="plate" placeholder="مثلاً 12A345" required dir="ltr" style="text-align:left">
 
       <label>{{ _('weight_kg') }}</label>
       <input id="weightInput" name="weight" type="number" min="0" step="0.01" value="{{ state.weight }}" required>
 
-      <label>{{ _('truck_photo') }}</label>
-
-      <!-- چند عکس: هر بار یک عکس انتخاب شود، یک ورودی جدید اضافه می‌شود -->
-      <div id="photosWrap">
-        <input class="camera photo-input" type="file" name="photos" accept="image/*" capture="environment">
+      <div class="mini-actions">
+        <button class="btn" type="button" id="copyScaleBtn" title="کپی وزن باسکول داخل فیلد وزن">کپی وزن باسکول</button>
+        <button class="btn" type="button" id="clearFormBtn" title="پاک کردن فرم">پاک کردن</button>
       </div>
 
+      <label>{{ _('truck_photo') }}</label>
+      <div id="photosWrap">
+        <input class="camera photo-input" type="file" name="photo" accept="image/*" capture="environment">
+      </div>
+      <div id="photoPreview" class="photo-preview"></div>
       <p class="hint">{{ _('hint_camera') }}</p>
-
       <button class="btn primary full" type="submit">{{ _('submit_weigh') }}</button>
     </form>
   </section>
 
-  <!-- نمایش وزن باسکول -->
   <section class="card">
     <div class="scale-box">
       <span>{{ _('current_scale_weight') }}</span>
       <strong id="liveWeight">{{ state.weight }}</strong>
       <b>kg</b>
-
       <div id="stable" class="{{ 'stable' if state.stable else 'unstable' }}">
         {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
       </div>
-
       <small id="scaleStatus">{{ _('scale') }}: {{ state.scale_id }}</small>
+      <div class="conn" id="connStatus"><span class="dot bad"></span>LIVE: OFF</div>
     </div>
   </section>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  // --- weight live part (همون قبلی) ---
+  const plateInput = document.getElementById('plateInput');
+  if (plateInput) {
+    plateInput.addEventListener('input', () => {
+      plateInput.value = plateInput.value.replace(/\s+/g, '').toUpperCase();
+    });
+  }
+
   const wi = document.getElementById('weightInput');
   const lw = document.getElementById('liveWeight');
   const s  = document.getElementById('stable');
   const ss = document.getElementById('scaleStatus');
+  const cs = document.getElementById('connStatus');
 
-  const STABLE_TEXT  = {{ _('stable')|tojson }};
-  const WAITING_TEXT = {{ _('waiting')|tojson }};
-  const SCALE_LABEL  = {{ _('scale')|tojson }};
+  const STABLE_TEXT  = {{ _('stable')|tojson|safe }};
+  const WAITING_TEXT = {{ _('waiting')|tojson|safe }};
+  const SCALE_LABEL  = {{ _('scale')|tojson|safe }};
 
   if (wi && lw) {
     wi.addEventListener('input', () => {
@@ -71,46 +93,65 @@ document.addEventListener('DOMContentLoaded', () => {
       const r = await fetch('/api/scale/weight', { cache: 'no-store' });
       const d = await r.json();
 
-      if (document.activeElement !== wi) {
-        lw.textContent = (d.weight ?? 0);
+      if (cs) { cs.innerHTML = `<span class="dot ok"></span>LIVE: ON`; }
+      if (document.activeElement !== wi) { lw.textContent = (d.weight ?? 0); }
+      if (ss) { ss.textContent = SCALE_LABEL + ': ' + (d.scale_id ?? ''); }
+      if (s) {
+        if (d.stable) {
+          s.className = 'stable';
+          s.textContent = '🟢 ' + STABLE_TEXT;
+        } else {
+          s.className = 'unstable';
+          s.textContent = '🟡 ' + WAITING_TEXT;
+        }
       }
-
-      ss.textContent = SCALE_LABEL + ': ' + (d.scale_id ?? '');
-      s.textContent = d.stable ? ('🟢 ' + STABLE_TEXT) : ('🟡 ' + WAITING_TEXT);
-      s.className = d.stable ? 'stable' : 'unstable';
-    } catch (e) {}
-  }
-
-  setInterval(refreshWeight, 1000);
-  refreshWeight();
-
-  // --- multi camera inputs (این قسمت جدید) ---
-  const wrap = document.getElementById('photosWrap');
-  if (!wrap) return;
-
-  function addPhotoInput() {
-    const inp = document.createElement('input');
-    inp.type = 'file';
-    inp.name = 'photos';
-    inp.accept = 'image/*';
-    inp.capture = 'environment';
-    inp.className = 'camera photo-input';
-
-    inp.addEventListener('change', onPhotoSelected);
-    wrap.appendChild(inp);
-  }
-
-  function onPhotoSelected() {
-    const inputs = wrap.querySelectorAll('input[type="file"][name="photos"]');
-    const last = inputs[inputs.length - 1];
-    // اگر آخرین input فایل گرفت، یک input جدید زیرش اضافه کن
-    if (last && last.files && last.files.length > 0) {
-      addPhotoInput();
+    } catch (e) {
+      if (cs) { cs.innerHTML = `<span class="dot bad"></span>LIVE: OFF`; }
     }
   }
 
-  const first = wrap.querySelector('input[type="file"][name="photos"]');
-  if (first) first.addEventListener('change', onPhotoSelected);
+  refreshWeight();
+  setInterval(refreshWeight, 1000);
+
+  const copyBtn = document.getElementById('copyScaleBtn');
+  if (copyBtn && wi && lw) {
+    copyBtn.addEventListener('click', () => { wi.value = lw.textContent; });
+  }
+
+  const clearBtn = document.getElementById('clearFormBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      document.getElementById('weighForm').reset();
+      document.getElementById('photoPreview').innerHTML = '';
+      lw.textContent = '0';
+    });
+  }
+
+  const photosWrap = document.getElementById('photosWrap');
+  const photoPreview = document.getElementById('photoPreview');
+  photosWrap.addEventListener('change', (e) => {
+    if (!e.target.classList.contains('photo-input')) return;
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const item = document.createElement('div');
+      item.className = 'photo-item';
+      item.innerHTML = `<img src="${ev.target.result}"><button type="button">✕</button>`;
+      item.querySelector('button').onclick = () => { item.remove(); e.target.remove(); };
+      photoPreview.appendChild(item);
+    };
+    reader.readAsDataURL(file);
+
+    const newInput = document.createElement('input');
+    newInput.className = 'camera photo-input';
+    newInput.type = 'file';
+    newInput.name = 'photo';
+    newInput.accept = 'image/*';
+    newInput.setAttribute('capture', 'environment');
+    photosWrap.appendChild(newInput);
+  });
 });
 </script>
 {% endblock %}
