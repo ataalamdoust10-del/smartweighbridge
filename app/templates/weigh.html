@@ -4,18 +4,216 @@
 
 {% block content %}
 <style>
+  :root{
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --text: #101828;
+    --muted: #667085;
+    --border: #e6e8ef;
+    --shadow: 0 10px 30px rgba(16,24,40,.08);
+    --primary: #2563eb;
+    --primary2:#1d4ed8;
+    --ok: #16a34a;
+    --warn:#f59e0b;
+    --radius: 18px;
+  }
+
+  body{ background: var(--bg); }
+  .container{ padding-top: 28px; padding-bottom: 40px; }
+
+  .page-head{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    margin: 12px 0 18px;
+  }
+  .page-head h1{
+    margin: 0;
+    font-size: 34px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .page-head p{
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.9;
+  }
+
+  .card{
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 18px;
+  }
+
+  form label{
+    display:block;
+    margin: 12px 0 8px;
+    font-weight: 800;
+    color: var(--text);
+  }
+  form input[type="text"],
+  form input[type="number"],
+  form input[type="file"],
+  form select,
+  form textarea{
+    width: 100%;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 14px;
+    padding: 12px 14px;
+    outline: none;
+    font-size: 15px;
+    transition: box-shadow .15s ease, border-color .15s ease, transform .05s ease;
+  }
+  form input:focus,
+  form select:focus,
+  form textarea:focus{
+    border-color: rgba(37,99,235,.55);
+    box-shadow: 0 0 0 4px rgba(37,99,235,.12);
+  }
+
+  .hint{
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .btn{
+    border: 1px solid var(--border);
+    background: #f2f4f7;
+    color: #111827;
+    cursor: pointer;
+    border-radius: 14px;
+    padding: 10px 14px;
+    font-weight: 900;
+    transition: transform .05s ease, background .15s ease, border-color .15s ease;
+    user-select: none;
+  }
+  .btn:hover{ background: #eef2ff; border-color: #d7dcff; }
+  .btn:active{ transform: translateY(1px); }
+
+  .btn.primary{
+    background: var(--primary);
+    border-color: transparent;
+    color: #fff;
+  }
+  .btn.primary:hover{ background: var(--primary2); }
+
+  .btn.full{ width: 100%; padding: 12px 16px; }
+
+  .mini-actions{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    margin-top: 12px;
+    flex-wrap:wrap;
+  }
+
   #photosWrap .photo-input{ display:block; margin-top:10px; }
-  .mini-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:10px; flex-wrap:wrap; }
-  .mini-actions .btn{ padding:10px 12px; border-radius:10px; font-weight:800; }
-  .photo-preview{ margin-top:12px; display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; }
+
+  .photo-preview{
+    margin-top:12px;
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:12px;
+  }
   .photo-item{ position:relative; }
-  .photo-item img{ width:100%; height:160px; object-fit:cover; border-radius:12px; background:#f2f4f7; border:1px solid #eaecf0; }
-  .photo-item button{ position:absolute; top:8px; left:8px; border:0; border-radius:10px; padding:6px 10px; cursor:pointer; background:rgba(0,0,0,.55); color:#fff; font-weight:900; line-height:1; }
-  .conn{ margin-top:8px; font-size:13px; color:#667085; }
-  .dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-left:6px; vertical-align:middle; }
-  .dot.ok{ background:#16a34a; }
-  .dot.bad{ background:#f59e0b; }
-  @media(max-width:760px){ .photo-preview{ grid-template-columns:1fr; } }
+  .photo-item img{
+    width:100%;
+    height:170px;
+    object-fit:cover;
+    border-radius:16px;
+    background:#f2f4f7;
+    border:1px solid var(--border);
+  }
+  .photo-item button{
+    position:absolute;
+    top:10px;
+    left:10px;
+    border:0;
+    border-radius:12px;
+    padding:7px 10px;
+    cursor:pointer;
+    background:rgba(16,24,40,.65);
+    color:#fff;
+    font-weight:900;
+    line-height:1;
+    backdrop-filter: blur(6px);
+  }
+
+  .scale-box{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    align-items:center;
+    text-align:center;
+    padding: 18px 10px;
+  }
+  .scale-box > span{
+    color: var(--muted);
+    font-weight: 800;
+  }
+  #liveWeight{
+    font-size: 64px;
+    line-height: 1;
+    letter-spacing: -1px;
+    color: var(--text);
+  }
+  .scale-box b{
+    font-size: 18px;
+    color: var(--muted);
+    font-weight: 900;
+    margin-top: -6px;
+  }
+
+  #stable{
+    padding: 8px 12px;
+    border-radius: 999px;
+    font-weight: 900;
+    border: 1px solid var(--border);
+    background: #f9fafb;
+    color: var(--text);
+  }
+  #stable.stable{
+    border-color: rgba(22,163,74,.25);
+    background: rgba(22,163,74,.08);
+  }
+  #stable.unstable{
+    border-color: rgba(245,158,11,.25);
+    background: rgba(245,158,11,.10);
+  }
+
+  #scaleStatus{
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  .conn{
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #f2f4f7;
+    border: 1px solid var(--border);
+  }
+  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .dot.ok{ background: var(--ok); }
+  .dot.bad{ background: var(--warn); }
+
+  @media(max-width: 760px){
+    .page-head{ align-items:flex-start; flex-direction:column; gap:8px; }
+    #liveWeight{ font-size: 54px; }
+    .photo-preview{ grid-template-columns:1fr; }
+    .mini-actions{ justify-content:stretch; }
+    .mini-actions .btn{ flex: 1; }
+  }
 </style>
 
 <div class="page-head">
@@ -26,6 +224,7 @@
 </div>
 
 <div class="grid-2">
+  <!-- فرم ثبت -->
   <section class="card">
     <form method="post" action="/weigh" enctype="multipart/form-data" id="weighForm">
       <label>{{ _('truck_plate') }}</label>
@@ -40,24 +239,31 @@
       </div>
 
       <label>{{ _('truck_photo') }}</label>
+
       <div id="photosWrap">
         <input class="camera photo-input" type="file" name="photo" accept="image/*" capture="environment">
       </div>
+
       <div id="photoPreview" class="photo-preview"></div>
+
       <p class="hint">{{ _('hint_camera') }}</p>
+
       <button class="btn primary full" type="submit">{{ _('submit_weigh') }}</button>
     </form>
   </section>
 
+  <!-- نمایش وزن باسکول -->
   <section class="card">
     <div class="scale-box">
       <span>{{ _('current_scale_weight') }}</span>
       <strong id="liveWeight">{{ state.weight }}</strong>
       <b>kg</b>
+
       <div id="stable" class="{{ 'stable' if state.stable else 'unstable' }}">
         {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
       </div>
-      <small id="scaleStatus">{{ _('scale') }}: {{ state.scale_id }}</small>
+
+      <small id="scaleStatus">{{ _('scale') }}: {{ state.scale_id or '' }}</small>
       <div class="conn" id="connStatus"><span class="dot bad"></span>LIVE: OFF</div>
     </div>
   </section>
@@ -65,6 +271,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // ====== plate formatting ======
   const plateInput = document.getElementById('plateInput');
   if (plateInput) {
     plateInput.addEventListener('input', () => {
@@ -72,6 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ====== weight live ======
   const wi = document.getElementById('weightInput');
   const lw = document.getElementById('liveWeight');
   const s  = document.getElementById('stable');
@@ -93,9 +301,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const r = await fetch('/api/scale/weight', { cache: 'no-store' });
       const d = await r.json();
 
-      if (cs) { cs.innerHTML = `<span class="dot ok"></span>LIVE: ON`; }
-      if (document.activeElement !== wi) { lw.textContent = (d.weight ?? 0); }
-      if (ss) { ss.textContent = SCALE_LABEL + ': ' + (d.scale_id ?? ''); }
+      if (cs) cs.innerHTML = `<span class="dot ok"></span>LIVE: ON`;
+
+      if (document.activeElement !== wi) {
+        lw.textContent = (d.weight ?? 0);
+      }
+
+      if (ss) ss.textContent = SCALE_LABEL + ': ' + (d.scale_id ?? '');
+
       if (s) {
         if (d.stable) {
           s.className = 'stable';
@@ -106,52 +319,102 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     } catch (e) {
-      if (cs) { cs.innerHTML = `<span class="dot bad"></span>LIVE: OFF`; }
+      if (cs) cs.innerHTML = `<span class="dot bad"></span>LIVE: OFF`;
     }
   }
 
   refreshWeight();
   setInterval(refreshWeight, 1000);
 
+  // ====== copy scale button ======
   const copyBtn = document.getElementById('copyScaleBtn');
   if (copyBtn && wi && lw) {
-    copyBtn.addEventListener('click', () => { wi.value = lw.textContent; });
-  }
-
-  const clearBtn = document.getElementById('clearFormBtn');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      document.getElementById('weighForm').reset();
-      document.getElementById('photoPreview').innerHTML = '';
-      lw.textContent = '0';
+    copyBtn.addEventListener('click', () => {
+      wi.value = lw.textContent;
+      wi.dispatchEvent(new Event('input')); // برای آپدیت نمایش
     });
   }
 
+  // ====== clear form ======
+  const clearBtn = document.getElementById('clearFormBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      const form = document.getElementById('weighForm');
+      const preview = document.getElementById('photoPreview');
+      const wrap = document.getElementById('photosWrap');
+
+      if (form) form.reset();
+      if (preview) preview.innerHTML = '';
+
+      // ریست ورودی‌های عکس به یک input
+      if (wrap) {
+        wrap.innerHTML = '';
+        const first = document.createElement('input');
+        first.className = 'camera photo-input';
+        first.type = 'file';
+        first.name = 'photo';
+        first.accept = 'image/*';
+        first.setAttribute('capture', 'environment');
+        wrap.appendChild(first);
+      }
+
+      if (lw) lw.textContent = '0';
+      if (wi) wi.value = '';
+    });
+  }
+
+  // ====== multi photo ======
   const photosWrap = document.getElementById('photosWrap');
   const photoPreview = document.getElementById('photoPreview');
-  photosWrap.addEventListener('change', (e) => {
-    if (!e.target.classList.contains('photo-input')) return;
-    const file = e.target.files[0];
-    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const item = document.createElement('div');
-      item.className = 'photo-item';
-      item.innerHTML = `<img src="${ev.target.result}"><button type="button">✕</button>`;
-      item.querySelector('button').onclick = () => { item.remove(); e.target.remove(); };
-      photoPreview.appendChild(item);
-    };
-    reader.readAsDataURL(file);
+  if (photosWrap && photoPreview) {
+    photosWrap.addEventListener('change', (e) => {
+      if (!e.target.classList.contains('photo-input')) return;
 
-    const newInput = document.createElement('input');
-    newInput.className = 'camera photo-input';
-    newInput.type = 'file';
-    newInput.name = 'photo';
-    newInput.accept = 'image/*';
-    newInput.setAttribute('capture', 'environment');
-    photosWrap.appendChild(newInput);
-  });
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      // نمایش پیش‌نمایش
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const item = document.createElement('div');
+        item.className = 'photo-item';
+        item.innerHTML = `
+          <img src="${ev.target.result}">
+          <button type="button" aria-label="remove">×</button>
+        `;
+
+        item.querySelector('button').onclick = () => {
+          item.remove();
+          e.target.remove();
+
+          // اگر هیچ input باقی نماند، یکی بساز
+          const any = photosWrap.querySelector('input.photo-input');
+          if (!any) {
+            const first = document.createElement('input');
+            first.className = 'camera photo-input';
+            first.type = 'file';
+            first.name = 'photo';
+            first.accept = 'image/*';
+            first.setAttribute('capture', 'environment');
+            photosWrap.appendChild(first);
+          }
+        };
+
+        photoPreview.appendChild(item);
+      };
+      reader.readAsDataURL(file);
+
+      // اضافه کردن input جدید برای عکس بعدی
+      const newInput = document.createElement('input');
+      newInput.className = 'camera photo-input';
+      newInput.type = 'file';
+      newInput.name = 'photo';
+      newInput.accept = 'image/*';
+      newInput.setAttribute('capture', 'environment');
+      photosWrap.appendChild(newInput);
+    });
+  }
 });
 </script>
 {% endblock %}
