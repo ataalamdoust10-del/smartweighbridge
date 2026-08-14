@@ -53,11 +53,11 @@ TRANSLATIONS = {
         "current_scale_weight": "وزن فعلی باسکول",
         "truck_plate": "پلاک کامیون",
         "weight_kg": "وزن (کیلوگرم)",
-        "truck_photo": "عکس کامیون",
+        "truck_photo": "عکس‌ها",
         "hint_camera": "در گوشی، با انتخاب این قسمت دوربین باز می‌شود.",
         "submit_weigh": "ثبت وزن و عکس",
 
-        # NEW (Weigh page - extra UI strings)
+        # Weigh page - UI strings
         "plate_placeholder": "مثلاً 12A345",
         "copy_scale_weight": "کپی وزن باسکول",
         "copy_scale_weight_title": "کپی وزن باسکول داخل فیلد وزن",
@@ -65,6 +65,36 @@ TRANSLATIONS = {
         "clear_form_title": "پاک کردن فرم",
         "live_on": "LIVE: ON",
         "live_off": "LIVE: OFF",
+
+        # Weigh page - extra fields
+        "vehicle_type": "نوع خودرو",
+        "vehicle_type_select": "انتخاب کنید...",
+        "vehicle_type_truck": "کامیون",
+        "vehicle_type_trailer": "تریلی",
+        "vehicle_type_flatbed": "کفی",
+        "vehicle_type_dump": "کمپرسی",
+        "vehicle_type_other": "سایر",
+
+        "driver_name": "نام راننده",
+        "driver_name_placeholder": "مثلاً علی احمدی",
+        "driver_phone": "شماره تماس راننده",
+        "driver_phone_placeholder": "مثلاً 0912xxxxxxx",
+
+        "cargo_type": "نوع بار / محصول",
+        "cargo_type_placeholder": "مثلاً سیمان / گندم / شن",
+        "cargo_owner": "صاحب بار (شرکت/شخص)",
+        "cargo_owner_placeholder": "نام شرکت یا شخص",
+
+        "origin": "مبدأ",
+        "origin_placeholder": "مثلاً تهران",
+        "destination": "مقصد",
+        "destination_placeholder": "مثلاً اصفهان",
+
+        "document_no": "شماره بارنامه / حواله / سفارش",
+        "document_no_placeholder": "مثلاً 12345",
+
+        "notes": "توضیحات",
+        "notes_placeholder": "توضیحات تکمیلی...",
 
         # Records page
         "records_title": "سوابق",
@@ -122,11 +152,10 @@ TRANSLATIONS = {
         "current_scale_weight": "Current scale weight",
         "truck_plate": "Truck plate",
         "weight_kg": "Weight (kg)",
-        "truck_photo": "Truck photo",
+        "truck_photo": "Photos",
         "hint_camera": "On mobile, selecting this will open the camera.",
         "submit_weigh": "Submit weight & photo",
 
-        # NEW (Weigh page - extra UI strings)
         "plate_placeholder": "e.g. 12A345",
         "copy_scale_weight": "Copy scale weight",
         "copy_scale_weight_title": "Copy live scale weight into the weight field",
@@ -134,6 +163,31 @@ TRANSLATIONS = {
         "clear_form_title": "Clear the form",
         "live_on": "LIVE: ON",
         "live_off": "LIVE: OFF",
+
+        "vehicle_type": "Vehicle type",
+        "vehicle_type_select": "Select...",
+        "vehicle_type_truck": "Truck",
+        "vehicle_type_trailer": "Trailer",
+        "vehicle_type_flatbed": "Flatbed",
+        "vehicle_type_dump": "Dump",
+        "vehicle_type_other": "Other",
+
+        "driver_name": "Driver name",
+        "driver_name_placeholder": "e.g. Ali Ahmadi",
+        "driver_phone": "Driver phone",
+        "driver_phone_placeholder": "e.g. +98...",
+        "cargo_type": "Cargo / product",
+        "cargo_type_placeholder": "e.g. Cement / Wheat",
+        "cargo_owner": "Cargo owner (Company/Person)",
+        "cargo_owner_placeholder": "Company or person name",
+        "origin": "Origin",
+        "origin_placeholder": "e.g. Tehran",
+        "destination": "Destination",
+        "destination_placeholder": "e.g. Isfahan",
+        "document_no": "Waybill / Order No.",
+        "document_no_placeholder": "e.g. 12345",
+        "notes": "Notes",
+        "notes_placeholder": "Additional notes...",
 
         "records_title": "Records",
         "records_subtitle": "Search and view all weighments",
@@ -189,11 +243,10 @@ TRANSLATIONS = {
         "current_scale_weight": "Ընթացիկ կշիռը",
         "truck_plate": "Մեքենայի համար",
         "weight_kg": "Քաշ (կգ)",
-        "truck_photo": "Մեքենայի լուսանկար",
+        "truck_photo": "Լուսանկարներ",
         "hint_camera": "Հեռախոսով ընտրելիս տեսախցիկը կբացվի։",
         "submit_weigh": "Ուղարկել",
 
-        # NEW (Weigh page - extra UI strings)
         "plate_placeholder": "օր. 12A345",
         "copy_scale_weight": "Պատճենել կշեռքի քաշը",
         "copy_scale_weight_title": "Պատճենել ընթացիկ քաշը քաշի դաշտում",
@@ -201,6 +254,31 @@ TRANSLATIONS = {
         "clear_form_title": "Մաքրել ձևը",
         "live_on": "LIVE: ON",
         "live_off": "LIVE: OFF",
+
+        "vehicle_type": "Տրանսպորտի տեսակ",
+        "vehicle_type_select": "Ընտրել...",
+        "vehicle_type_truck": "Բեռնատար",
+        "vehicle_type_trailer": "Տրեյլեր",
+        "vehicle_type_flatbed": "Հարթակ",
+        "vehicle_type_dump": "Թափք",
+        "vehicle_type_other": "Այլ",
+
+        "driver_name": "Վարորդի անունը",
+        "driver_name_placeholder": "օր. ...",
+        "driver_phone": "Վարորդի հեռախոս",
+        "driver_phone_placeholder": "օր. +374...",
+        "cargo_type": "Բեռ / Ապրանք",
+        "cargo_type_placeholder": "օր. ...",
+        "cargo_owner": "Բեռի սեփականատեր (Ընկերություն/Անձ)",
+        "cargo_owner_placeholder": "Անուն",
+        "origin": "Մեկնարկ",
+        "origin_placeholder": "օր. ...",
+        "destination": "Նպատակակետ",
+        "destination_placeholder": "օր. ...",
+        "document_no": "Փաստաթուղթ №",
+        "document_no_placeholder": "օր. 12345",
+        "notes": "Նշումներ",
+        "notes_placeholder": "Լրացուցիչ նշումներ...",
 
         "records_title": "Գրառումներ",
         "records_subtitle": "Որոնել և դիտել բոլոր կշռումները",

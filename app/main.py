@@ -72,7 +72,30 @@ templates.env.globals["_"] = _
 def db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    # enable foreign keys for this connection
+    conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
+
+def _ensure_weighments_columns(conn: sqlite3.Connection):
+    # Add missing columns safely (idempotent)
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(weighments)").fetchall()}
+
+    additions = {
+        "vehicle_type": "vehicle_type TEXT",
+        "driver_name": "driver_name TEXT",
+        "driver_phone": "driver_phone TEXT",
+        "cargo_type": "cargo_type TEXT",
+        "cargo_owner": "cargo_owner TEXT",
+        "origin": "origin TEXT",
+        "destination": "destination TEXT",
+        "document_no": "document_no TEXT",
+        "notes": "notes TEXT",
+    }
+
+    for col, ddl in additions.items():
+        if col not in cols:
+            conn.execute(f"ALTER TABLE weighments ADD COLUMN {ddl}")
 
 
 def init_db():
@@ -91,6 +114,14 @@ def init_db():
         status TEXT NOT NULL DEFAULT 'SAVED'
     );
 
+    CREATE TABLE IF NOT EXISTS weighment_photos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        weighment_id INTEGER NOT NULL,
+        filename TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (weighment_id) REFERENCES weighments(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS scale_state (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         scale_id TEXT NOT NULL,
@@ -102,6 +133,10 @@ def init_db():
     INSERT OR IGNORE INTO scale_state(id, scale_id, weight, stable, updated_at)
     VALUES(1, 'SCALE-01', 0, 0, datetime('now'));
     """)
+
+    # ensure new columns exist
+    _ensure_weighments_columns(conn)
+
     conn.commit()
     conn.close()
 
@@ -121,6 +156,13 @@ def require_login(request: Request):
 def next_ticket(conn):
     row = conn.execute("SELECT COALESCE(MAX(ticket_number), 0) + 1 AS n FROM weighments").fetchone()
     return int(row["n"])
+
+
+def _clean_text(v: str | None) -> str | None:
+    if v is None:
+        return None
+    v = v.strip()
+    return v if v else None
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -195,7 +237,18 @@ async def create_weighment(
     request: Request,
     plate: str = Form(...),
     weight: float = Form(...),
-    photo: UploadFile | None = File(None),
+
+    vehicle_type: str | None = Form(None),
+    driver_name: str | None = Form(None),
+    driver_phone: str | None = Form(None),
+    cargo_type: str | None = Form(None),
+    cargo_owner: str | None = Form(None),
+    origin: str | None = Form(None),
+    destination: str | None = Form(None),
+    document_no: str | None = Form(None),
+    notes: str | None = Form(None),
+
+    photo: list[UploadFile] | None = File(None),
 ):
     require_login(request)
 
@@ -205,28 +258,74 @@ async def create_weighment(
     if weight < 0 or weight > 1000000:
         return RedirectResponse("/weigh?error=weight", status_code=303)
 
-    filename = None
-    if photo and photo.filename:
+    # clean optional fields
+    vehicle_type = _clean_text(vehicle_type)
+    driver_name = _clean_text(driver_name)
+    driver_phone = _clean_text(driver_phone)
+    cargo_type = _clean_text(cargo_type)
+    cargo_owner = _clean_text(cargo_owner)
+    origin = _clean_text(origin)
+    destination = _clean_text(destination)
+    document_no = _clean_text(document_no)
+    notes = _clean_text(notes)
+
+    # handle photos (multi)
+    filenames: list[str] = []
+    if photo:
         allowed = {".jpg", ".jpeg", ".png", ".webp"}
-        ext = Path(photo.filename).suffix.lower()
-        if ext not in allowed:
-            return RedirectResponse("/weigh?error=photo", status_code=303)
-        filename = f"{uuid.uuid4().hex}{ext}"
-        target = UPLOAD_DIR / filename
-        content = await photo.read()
-        if len(content) > 10 * 1024 * 1024:
-            return RedirectResponse("/weigh?error=photo_size", status_code=303)
-        target.write_bytes(content)
+        max_each = 10 * 1024 * 1024  # 10MB each
+        max_count = 10
+
+        for up in photo[:max_count]:
+            if not up or not up.filename:
+                continue
+
+            ext = Path(up.filename).suffix.lower()
+            if ext not in allowed:
+                return RedirectResponse("/weigh?error=photo", status_code=303)
+
+            content = await up.read()
+            if len(content) > max_each:
+                return RedirectResponse("/weigh?error=photo_size", status_code=303)
+
+            fn = f"{uuid.uuid4().hex}{ext}"
+            (UPLOAD_DIR / fn).write_bytes(content)
+            filenames.append(fn)
+
+    # backward compatible: keep first photo in photo_filename
+    first_photo = filenames[0] if filenames else None
 
     conn = db()
+
+    # ensure schema (in case app started before init_db ran)
+    _ensure_weighments_columns(conn)
+
     ticket = next_ticket(conn)
     now = datetime.now(timezone.utc).isoformat()
-    conn.execute(
+
+    cur = conn.execute(
         """INSERT INTO weighments
-           (ticket_number, plate, weight, unit, photo_filename, scale_id, operator, created_at, status)
-           VALUES (?, ?, ?, 'kg', ?, 'SCALE-01', ?, ?, 'SAVED')""",
-        (ticket, plate, weight, filename, request.session["user"], now),
+           (ticket_number, plate, weight, unit, photo_filename, scale_id, operator, created_at, status,
+            vehicle_type, driver_name, driver_phone, cargo_type, cargo_owner, origin, destination, document_no, notes)
+           VALUES (?, ?, ?, 'kg', ?, 'SCALE-01', ?, ?, 'SAVED',
+                   ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            ticket, plate, weight, first_photo, request.session["user"], now,
+            vehicle_type, driver_name, driver_phone, cargo_type, cargo_owner,
+            origin, destination, document_no, notes
+        ),
     )
+
+    weighment_id = cur.lastrowid
+
+    # store all photos in weighment_photos (if any)
+    if filenames:
+        for fn in filenames:
+            conn.execute(
+                "INSERT INTO weighment_photos (weighment_id, filename, created_at) VALUES (?, ?, ?)",
+                (weighment_id, fn, now),
+            )
+
     conn.commit()
     conn.close()
 
@@ -240,14 +339,35 @@ async def detail(request: Request, ticket: int):
     row = conn.execute(
         "SELECT * FROM weighments WHERE ticket_number=?", (ticket,)
     ).fetchone()
-    conn.close()
+
     if not row:
+        conn.close()
         raise HTTPException(404, "Ticket not found")
 
-    # اگر پروژه‌ات چندعکسی شد، اینجا باید photos هم پاس بدی (الان تک‌عکس است)
+    weighment_id = row["id"]
+
+    # get photos list
+    has_photos_table = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='weighment_photos'"
+    ).fetchone()
+
+    photos: list[str] = []
+    if has_photos_table:
+        photos_rows = conn.execute(
+            "SELECT filename FROM weighment_photos WHERE weighment_id=? ORDER BY id ASC",
+            (weighment_id,),
+        ).fetchall()
+        photos = [r["filename"] for r in photos_rows]
+
+    # fallback
+    if not photos and row["photo_filename"]:
+        photos = [row["photo_filename"]]
+
+    conn.close()
+
     return templates.TemplateResponse(
         "detail.html",
-        {"request": request, "row": row, "photos": ([row["photo_filename"]] if row["photo_filename"] else []), "user": request.session["user"]},
+        {"request": request, "row": row, "photos": photos, "user": request.session["user"]},
     )
 
 
@@ -295,7 +415,6 @@ async def delete_weighment(request: Request, ticket: int, next: str = Form("/rec
 
     filenames = []
 
-    # اگر جدول چندعکس وجود داشت، همه عکس‌های مربوط به این قبض را هم حذف می‌کنیم
     has_photos_table = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='weighment_photos'"
     ).fetchone()
@@ -308,7 +427,6 @@ async def delete_weighment(request: Request, ticket: int, next: str = Form("/rec
         filenames = [r["filename"] for r in photos_rows]
         conn.execute("DELETE FROM weighment_photos WHERE weighment_id=?", (weighment_id,))
 
-    # تک‌عکس قدیمی
     if not filenames and row["photo_filename"]:
         filenames = [row["photo_filename"]]
 
@@ -316,7 +434,6 @@ async def delete_weighment(request: Request, ticket: int, next: str = Form("/rec
     conn.commit()
     conn.close()
 
-    # حذف فایل‌ها از uploads
     for fn in filenames:
         try:
             p = UPLOAD_DIR / fn

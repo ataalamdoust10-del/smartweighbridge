@@ -56,6 +56,7 @@
   form input[type="text"],
   form input[type="number"],
   form input[type="file"],
+  form input[type="tel"],
   form select,
   form textarea{
     width: 100%;
@@ -65,7 +66,7 @@
     padding: 12px 14px;
     outline: none;
     font-size: 15px;
-    transition: box-shadow .15s ease, border-color .15s ease, transform .05s ease;
+    transition: box-shadow .15s ease, border-color .15s ease;
   }
   form input:focus,
   form select:focus,
@@ -89,11 +90,8 @@
     border-radius: 14px;
     padding: 10px 14px;
     font-weight: 900;
-    transition: transform .05s ease, background .15s ease, border-color .15s ease;
-    user-select: none;
   }
   .btn:hover{ background: #eef2ff; border-color: #d7dcff; }
-  .btn:active{ transform: translateY(1px); }
 
   .btn.primary{
     background: var(--primary);
@@ -111,6 +109,14 @@
     margin-top: 12px;
     flex-wrap:wrap;
   }
+
+  .form-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 6px;
+  }
+  .form-grid > div{ min-width:0; }
 
   #photosWrap .photo-input{ display:block; margin-top:10px; }
 
@@ -177,19 +183,10 @@
     background: #f9fafb;
     color: var(--text);
   }
-  #stable.stable{
-    border-color: rgba(22,163,74,.25);
-    background: rgba(22,163,74,.08);
-  }
-  #stable.unstable{
-    border-color: rgba(245,158,11,.25);
-    background: rgba(245,158,11,.10);
-  }
+  #stable.stable{ border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.08); }
+  #stable.unstable{ border-color: rgba(245,158,11,.25); background: rgba(245,158,11,.10); }
 
-  #scaleStatus{
-    color: var(--muted);
-    font-weight: 800;
-  }
+  #scaleStatus{ color: var(--muted); font-weight: 800; }
 
   .conn{
     margin-top: 6px;
@@ -213,6 +210,7 @@
     .photo-preview{ grid-template-columns:1fr; }
     .mini-actions{ justify-content:stretch; }
     .mini-actions .btn{ flex: 1; }
+    .form-grid{ grid-template-columns: 1fr; }
   }
 </style>
 
@@ -237,14 +235,64 @@
         <button class="btn" type="button" id="clearFormBtn" title="{{ _('clear_form_title') }}">{{ _('clear_form') }}</button>
       </div>
 
-      <label>{{ _('truck_photo') }}</label>
+      <div class="form-grid">
+        <div>
+          <label>{{ _('vehicle_type') }}</label>
+          <select name="vehicle_type" id="vehicleType">
+            <option value="">{{ _('vehicle_type_select') }}</option>
+            <option value="truck">{{ _('vehicle_type_truck') }}</option>
+            <option value="trailer">{{ _('vehicle_type_trailer') }}</option>
+            <option value="flatbed">{{ _('vehicle_type_flatbed') }}</option>
+            <option value="dump">{{ _('vehicle_type_dump') }}</option>
+            <option value="other">{{ _('vehicle_type_other') }}</option>
+          </select>
+        </div>
 
+        <div>
+          <label>{{ _('driver_name') }}</label>
+          <input type="text" name="driver_name" placeholder="{{ _('driver_name_placeholder') }}">
+        </div>
+
+        <div>
+          <label>{{ _('driver_phone') }}</label>
+          <input type="tel" name="driver_phone" placeholder="{{ _('driver_phone_placeholder') }}" dir="ltr" style="text-align:left" inputmode="tel">
+        </div>
+
+        <div>
+          <label>{{ _('cargo_type') }}</label>
+          <input type="text" name="cargo_type" placeholder="{{ _('cargo_type_placeholder') }}">
+        </div>
+
+        <div>
+          <label>{{ _('cargo_owner') }}</label>
+          <input type="text" name="cargo_owner" placeholder="{{ _('cargo_owner_placeholder') }}">
+        </div>
+
+        <div>
+          <label>{{ _('origin') }}</label>
+          <input type="text" name="origin" placeholder="{{ _('origin_placeholder') }}">
+        </div>
+
+        <div>
+          <label>{{ _('destination') }}</label>
+          <input type="text" name="destination" placeholder="{{ _('destination_placeholder') }}">
+        </div>
+
+        <div>
+          <label>{{ _('document_no') }}</label>
+          <input type="text" name="document_no" placeholder="{{ _('document_no_placeholder') }}" dir="ltr" style="text-align:left">
+        </div>
+      </div>
+
+      <label>{{ _('notes') }}</label>
+      <textarea name="notes" rows="3" placeholder="{{ _('notes_placeholder') }}"></textarea>
+
+      <label>{{ _('truck_photo') }}</label>
       <div id="photosWrap">
         <input class="camera photo-input" type="file" name="photo" accept="image/*" capture="environment">
       </div>
 
       <div id="photoPreview" class="photo-preview"></div>
-
       <p class="hint">{{ _('hint_camera') }}</p>
 
       <button class="btn primary full" type="submit">{{ _('submit_weigh') }}</button>
