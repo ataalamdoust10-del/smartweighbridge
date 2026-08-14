@@ -18,6 +18,44 @@
   @media(max-width:760px){
     .photo-grid{ grid-template-columns:1fr; }
   }
+
+  /* اگر در style.css تعریف نشده باشد، این‌ها کمک می‌کند منظم‌تر شود */
+  .ticket-info{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 18px;
+    margin-top: 18px;
+  }
+  .ticket-info > div{
+    background: #fff;
+    border: 1px solid #eaecf0;
+    border-radius: 12px;
+    padding: 12px 12px;
+  }
+  .ticket-info span{
+    display:block;
+    color:#667085;
+    font-weight:800;
+    font-size:13px;
+    margin-bottom:6px;
+  }
+  .ticket-info strong{
+    display:block;
+    color:#101828;
+    font-weight:900;
+    font-size:15px;
+    line-height:1.7;
+    word-break: break-word;
+  }
+  .ticket-info .full{
+    grid-column: 1 / -1;
+  }
+  .notes{
+    white-space: pre-wrap;
+  }
+  @media(max-width:760px){
+    .ticket-info{ grid-template-columns: 1fr; }
+  }
 </style>
 
 <div class="page-head">
@@ -80,6 +118,85 @@
         {% endif %}
       </strong>
     </div>
+
+    {# ====== New fields (only show if exists) ====== #}
+
+    {% if row.vehicle_type %}
+    <div>
+      <span>{{ _('vehicle_type') }}</span>
+      <strong>
+        {% if row.vehicle_type == 'truck' %}
+          {{ _('vehicle_type_truck') }}
+        {% elif row.vehicle_type == 'trailer' %}
+          {{ _('vehicle_type_trailer') }}
+        {% elif row.vehicle_type == 'flatbed' %}
+          {{ _('vehicle_type_flatbed') }}
+        {% elif row.vehicle_type == 'dump' %}
+          {{ _('vehicle_type_dump') }}
+        {% elif row.vehicle_type == 'other' %}
+          {{ _('vehicle_type_other') }}
+        {% else %}
+          {{ row.vehicle_type }}
+        {% endif %}
+      </strong>
+    </div>
+    {% endif %}
+
+    {% if row.driver_name %}
+    <div>
+      <span>{{ _('driver_name') }}</span>
+      <strong>{{ row.driver_name }}</strong>
+    </div>
+    {% endif %}
+
+    {% if row.driver_phone %}
+    <div>
+      <span>{{ _('driver_phone') }}</span>
+      <strong dir="ltr" style="text-align:left">{{ row.driver_phone }}</strong>
+    </div>
+    {% endif %}
+
+    {% if row.cargo_type %}
+    <div>
+      <span>{{ _('cargo_type') }}</span>
+      <strong>{{ row.cargo_type }}</strong>
+    </div>
+    {% endif %}
+
+    {% if row.cargo_owner %}
+    <div>
+      <span>{{ _('cargo_owner') }}</span>
+      <strong>{{ row.cargo_owner }}</strong>
+    </div>
+    {% endif %}
+
+    {% if row.origin %}
+    <div>
+      <span>{{ _('origin') }}</span>
+      <strong>{{ row.origin }}</strong>
+    </div>
+    {% endif %}
+
+    {% if row.destination %}
+    <div>
+      <span>{{ _('destination') }}</span>
+      <strong>{{ row.destination }}</strong>
+    </div>
+    {% endif %}
+
+    {% if row.document_no %}
+    <div>
+      <span>{{ _('document_no') }}</span>
+      <strong dir="ltr" style="text-align:left">{{ row.document_no }}</strong>
+    </div>
+    {% endif %}
+
+    {% if row.notes %}
+    <div class="full">
+      <span>{{ _('notes') }}</span>
+      <strong class="notes">{{ row.notes }}</strong>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

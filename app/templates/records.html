@@ -2,6 +2,21 @@
 {% block title %}{{ _('records') }}{% endblock %}
 
 {% block content %}
+<style>
+  .rec-meta{
+    margin-top:6px;
+    color:#667085;
+    font-size:12.5px;
+    line-height:1.7;
+  }
+  .rec-meta .line{ display:block; }
+  .rec-meta b{ color:#344054; font-weight:900; }
+  .rec-meta .sep{ margin: 0 6px; color:#98a2b3; }
+  @media(max-width:760px){
+    .rec-meta{ font-size:12px; }
+  }
+</style>
+
 <div class="page-head">
   <div>
     <h1>{{ _('records_title') }}</h1>
@@ -30,15 +45,81 @@
           <th>{{ _('actions') }}</th>
         </tr>
       </thead>
+
       <tbody>
         {% for r in rows %}
         <tr>
           <td>
             <a href="/weighments/{{ r.ticket_number }}">#{{ "%06d"|format(r.ticket_number) }}</a>
           </td>
-          <td>{{ r.plate }}</td>
+
+          <td>
+            <div style="font-weight:900;">{{ r.plate }}</div>
+
+            {# اطلاعات تکمیلی (اگر موجود باشد) #}
+            {% set has_extra = (r.vehicle_type or r.driver_name or r.driver_phone or r.cargo_type or r.cargo_owner or r.origin or r.destination or r.document_no) %}
+            {% if has_extra %}
+              <div class="rec-meta">
+                {% if r.vehicle_type or r.driver_name or r.driver_phone %}
+                  <span class="line">
+                    {% if r.vehicle_type %}
+                      <b>{{ _('vehicle_type') }}:</b>
+                      {% if r.vehicle_type == 'truck' %}{{ _('vehicle_type_truck') }}
+                      {% elif r.vehicle_type == 'trailer' %}{{ _('vehicle_type_trailer') }}
+                      {% elif r.vehicle_type == 'flatbed' %}{{ _('vehicle_type_flatbed') }}
+                      {% elif r.vehicle_type == 'dump' %}{{ _('vehicle_type_dump') }}
+                      {% elif r.vehicle_type == 'other' %}{{ _('vehicle_type_other') }}
+                      {% else %}{{ r.vehicle_type }}
+                      {% endif %}
+                    {% endif %}
+
+                    {% if r.vehicle_type and (r.driver_name or r.driver_phone) %}<span class="sep">|</span>{% endif %}
+
+                    {% if r.driver_name %}
+                      <b>{{ _('driver_name') }}:</b> {{ r.driver_name }}
+                    {% endif %}
+
+                    {% if r.driver_phone %}
+                      {% if r.driver_name %}<span class="sep">|</span>{% endif %}
+                      <b>{{ _('driver_phone') }}:</b> <span dir="ltr" style="text-align:left; display:inline-block;">{{ r.driver_phone }}</span>
+                    {% endif %}
+                  </span>
+                {% endif %}
+
+                {% if r.cargo_type or r.cargo_owner %}
+                  <span class="line">
+                    {% if r.cargo_type %}
+                      <b>{{ _('cargo_type') }}:</b> {{ r.cargo_type }}
+                    {% endif %}
+                    {% if r.cargo_type and r.cargo_owner %}<span class="sep">|</span>{% endif %}
+                    {% if r.cargo_owner %}
+                      <b>{{ _('cargo_owner') }}:</b> {{ r.cargo_owner }}
+                    {% endif %}
+                  </span>
+                {% endif %}
+
+                {% if r.origin or r.destination %}
+                  <span class="line">
+                    {% if r.origin %}<b>{{ _('origin') }}:</b> {{ r.origin }}{% endif %}
+                    {% if r.origin and r.destination %}<span class="sep">→</span>{% endif %}
+                    {% if r.destination %}<b>{{ _('destination') }}:</b> {{ r.destination }}{% endif %}
+                  </span>
+                {% endif %}
+
+                {% if r.document_no %}
+                  <span class="line">
+                    <b>{{ _('document_no') }}:</b>
+                    <span dir="ltr" style="text-align:left; display:inline-block;">{{ r.document_no }}</span>
+                  </span>
+                {% endif %}
+              </div>
+            {% endif %}
+          </td>
+
           <td>{{ r.weight }} {{ r.unit }}</td>
+
           <td>{{ (r.created_at|string)[:19].replace('T',' ') }}</td>
+
           <td>
             <span class="badge">
               {% if r.status == 'SAVED' %}
@@ -48,6 +129,7 @@
               {% endif %}
             </span>
           </td>
+
           <td>
             <form method="post"
                   action="/weighments/{{ r.ticket_number }}/delete"
