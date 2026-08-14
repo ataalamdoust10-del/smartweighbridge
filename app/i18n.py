@@ -48,7 +48,7 @@ TRANSLATIONS = {
         "no_photo": "بدون عکس",
 
         # Weigh page
-        "weigh_truck_title": "ثبت وزن کامیون",
+        "weigh_truck_title": "ثبت وزن",  # changed
         "weigh_subtitle": "اطلاعات را بررسی و ثبت کنید.",
         "current_scale_weight": "وزن فعلی باسکول",
         "truck_plate": "پلاک کامیون",
@@ -147,7 +147,7 @@ TRANSLATIONS = {
         "datetime": "Date & time",
         "no_photo": "No photo",
 
-        "weigh_truck_title": "Truck weigh-in",
+        "weigh_truck_title": "Weigh-in",  # changed
         "weigh_subtitle": "Review and submit the information.",
         "current_scale_weight": "Current scale weight",
         "truck_plate": "Truck plate",
@@ -238,7 +238,7 @@ TRANSLATIONS = {
         "datetime": "Ամսաթիվ և ժամ",
         "no_photo": "Առանց լուսանկարի",
 
-        "weigh_truck_title": "Բեռնատարի կշռում",
+        "weigh_truck_title": "Կշռում",  # changed
         "weigh_subtitle": "Ստուգեք տվյալները և ուղարկեք։",
         "current_scale_weight": "Ընթացիկ կշիռը",
         "truck_plate": "Մեքենայի համար",
