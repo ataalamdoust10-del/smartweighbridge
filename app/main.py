@@ -31,6 +31,9 @@ DEVICE_TOKEN = os.getenv("SWB_DEVICE_TOKEN", "CHANGE-ME-DEVICE")
 SUPPORTED_LANGS = {"fa", "en", "hy"}
 DEFAULT_LANG = "fa"
 
+# ثبت فقط با وزن باسکول:
+MAX_SCALE_AGE_SEC = float(os.getenv("SWB_MAX_SCALE_AGE_SEC", "5"))  # وزن باید حداکثر 5 ثانیه پیش آپدیت شده باشد
+
 app = FastAPI(title="Smart Weighbridge v1")
 app.add_middleware(SessionMiddleware, secret_key=SECRET, max_age=60 * 60 * 12)
 
@@ -72,13 +75,11 @@ templates.env.globals["_"] = _
 def db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    # enable foreign keys for this connection
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
 def _ensure_weighments_columns(conn: sqlite3.Connection):
-    # Add missing columns safely (idempotent)
     cols = {r["name"] for r in conn.execute("PRAGMA table_info(weighments)").fetchall()}
 
     additions = {
@@ -134,9 +135,7 @@ def init_db():
     VALUES(1, 'SCALE-01', 0, 0, datetime('now'));
     """)
 
-    # ensure new columns exist
     _ensure_weighments_columns(conn)
-
     conn.commit()
     conn.close()
 
@@ -163,6 +162,14 @@ def _clean_text(v: str | None) -> str | None:
         return None
     v = v.strip()
     return v if v else None
+
+
+def _parse_dt(s: str) -> datetime:
+    # updated_at ممکن است با timezone یا بدون timezone ذخیره شده باشد
+    dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -236,7 +243,9 @@ async def weigh_page(request: Request):
 async def create_weighment(
     request: Request,
     plate: str = Form(...),
-    weight: float = Form(...),
+
+    # وزن فرم را فقط برای سازگاری نگه می‌داریم (اما استفاده نمی‌کنیم)
+    weight: float | None = Form(None),
 
     vehicle_type: str | None = Form(None),
     driver_name: str | None = Form(None),
@@ -255,10 +264,41 @@ async def create_weighment(
     plate = plate.strip()
     if not plate:
         return RedirectResponse("/weigh?error=plate", status_code=303)
-    if weight < 0 or weight > 1000000:
+
+    # ====== وزن را فقط از باسکول بگیر ======
+    conn = db()
+    st = conn.execute("SELECT * FROM scale_state WHERE id=1").fetchone()
+    conn.close()
+
+    if not st:
+        return RedirectResponse("/weigh?error=scale", status_code=303)
+
+    scale_weight = float(st["weight"])
+    scale_stable = bool(st["stable"])
+    scale_id = str(st["scale_id"])
+    updated_at = str(st["updated_at"])
+
+    # شرط پایدار بودن
+    if not scale_stable:
+        return RedirectResponse("/weigh?error=unstable", status_code=303)
+
+    # شرط تازه بودن وزن
+    try:
+        age = (datetime.now(timezone.utc) - _parse_dt(updated_at)).total_seconds()
+        if age > MAX_SCALE_AGE_SEC:
+            return RedirectResponse("/weigh?error=stale", status_code=303)
+    except Exception:
+        # اگر نتونستیم زمان رو parse کنیم، سخت‌گیری نکنیم
+        pass
+
+    # اعتبار وزن برای ثبت قبض (منفی ثبت نکن)
+    if scale_weight < 0 or scale_weight > 1000000:
         return RedirectResponse("/weigh?error=weight", status_code=303)
 
-    # clean optional fields
+    # وزن نهایی قبض
+    weight_final = scale_weight
+
+    # ====== فیلدهای تکمیلی ======
     vehicle_type = _clean_text(vehicle_type)
     driver_name = _clean_text(driver_name)
     driver_phone = _clean_text(driver_phone)
@@ -269,11 +309,11 @@ async def create_weighment(
     document_no = _clean_text(document_no)
     notes = _clean_text(notes)
 
-    # handle photos (multi)
+    # ====== ذخیره عکس‌ها (چندتایی) ======
     filenames: list[str] = []
     if photo:
         allowed = {".jpg", ".jpeg", ".png", ".webp"}
-        max_each = 10 * 1024 * 1024  # 10MB each
+        max_each = 10 * 1024 * 1024
         max_count = 10
 
         for up in photo[:max_count]:
@@ -292,12 +332,9 @@ async def create_weighment(
             (UPLOAD_DIR / fn).write_bytes(content)
             filenames.append(fn)
 
-    # backward compatible: keep first photo in photo_filename
     first_photo = filenames[0] if filenames else None
 
     conn = db()
-
-    # ensure schema (in case app started before init_db ran)
     _ensure_weighments_columns(conn)
 
     ticket = next_ticket(conn)
@@ -307,10 +344,10 @@ async def create_weighment(
         """INSERT INTO weighments
            (ticket_number, plate, weight, unit, photo_filename, scale_id, operator, created_at, status,
             vehicle_type, driver_name, driver_phone, cargo_type, cargo_owner, origin, destination, document_no, notes)
-           VALUES (?, ?, ?, 'kg', ?, 'SCALE-01', ?, ?, 'SAVED',
+           VALUES (?, ?, ?, 'kg', ?, ?, ?, ?, 'SAVED',
                    ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
         (
-            ticket, plate, weight, first_photo, request.session["user"], now,
+            ticket, plate, weight_final, first_photo, scale_id, request.session["user"], now,
             vehicle_type, driver_name, driver_phone, cargo_type, cargo_owner,
             origin, destination, document_no, notes
         ),
@@ -318,7 +355,6 @@ async def create_weighment(
 
     weighment_id = cur.lastrowid
 
-    # store all photos in weighment_photos (if any)
     if filenames:
         for fn in filenames:
             conn.execute(
@@ -346,7 +382,6 @@ async def detail(request: Request, ticket: int):
 
     weighment_id = row["id"]
 
-    # get photos list
     has_photos_table = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='weighment_photos'"
     ).fetchone()
@@ -359,7 +394,6 @@ async def detail(request: Request, ticket: int):
         ).fetchall()
         photos = [r["filename"] for r in photos_rows]
 
-    # fallback
     if not photos and row["photo_filename"]:
         photos = [row["photo_filename"]]
 
@@ -393,7 +427,6 @@ async def records(request: Request, q: str = ""):
     )
 
 
-# ---------- DELETE ROUTE ----------
 @app.post("/weighments/{ticket}/delete")
 async def delete_weighment(request: Request, ticket: int, next: str = Form("/records")):
     require_login(request)
@@ -473,7 +506,8 @@ async def set_scale_weight(request: Request):
     except (KeyError, TypeError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    if weight < 0 or weight > 1000000:
+    # وزن منفی برای نمایش مجاز است (ولی در ثبت قبض، منفی را قبول نمی‌کنیم)
+    if weight < -1000000 or weight > 1000000:
         raise HTTPException(status_code=400, detail="Invalid weight")
 
     now = datetime.now(timezone.utc).isoformat()
