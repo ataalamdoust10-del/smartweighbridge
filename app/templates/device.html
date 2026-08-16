@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}{{ _('device_title') }}{% endblock %}
+
+{% block content %}
+<style>
+  .device-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;}
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .kv>div{border:1px solid #eaecf0;border-radius:12px;padding:12px;background:#fff;}
+  .kv span{display:block;color:#667085;font-weight:800;font-size:13px;margin-bottom:6px;}
+  .kv strong{display:block;color:#101828;font-weight:900;font-size:15px;line-height:1.6;word-break:break-word;}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+  .note{margin-top:10px;color:#667085;font-size:13px;line-height:1.9;}
+  .mono{direction:ltr;unicode-bidi:bidi-override;display:inline-block;text-align:left;}
+  .rawbox{max-height:340px;overflow:auto;background:#0b1220;color:#e5e7eb;padding:12px;border-radius:12px;font-size:12px;line-height:1.6;}
+  .badge-ok,.badge-warn{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;font-weight:900;}
+  .badge-ok{border:1px solid rgba(22,163,74,.25);background:rgba(22,163,74,.08);}
+  .badge-warn{border:1px solid rgba(245,158,11,.25);background:rgba(245,158,11,.10);}
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  .dot.ok{background:#16a34a;}
+  .dot.bad{background:#f59e0b;}
+  .full{grid-column:1/-1;}
+  @media(max-width:900px){.device-grid{grid-template-columns:1fr;}.kv{grid-template-columns:1fr;}}
+</style>
+
+<div class="page-head">
+  <div>
+    <h1>{{ _('device_title') }}</h1>
+    <p>{{ _('device_subtitle') }}</p>
+  </div>
+</div>
+
+<div class="device-grid">
+  <!-- Settings -->
+  <section class="card">
+    <form method="post" action="/device/save">
+      <label>{{ _('device_enabled') }}</label>
+      <select name="enabled">
+        <option value="0" {% if not cfg.enabled %}selected{% endif %}>{{ _('device_off') }}</option>
+        <option value="1" {% if cfg.enabled %}selected{% endif %}>{{ _('device_on') }}</option>
+      </select>
+
+      <label>Interface</label>
+      <input value="RS232" readonly>
+
+      <label>{{ _('device_port') }}</label>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <select name="port" style="flex:1; min-width:260px;">
+          <option value="">{{ _('device_autodetect') }}</option>
+          {% for p in ports %}
+            <option value="{{ p.device }}" {% if cfg.port==p.device %}selected{% endif %}>
+              {{ p.device }} — {{ p.description }}
+            </option>
+          {% endfor %}
+        </select>
+        <button class="btn" type="submit" name="action" value="autodetect">{{ _('device_autodetect') }}</button>
+      </div>
+
+      <label>{{ _('device_baud') }}</label>
+      <select name="baud">
+        {% for b in [110,300,600,1200,2400,4800,9600,14400,19200,38400,57600,115200] %}
+          <option value="{{ b }}" {% if cfg.baud==b %}selected{% endif %}>{{ b }}</option>
+        {% endfor %}
+      </select>
+
+      <label>{{ _('device_indicator') }}</label>
+      <select name="indicator">
+        <option value="GENERIC_SIGNED_5_6" {% if cfg.indicator=='GENERIC_SIGNED_5_6' %}selected{% endif %}>
+          Generic (Signed 5/6 digits)
+        </option>
+        <option value="DTC" {% if cfg.indicator=='DTC' %}selected{% endif %}>DTC</option>
+        <option value="KELI" {% if cfg.indicator=='KELI' %}selected{% endif %}>Keli</option>
+        <option value="MITC_STAR" {% if cfg.indicator=='MITC_STAR' %}selected{% endif %}>MITC Star</option>
+        <option value="GAMMA" {% if cfg.indicator=='GAMMA' %}selected{% endif %}>Gamma</option>
+      </select>
+
+      <div class="kv" style="margin-top:12px;">
+        <div>
+          <span>{{ _('device_stable_tol') }}</span>
+          <input name="stable_tol" type="number" step="0.1" value="{{ cfg.stable_tol }}">
+        </div>
+        <div>
+          <span>{{ _('device_stable_seconds') }}</span>
+          <input name="stable_seconds" type="number" step="0.1" value="{{ cfg.stable_seconds }}">
+        </div>
+        <div>
+          <span>{{ _('device_send_every') }}</span>
+          <input name="send_every_sec" type="number" step="0.1" value="{{ cfg.send_every_sec }}">
+        </div>
+        <div>
+          <span>{{ _('device_scale_id') }}</span>
+          <input name="scale_id" value="{{ cfg.scale_id }}">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" type="submit" name="action" value="save">{{ _('device_save') }}</button>
+        <button class="btn" type="submit" name="action" value="start">{{ _('device_start') }}</button>
+        <button class="btn" type="submit" name="action" value="stop">{{ _('device_stop') }}</button>
+      </div>
+
+      <div class="note">
+        - برای باز شدن COM، برنامه‌هایی مثل <b>TeraTerm</b> و هر Agent دیگر نباید پورت را اشغال کرده باشند.<br>
+        - اگر وزن ناپایدار است، مقدار <b>{{ _('device_stable_tol') }}</b> را کمی بیشتر کن (مثلاً 1 یا 2).
+      </div>
+    </form>
+  </section>
+
+  <!-- Live status -->
+  <section class="card">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <h3 style="margin:0;">{{ _('device_running') }}</h3>
+      <div id="runBadge" class="badge-warn"><span class="dot bad"></span>OFF</div>
+    </div>
+
+    <div class="kv" style="margin-top:12px;">
+      <div>
+        <span>{{ _('device_port') }}</span>
+        <strong id="st_port" class="mono">-</strong>
+      </div>
+      <div>
+        <span>{{ _('device_baud') }}</span>
+        <strong id="st_baud" class="mono">-</strong>
+      </div>
+
+      <div>
+        <span>{{ _('device_last_weight') }}</span>
+        <strong id="st_w" class="mono">-</strong>
+      </div>
+      <div>
+        <span>Stable</span>
+        <strong id="st_stable">-</strong>
+      </div>
+
+      <div class="full">
+        <span>{{ _('device_last_raw') }}</span>
+        <strong id="st_raw" class="mono">-</strong>
+      </div>
+
+      <div class="full">
+        <span>Last seen (sec)</span>
+        <strong id="st_age" class="mono">-</strong>
+      </div>
+
+      <div class="full">
+        <span>Error</span>
+        <strong id="st_err" class="mono">-</strong>
+      </div>
+    </div>
+
+    <h4 style="margin:14px 0 8px;">{{ _('device_raw_lines') }}</h4>
+    <pre id="rawLines" class="rawbox"></pre>
+  </section>
+</div>
+
+<script>
+async function refresh(){
+  const r = await fetch('/api/device/status', {cache:'no-store'});
+  const d = await r.json();
+
+  const run = !!d.running;
+  const badge = document.getElementById('runBadge');
+  badge.className = run ? 'badge-ok' : 'badge-warn';
+  badge.innerHTML = run ? '<span class="dot ok"></span>ON' : '<span class="dot bad"></span>OFF';
+
+  document.getElementById('st_port').textContent = d.cfg.port || '(auto)';
+  document.getElementById('st_baud').textContent = d.cfg.baud;
+  document.getElementById('st_w').textContent = (d.last_weight ?? '');
+  document.getElementById('st_stable').textContent = d.last_stable ? 'TRUE' : 'FALSE';
+  document.getElementById('st_raw').textContent = d.last_raw || '';
+  document.getElementById('rawLines').textContent = (d.raw_lines || []).join('\n');
+  document.getElementById('st_err').textContent = d.last_error || '';
+
+  const now = Date.now()/1000;
+  const age = d.last_seen_ts ? Math.max(0, now - d.last_seen_ts) : null;
+  document.getElementById('st_age').textContent = age === null ? '' : age.toFixed(1);
+}
+
+refresh();
+setInterval(refresh, 1000);
+</script>
+{% endblock %}

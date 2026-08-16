@@ -17,6 +17,9 @@ try:
 except ImportError:
     from i18n import translate, get_dir
 
+# Serial manager (داخل خود وب‌اپ)
+from .serial_manager import SerialManager, DeviceConfig
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "weighbridge.db"
@@ -32,7 +35,7 @@ SUPPORTED_LANGS = {"fa", "en", "hy"}
 DEFAULT_LANG = "fa"
 
 # ثبت فقط با وزن باسکول:
-MAX_SCALE_AGE_SEC = float(os.getenv("SWB_MAX_SCALE_AGE_SEC", "5"))  # وزن باید حداکثر 5 ثانیه پیش آپدیت شده باشد
+MAX_SCALE_AGE_SEC = float(os.getenv("SWB_MAX_SCALE_AGE_SEC", "5"))
 
 app = FastAPI(title="Smart Weighbridge v1")
 app.add_middleware(SessionMiddleware, secret_key=SECRET, max_age=60 * 60 * 12)
@@ -40,6 +43,8 @@ app.add_middleware(SessionMiddleware, secret_key=SECRET, max_age=60 * 60 * 12)
 app.mount("/static", StaticFiles(directory=BASE_DIR / "app" / "static"), name="static")
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 templates = Jinja2Templates(directory=BASE_DIR / "app" / "templates")
+
+serial_mgr = SerialManager()
 
 
 @app.middleware("http")
@@ -93,7 +98,6 @@ def _ensure_weighments_columns(conn: sqlite3.Connection):
         "document_no": "document_no TEXT",
         "notes": "notes TEXT",
     }
-
     for col, ddl in additions.items():
         if col not in cols:
             conn.execute(f"ALTER TABLE weighments ADD COLUMN {ddl}")
@@ -133,6 +137,21 @@ def init_db():
 
     INSERT OR IGNORE INTO scale_state(id, scale_id, weight, stable, updated_at)
     VALUES(1, 'SCALE-01', 0, 0, datetime('now'));
+
+    CREATE TABLE IF NOT EXISTS device_config (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        enabled INTEGER NOT NULL DEFAULT 0,
+        port TEXT NOT NULL DEFAULT '',
+        baud INTEGER NOT NULL DEFAULT 2400,
+        indicator TEXT NOT NULL DEFAULT 'GENERIC_SIGNED_5_6',
+        stable_tol REAL NOT NULL DEFAULT 1.0,
+        stable_seconds REAL NOT NULL DEFAULT 1.2,
+        send_every_sec REAL NOT NULL DEFAULT 0.3,
+        scale_id TEXT NOT NULL DEFAULT 'SCALE-01',
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    INSERT OR IGNORE INTO device_config(id) VALUES (1);
     """)
 
     _ensure_weighments_columns(conn)
@@ -165,11 +184,73 @@ def _clean_text(v: str | None) -> str | None:
 
 
 def _parse_dt(s: str) -> datetime:
-    # updated_at ممکن است با timezone یا بدون timezone ذخیره شده باشد
     dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt
+
+
+def load_device_config() -> DeviceConfig:
+    conn = db()
+    r = conn.execute("SELECT * FROM device_config WHERE id=1").fetchone()
+    conn.close()
+    return DeviceConfig(
+        enabled=bool(r["enabled"]),
+        port=str(r["port"] or ""),
+        baud=int(r["baud"]),
+        indicator=str(r["indicator"]),
+        stable_tol=float(r["stable_tol"]),
+        stable_seconds=float(r["stable_seconds"]),
+        send_every_sec=float(r["send_every_sec"]),
+        scale_id=str(r["scale_id"] or "SCALE-01"),
+    )
+
+
+def save_device_config(cfg: DeviceConfig):
+    conn = db()
+    conn.execute(
+        """UPDATE device_config
+           SET enabled=?, port=?, baud=?, indicator=?, stable_tol=?, stable_seconds=?, send_every_sec=?, scale_id=?, updated_at=?
+           WHERE id=1""",
+        (
+            1 if cfg.enabled else 0,
+            cfg.port,
+            cfg.baud,
+            cfg.indicator,
+            cfg.stable_tol,
+            cfg.stable_seconds,
+            cfg.send_every_sec,
+            cfg.scale_id,
+            datetime.now(timezone.utc).isoformat(),
+        ),
+    )
+    conn.commit()
+    conn.close()
+
+
+def update_scale_state(weight: float, stable: bool, scale_id: str):
+    conn = db()
+    conn.execute(
+        """UPDATE scale_state
+           SET scale_id=?, weight=?, stable=?, updated_at=?
+           WHERE id=1""",
+        (scale_id, float(weight), 1 if stable else 0, datetime.now(timezone.utc).isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
+@app.on_event("startup")
+def _startup():
+    cfg = load_device_config()
+    serial_mgr.set_config(cfg)
+    if cfg.enabled:
+        serial_mgr.start(update_scale_state)
+
+
+@app.on_event("shutdown")
+def _shutdown():
+    serial_mgr.stop()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -191,11 +272,7 @@ async def login(request: Request, username: str = Form(...), password: str = For
         return RedirectResponse("/dashboard", status_code=303)
 
     error_msg = translate(getattr(request.state, "lang", DEFAULT_LANG), "login_error")
-    return templates.TemplateResponse(
-        "login.html",
-        {"request": request, "error": error_msg},
-        status_code=401,
-    )
+    return templates.TemplateResponse("login.html", {"request": request, "error": error_msg}, status_code=401)
 
 
 @app.get("/logout")
@@ -233,19 +310,90 @@ async def weigh_page(request: Request):
     conn = db()
     state = conn.execute("SELECT * FROM scale_state WHERE id=1").fetchone()
     conn.close()
-    return templates.TemplateResponse(
-        "weigh.html",
-        {"request": request, "state": state, "user": request.session["user"]},
+    return templates.TemplateResponse("weigh.html", {"request": request, "state": state, "user": request.session["user"]})
+
+
+@app.get("/device", response_class=HTMLResponse)
+async def device_page(request: Request):
+    require_login(request)
+    cfg = serial_mgr.get_config()
+    ports = serial_mgr.list_ports()
+    return templates.TemplateResponse("device.html", {"request": request, "cfg": cfg, "ports": ports, "user": request.session["user"]})
+
+
+@app.post("/device/save")
+async def device_save(
+    request: Request,
+    enabled: str = Form("0"),
+    port: str = Form(""),
+    baud: int = Form(2400),
+    indicator: str = Form("GENERIC_SIGNED_5_6"),
+    stable_tol: float = Form(1.0),
+    stable_seconds: float = Form(1.2),
+    send_every_sec: float = Form(0.3),
+    scale_id: str = Form("SCALE-01"),
+    action: str = Form("save"),
+):
+    require_login(request)
+
+    cfg = DeviceConfig(
+        enabled=(enabled == "1"),
+        port=(port or "").strip(),
+        baud=int(baud),
+        indicator=str(indicator),
+        stable_tol=float(stable_tol),
+        stable_seconds=float(stable_seconds),
+        send_every_sec=float(send_every_sec),
+        scale_id=(scale_id or "SCALE-01").strip(),
     )
+
+    if action == "autodetect":
+        cfg.port = serial_mgr.auto_detect_port()
+
+    save_device_config(cfg)
+    serial_mgr.set_config(cfg)
+
+    # restart logic
+    if action == "stop":
+        serial_mgr.stop()
+    else:
+        serial_mgr.stop()
+        if cfg.enabled:
+            serial_mgr.start(update_scale_state)
+
+    return RedirectResponse("/device", status_code=303)
+
+
+@app.get("/api/device/status")
+async def device_status(request: Request):
+    require_login(request)
+    cfg = serial_mgr.get_config()
+    return JSONResponse({
+        "running": serial_mgr.is_running(),
+        "cfg": {
+            "enabled": cfg.enabled,
+            "port": cfg.port,
+            "baud": cfg.baud,
+            "indicator": cfg.indicator,
+            "stable_tol": cfg.stable_tol,
+            "stable_seconds": cfg.stable_seconds,
+            "send_every_sec": cfg.send_every_sec,
+            "scale_id": cfg.scale_id,
+        },
+        "last_error": serial_mgr.last_error,
+        "last_raw": serial_mgr.last_raw,
+        "last_weight": serial_mgr.last_weight,
+        "last_stable": serial_mgr.last_stable,
+        "last_seen_ts": serial_mgr.last_seen_ts,
+        "raw_lines": list(serial_mgr.raw_lines),
+    })
 
 
 @app.post("/weigh")
 async def create_weighment(
     request: Request,
     plate: str = Form(...),
-
-    # وزن فرم را فقط برای سازگاری نگه می‌داریم (اما استفاده نمی‌کنیم)
-    weight: float | None = Form(None),
+    weight: float | None = Form(None),  # ignored
 
     vehicle_type: str | None = Form(None),
     driver_name: str | None = Form(None),
@@ -265,7 +413,7 @@ async def create_weighment(
     if not plate:
         return RedirectResponse("/weigh?error=plate", status_code=303)
 
-    # ====== وزن را فقط از باسکول بگیر ======
+    # وزن فقط از scale_state
     conn = db()
     st = conn.execute("SELECT * FROM scale_state WHERE id=1").fetchone()
     conn.close()
@@ -278,27 +426,22 @@ async def create_weighment(
     scale_id = str(st["scale_id"])
     updated_at = str(st["updated_at"])
 
-    # شرط پایدار بودن
     if not scale_stable:
         return RedirectResponse("/weigh?error=unstable", status_code=303)
 
-    # شرط تازه بودن وزن
     try:
         age = (datetime.now(timezone.utc) - _parse_dt(updated_at)).total_seconds()
         if age > MAX_SCALE_AGE_SEC:
             return RedirectResponse("/weigh?error=stale", status_code=303)
     except Exception:
-        # اگر نتونستیم زمان رو parse کنیم، سخت‌گیری نکنیم
         pass
 
-    # اعتبار وزن برای ثبت قبض (منفی ثبت نکن)
+    # قبض وزن منفی ثبت نمی‌کند
     if scale_weight < 0 or scale_weight > 1000000:
         return RedirectResponse("/weigh?error=weight", status_code=303)
 
-    # وزن نهایی قبض
     weight_final = scale_weight
 
-    # ====== فیلدهای تکمیلی ======
     vehicle_type = _clean_text(vehicle_type)
     driver_name = _clean_text(driver_name)
     driver_phone = _clean_text(driver_phone)
@@ -309,7 +452,6 @@ async def create_weighment(
     document_no = _clean_text(document_no)
     notes = _clean_text(notes)
 
-    # ====== ذخیره عکس‌ها (چندتایی) ======
     filenames: list[str] = []
     if photo:
         allowed = {".jpg", ".jpeg", ".png", ".webp"}
@@ -372,9 +514,7 @@ async def create_weighment(
 async def detail(request: Request, ticket: int):
     require_login(request)
     conn = db()
-    row = conn.execute(
-        "SELECT * FROM weighments WHERE ticket_number=?", (ticket,)
-    ).fetchone()
+    row = conn.execute("SELECT * FROM weighments WHERE ticket_number=?", (ticket,)).fetchone()
 
     if not row:
         conn.close()
@@ -399,10 +539,7 @@ async def detail(request: Request, ticket: int):
 
     conn.close()
 
-    return templates.TemplateResponse(
-        "detail.html",
-        {"request": request, "row": row, "photos": photos, "user": request.session["user"]},
-    )
+    return templates.TemplateResponse("detail.html", {"request": request, "row": row, "photos": photos, "user": request.session["user"]})
 
 
 @app.get("/records", response_class=HTMLResponse)
@@ -421,10 +558,7 @@ async def records(request: Request, q: str = ""):
         rows = conn.execute("SELECT * FROM weighments ORDER BY id DESC").fetchall()
     conn.close()
 
-    return templates.TemplateResponse(
-        "records.html",
-        {"request": request, "rows": rows, "q": q, "user": request.session["user"]},
-    )
+    return templates.TemplateResponse("records.html", {"request": request, "rows": rows, "q": q, "user": request.session["user"]})
 
 
 @app.post("/weighments/{ticket}/delete")
@@ -435,17 +569,13 @@ async def delete_weighment(request: Request, ticket: int, next: str = Form("/rec
         next = "/records"
 
     conn = db()
-    row = conn.execute(
-        "SELECT * FROM weighments WHERE ticket_number=?",
-        (ticket,),
-    ).fetchone()
+    row = conn.execute("SELECT * FROM weighments WHERE ticket_number=?", (ticket,)).fetchone()
 
     if not row:
         conn.close()
         return RedirectResponse(next, status_code=303)
 
     weighment_id = row["id"]
-
     filenames = []
 
     has_photos_table = conn.execute(
@@ -494,6 +624,7 @@ async def get_scale_weight(request: Request):
 
 @app.post("/api/scale/weight")
 async def set_scale_weight(request: Request):
+    # برای حالت Agent خارجی
     token = request.headers.get("X-Device-Token")
     if token != DEVICE_TOKEN:
         raise HTTPException(status_code=401, detail="Invalid device token")
@@ -506,18 +637,8 @@ async def set_scale_weight(request: Request):
     except (KeyError, TypeError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # وزن منفی برای نمایش مجاز است (ولی در ثبت قبض، منفی را قبول نمی‌کنیم)
     if weight < -1000000 or weight > 1000000:
         raise HTTPException(status_code=400, detail="Invalid weight")
 
-    now = datetime.now(timezone.utc).isoformat()
-    conn = db()
-    conn.execute(
-        """UPDATE scale_state
-           SET scale_id=?, weight=?, stable=?, updated_at=?
-           WHERE id=1""",
-        (scale_id, weight, 1 if stable else 0, now),
-    )
-    conn.commit()
-    conn.close()
+    update_scale_state(weight, stable, scale_id)
     return {"ok": True, "weight": weight, "stable": stable, "scale_id": scale_id}

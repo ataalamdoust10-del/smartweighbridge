@@ -20,6 +20,7 @@ TRANSLATIONS = {
         "dashboard": "داشبورد",
         "weigh": "ثبت وزن",
         "records": "سوابق",
+        "device": "دستگاه",          # NEW
         "logout": "خروج",
 
         # Dashboard
@@ -48,7 +49,7 @@ TRANSLATIONS = {
         "no_photo": "بدون عکس",
 
         # Weigh page
-        "weigh_truck_title": "ثبت وزن",  # changed
+        "weigh_truck_title": "ثبت وزن",
         "weigh_subtitle": "اطلاعات را بررسی و ثبت کنید.",
         "current_scale_weight": "وزن فعلی باسکول",
         "truck_plate": "پلاک کامیون",
@@ -96,6 +97,28 @@ TRANSLATIONS = {
         "notes": "توضیحات",
         "notes_placeholder": "توضیحات تکمیلی...",
 
+        # Device/RS232 page (optional keys for future i18n)
+        "device_title": "دستگاه / RS232",
+        "device_subtitle": "تنظیمات اتصال اندیکاتور و خواندن وزن",
+        "device_enabled": "وضعیت",
+        "device_off": "خاموش",
+        "device_on": "روشن",
+        "device_port": "پورت سریال (COM)",
+        "device_autodetect": "تشخیص خودکار",
+        "device_baud": "نرخ Baud",
+        "device_indicator": "نوع اندیکاتور",
+        "device_stable_tol": "تلورانس پایداری",
+        "device_stable_seconds": "زمان پایداری (ثانیه)",
+        "device_send_every": "ارسال هر (ثانیه)",
+        "device_scale_id": "شناسه باسکول",
+        "device_save": "ذخیره",
+        "device_start": "شروع",
+        "device_stop": "توقف",
+        "device_running": "در حال اجرا",
+        "device_last_weight": "آخرین وزن",
+        "device_last_raw": "آخرین RAW",
+        "device_raw_lines": "خطوط RAW",
+
         # Records page
         "records_title": "سوابق",
         "records_subtitle": "جستجو و مشاهده همه ثبت‌ها",
@@ -123,6 +146,7 @@ TRANSLATIONS = {
         "dashboard": "Dashboard",
         "weigh": "Weigh",
         "records": "Records",
+        "device": "Device",          # NEW
         "logout": "Logout",
 
         "welcome": "Welcome",
@@ -147,7 +171,7 @@ TRANSLATIONS = {
         "datetime": "Date & time",
         "no_photo": "No photo",
 
-        "weigh_truck_title": "Weigh-in",  # changed
+        "weigh_truck_title": "Weigh-in",
         "weigh_subtitle": "Review and submit the information.",
         "current_scale_weight": "Current scale weight",
         "truck_plate": "Truck plate",
@@ -189,6 +213,28 @@ TRANSLATIONS = {
         "notes": "Notes",
         "notes_placeholder": "Additional notes...",
 
+        # Device/RS232 (optional keys)
+        "device_title": "Device / RS232",
+        "device_subtitle": "Indicator connection settings & live reading",
+        "device_enabled": "Status",
+        "device_off": "Off",
+        "device_on": "On",
+        "device_port": "Serial port (COM)",
+        "device_autodetect": "Auto Detect",
+        "device_baud": "Baud rate",
+        "device_indicator": "Indicator type",
+        "device_stable_tol": "Stable tolerance",
+        "device_stable_seconds": "Stable seconds",
+        "device_send_every": "Send every (sec)",
+        "device_scale_id": "Scale ID",
+        "device_save": "Save",
+        "device_start": "Start",
+        "device_stop": "Stop",
+        "device_running": "Running",
+        "device_last_weight": "Last weight",
+        "device_last_raw": "Last RAW",
+        "device_raw_lines": "RAW lines",
+
         "records_title": "Records",
         "records_subtitle": "Search and view all weighments",
         "search": "Search",
@@ -214,6 +260,7 @@ TRANSLATIONS = {
         "dashboard": "Վահանակ",
         "weigh": "Կշռում",
         "records": "Գրառումներ",
+        "device": "Սարք",           # NEW
         "logout": "Ելք",
 
         "welcome": "Բարի գալուստ",
@@ -238,7 +285,7 @@ TRANSLATIONS = {
         "datetime": "Ամսաթիվ և ժամ",
         "no_photo": "Առանց լուսանկարի",
 
-        "weigh_truck_title": "Կշռում",  # changed
+        "weigh_truck_title": "Կշռում",
         "weigh_subtitle": "Ստուգեք տվյալները և ուղարկեք։",
         "current_scale_weight": "Ընթացիկ կշիռը",
         "truck_plate": "Մեքենայի համար",
@@ -279,6 +326,28 @@ TRANSLATIONS = {
         "document_no_placeholder": "օր. 12345",
         "notes": "Նշումներ",
         "notes_placeholder": "Լրացուցիչ նշումներ...",
+
+        # Device/RS232 (optional keys)
+        "device_title": "Սարք / RS232",
+        "device_subtitle": "Միացման կարգավորումներ և կենդանի ընթերցում",
+        "device_enabled": "Կարգավիճակ",
+        "device_off": "Անջատված",
+        "device_on": "Միացված",
+        "device_port": "Սերիական պորտ (COM)",
+        "device_autodetect": "Ավտոմատ գտնել",
+        "device_baud": "Baud արագություն",
+        "device_indicator": "Ցուցիչի տեսակ",
+        "device_stable_tol": "Կայունության շեմ",
+        "device_stable_seconds": "Կայունության ժամանակ (վրկ)",
+        "device_send_every": "Ուղարկել ամեն (վրկ)",
+        "device_scale_id": "Կշեռքի ID",
+        "device_save": "Պահպանել",
+        "device_start": "Սկսել",
+        "device_stop": "Կանգնեցնել",
+        "device_running": "Աշխատում է",
+        "device_last_weight": "Վերջին քաշ",
+        "device_last_raw": "Վերջին RAW",
+        "device_raw_lines": "RAW տողեր",
 
         "records_title": "Գրառումներ",
         "records_subtitle": "Որոնել և դիտել բոլոր կշռումները",
