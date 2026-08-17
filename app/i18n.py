@@ -20,7 +20,7 @@ TRANSLATIONS = {
         "dashboard": "داشبورد",
         "weigh": "ثبت وزن",
         "records": "سوابق",
-        "device": "دستگاه",          # NEW
+        "device": "دستگاه",
         "logout": "خروج",
 
         # Dashboard
@@ -41,7 +41,7 @@ TRANSLATIONS = {
         "status": "وضعیت",
         "saved": "ذخیره شد",
 
-        # Detail (ticket page)
+        # Detail
         "weighment_details": "جزئیات وزن‌کشی",
         "print": "چاپ",
         "operator": "اپراتور",
@@ -52,13 +52,16 @@ TRANSLATIONS = {
         "weigh_truck_title": "ثبت وزن",
         "weigh_subtitle": "اطلاعات را بررسی و ثبت کنید.",
         "current_scale_weight": "وزن فعلی باسکول",
-        "truck_plate": "پلاک کامیون",
+
+        # تغییر داده شده
+        "truck_plate": "پلاک ماشین",
+
         "weight_kg": "وزن (کیلوگرم)",
         "truck_photo": "عکس‌ها",
         "hint_camera": "در گوشی، با انتخاب این قسمت دوربین باز می‌شود.",
         "submit_weigh": "ثبت وزن و عکس",
 
-        # Weigh page - UI strings
+        # Weigh page - UI
         "plate_placeholder": "مثلاً 12A345",
         "copy_scale_weight": "کپی وزن باسکول",
         "copy_scale_weight_title": "کپی وزن باسکول داخل فیلد وزن",
@@ -67,8 +70,13 @@ TRANSLATIONS = {
         "live_on": "LIVE: ON",
         "live_off": "LIVE: OFF",
 
-        # Weigh page - extra fields
+        # Vehicle
         "vehicle_type": "نوع خودرو",
+
+        # جدید - ورود دستی
+        "vehicle_type_placeholder": "مثلاً کامیون، تریلی، سواری",
+
+        # کلیدهای قدیمی برای سازگاری
         "vehicle_type_select": "انتخاب کنید...",
         "vehicle_type_truck": "کامیون",
         "vehicle_type_trailer": "تریلی",
@@ -78,16 +86,19 @@ TRANSLATIONS = {
 
         "driver_name": "نام راننده",
         "driver_name_placeholder": "مثلاً علی احمدی",
+
         "driver_phone": "شماره تماس راننده",
         "driver_phone_placeholder": "مثلاً 0912xxxxxxx",
 
         "cargo_type": "نوع بار / محصول",
         "cargo_type_placeholder": "مثلاً سیمان / گندم / شن",
+
         "cargo_owner": "صاحب بار (شرکت/شخص)",
         "cargo_owner_placeholder": "نام شرکت یا شخص",
 
         "origin": "مبدأ",
         "origin_placeholder": "مثلاً تهران",
+
         "destination": "مقصد",
         "destination_placeholder": "مثلاً اصفهان",
 
@@ -97,7 +108,7 @@ TRANSLATIONS = {
         "notes": "توضیحات",
         "notes_placeholder": "توضیحات تکمیلی...",
 
-        # Device/RS232 page (optional keys for future i18n)
+        # Device / RS232
         "device_title": "دستگاه / RS232",
         "device_subtitle": "تنظیمات اتصال اندیکاتور و خواندن وزن",
         "device_enabled": "وضعیت",
@@ -119,7 +130,7 @@ TRANSLATIONS = {
         "device_last_raw": "آخرین RAW",
         "device_raw_lines": "خطوط RAW",
 
-        # Records page
+        # Records
         "records_title": "سوابق",
         "records_subtitle": "جستجو و مشاهده همه ثبت‌ها",
         "search": "جستجو",
@@ -136,6 +147,7 @@ TRANSLATIONS = {
     "en": {
         "app_name": "Smart Weighbridge",
 
+        # Login
         "login": "Login",
         "login_subtitle": "Weighbridge management system",
         "username": "Username",
@@ -143,12 +155,14 @@ TRANSLATIONS = {
         "submit_login": "Sign in",
         "login_error": "Invalid username or password.",
 
+        # Nav
         "dashboard": "Dashboard",
         "weigh": "Weigh",
         "records": "Records",
-        "device": "Device",          # NEW
+        "device": "Device",
         "logout": "Logout",
 
+        # Dashboard
         "welcome": "Welcome",
         "new_weighment": "New weighment",
         "records_count": "Records count",
@@ -158,6 +172,7 @@ TRANSLATIONS = {
         "waiting": "Waiting",
         "latest_weighments": "Latest weighments",
 
+        # Common
         "ticket": "Ticket",
         "plate": "Plate",
         "weight": "Weight",
@@ -165,21 +180,27 @@ TRANSLATIONS = {
         "status": "Status",
         "saved": "Saved",
 
+        # Detail
         "weighment_details": "Weighment details",
         "print": "Print",
         "operator": "Operator",
         "datetime": "Date & time",
         "no_photo": "No photo",
 
+        # Weigh page
         "weigh_truck_title": "Weigh-in",
         "weigh_subtitle": "Review and submit the information.",
         "current_scale_weight": "Current scale weight",
-        "truck_plate": "Truck plate",
+
+        # Changed
+        "truck_plate": "Vehicle plate",
+
         "weight_kg": "Weight (kg)",
         "truck_photo": "Photos",
         "hint_camera": "On mobile, selecting this will open the camera.",
         "submit_weigh": "Submit weight & photo",
 
+        # UI
         "plate_placeholder": "e.g. 12A345",
         "copy_scale_weight": "Copy scale weight",
         "copy_scale_weight_title": "Copy live scale weight into the weight field",
@@ -188,32 +209,45 @@ TRANSLATIONS = {
         "live_on": "LIVE: ON",
         "live_off": "LIVE: OFF",
 
+        # Vehicle
         "vehicle_type": "Vehicle type",
+
+        # New manual input placeholder
+        "vehicle_type_placeholder": "e.g. Truck, Trailer, Car",
+
+        # Old keys kept for compatibility
         "vehicle_type_select": "Select...",
         "vehicle_type_truck": "Truck",
         "vehicle_type_trailer": "Trailer",
         "vehicle_type_flatbed": "Flatbed",
-        "vehicle_type_dump": "Dump",
+        "vehicle_type_dump": "Dump truck",
         "vehicle_type_other": "Other",
 
         "driver_name": "Driver name",
         "driver_name_placeholder": "e.g. Ali Ahmadi",
+
         "driver_phone": "Driver phone",
         "driver_phone_placeholder": "e.g. +98...",
+
         "cargo_type": "Cargo / product",
         "cargo_type_placeholder": "e.g. Cement / Wheat",
+
         "cargo_owner": "Cargo owner (Company/Person)",
         "cargo_owner_placeholder": "Company or person name",
+
         "origin": "Origin",
         "origin_placeholder": "e.g. Tehran",
+
         "destination": "Destination",
         "destination_placeholder": "e.g. Isfahan",
+
         "document_no": "Waybill / Order No.",
         "document_no_placeholder": "e.g. 12345",
+
         "notes": "Notes",
         "notes_placeholder": "Additional notes...",
 
-        # Device/RS232 (optional keys)
+        # Device / RS232
         "device_title": "Device / RS232",
         "device_subtitle": "Indicator connection settings & live reading",
         "device_enabled": "Status",
@@ -235,6 +269,7 @@ TRANSLATIONS = {
         "device_last_raw": "Last RAW",
         "device_raw_lines": "RAW lines",
 
+        # Records
         "records_title": "Records",
         "records_subtitle": "Search and view all weighments",
         "search": "Search",
@@ -242,6 +277,7 @@ TRANSLATIONS = {
         "clear": "Clear",
         "no_results": "No results found.",
 
+        # Delete
         "actions": "Actions",
         "delete": "Delete",
         "confirm_delete": "Are you sure you want to delete this ticket?",
@@ -250,6 +286,7 @@ TRANSLATIONS = {
     "hy": {
         "app_name": "Խելացի Կշռակայան",
 
+        # Login
         "login": "Մուտք",
         "login_subtitle": "Կշռակայանի կառավարման համակարգ",
         "username": "Օգտանուն",
@@ -257,12 +294,14 @@ TRANSLATIONS = {
         "submit_login": "Մուտք գործել",
         "login_error": "Սխալ օգտանուն կամ գաղտնաբառ։",
 
+        # Nav
         "dashboard": "Վահանակ",
         "weigh": "Կշռում",
         "records": "Գրառումներ",
-        "device": "Սարք",           # NEW
+        "device": "Սարք",
         "logout": "Ելք",
 
+        # Dashboard
         "welcome": "Բարի գալուստ",
         "new_weighment": "Նոր կշռում",
         "records_count": "Գրառումների քանակը",
@@ -272,6 +311,7 @@ TRANSLATIONS = {
         "waiting": "Սպասում",
         "latest_weighments": "Վերջին կշռումները",
 
+        # Common
         "ticket": "Տոմս",
         "plate": "Համարանիշ",
         "weight": "Քաշ",
@@ -279,21 +319,27 @@ TRANSLATIONS = {
         "status": "Կարգավիճակ",
         "saved": "Պահպանված է",
 
+        # Detail
         "weighment_details": "Կշռման մանրամասներ",
         "print": "Տպել",
         "operator": "Օպերատոր",
         "datetime": "Ամսաթիվ և ժամ",
         "no_photo": "Առանց լուսանկարի",
 
+        # Weigh page
         "weigh_truck_title": "Կշռում",
         "weigh_subtitle": "Ստուգեք տվյալները և ուղարկեք։",
         "current_scale_weight": "Ընթացիկ կշիռը",
-        "truck_plate": "Մեքենայի համար",
+
+        # Vehicle plate
+        "truck_plate": "Մեքենայի համարանիշ",
+
         "weight_kg": "Քաշ (կգ)",
         "truck_photo": "Լուսանկարներ",
         "hint_camera": "Հեռախոսով ընտրելիս տեսախցիկը կբացվի։",
         "submit_weigh": "Ուղարկել",
 
+        # UI
         "plate_placeholder": "օր. 12A345",
         "copy_scale_weight": "Պատճենել կշեռքի քաշը",
         "copy_scale_weight_title": "Պատճենել ընթացիկ քաշը քաշի դաշտում",
@@ -302,7 +348,13 @@ TRANSLATIONS = {
         "live_on": "LIVE: ON",
         "live_off": "LIVE: OFF",
 
+        # Vehicle
         "vehicle_type": "Տրանսպորտի տեսակ",
+
+        # New manual input placeholder
+        "vehicle_type_placeholder": "օր. բեռնատար, կցորդ, մեքենա",
+
+        # Old keys kept
         "vehicle_type_select": "Ընտրել...",
         "vehicle_type_truck": "Բեռնատար",
         "vehicle_type_trailer": "Տրեյլեր",
@@ -312,22 +364,29 @@ TRANSLATIONS = {
 
         "driver_name": "Վարորդի անունը",
         "driver_name_placeholder": "օր. ...",
+
         "driver_phone": "Վարորդի հեռախոս",
         "driver_phone_placeholder": "օր. +374...",
+
         "cargo_type": "Բեռ / Ապրանք",
         "cargo_type_placeholder": "օր. ...",
+
         "cargo_owner": "Բեռի սեփականատեր (Ընկերություն/Անձ)",
         "cargo_owner_placeholder": "Անուն",
+
         "origin": "Մեկնարկ",
         "origin_placeholder": "օր. ...",
+
         "destination": "Նպատակակետ",
         "destination_placeholder": "օր. ...",
+
         "document_no": "Փաստաթուղթ №",
         "document_no_placeholder": "օր. 12345",
+
         "notes": "Նշումներ",
         "notes_placeholder": "Լրացուցիչ նշումներ...",
 
-        # Device/RS232 (optional keys)
+        # Device / RS232
         "device_title": "Սարք / RS232",
         "device_subtitle": "Միացման կարգավորումներ և կենդանի ընթերցում",
         "device_enabled": "Կարգավիճակ",
@@ -349,6 +408,7 @@ TRANSLATIONS = {
         "device_last_raw": "Վերջին RAW",
         "device_raw_lines": "RAW տողեր",
 
+        # Records
         "records_title": "Գրառումներ",
         "records_subtitle": "Որոնել և դիտել բոլոր կշռումները",
         "search": "Որոնում",
@@ -356,6 +416,7 @@ TRANSLATIONS = {
         "clear": "Մաքրել",
         "no_results": "Արդյունք չկա։",
 
+        # Delete
         "actions": "Գործողություններ",
         "delete": "Ջնջել",
         "confirm_delete": "Վստա՞հ եք, որ ցանկանում եք ջնջել այս տոմսը։",
@@ -363,6 +424,7 @@ TRANSLATIONS = {
 }
 
 RTL_LANGS = {"fa"}
+
 
 def translate(lang: str, key: str) -> str:
     lang = lang if lang in SUPPORTED_LANGS else DEFAULT_LANG
@@ -374,6 +436,7 @@ def translate(lang: str, key: str) -> str:
         return TRANSLATIONS[DEFAULT_LANG][key]
 
     return key
+
 
 def get_dir(lang: str) -> str:
     lang = lang if lang in SUPPORTED_LANGS else DEFAULT_LANG

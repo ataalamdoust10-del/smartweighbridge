@@ -27,12 +27,14 @@
     justify-content:space-between;
     margin: 12px 0 18px;
   }
+
   .page-head h1{
     margin: 0;
     font-size: 34px;
     letter-spacing: -0.5px;
     color: var(--text);
   }
+
   .page-head p{
     margin: 8px 0 0;
     color: var(--muted);
@@ -94,16 +96,26 @@
     font-weight: 900;
     user-select:none;
   }
-  .btn:hover{ background: #eef2ff; border-color: #d7dcff; }
+
+  .btn:hover{
+    background: #eef2ff;
+    border-color: #d7dcff;
+  }
 
   .btn.primary{
     background: var(--primary);
     border-color: transparent;
     color: #fff;
   }
-  .btn.primary:hover{ background: var(--primary2); }
 
-  .btn.full{ width: 100%; padding: 12px 16px; }
+  .btn.primary:hover{
+    background: var(--primary2);
+  }
+
+  .btn.full{
+    width: 100%;
+    padding: 12px 16px;
+  }
 
   .mini-actions{
     display:flex;
@@ -119,16 +131,21 @@
     gap: 12px;
     margin-top: 6px;
   }
-  .form-grid > div{ min-width:0; }
 
-  /* برای درست نمایش دادن منفی در صفحات RTL */
+  .form-grid > div{
+    min-width:0;
+  }
+
   .num-ltr{
     direction: ltr;
     unicode-bidi: bidi-override;
     display:inline-block;
   }
 
-  #photosWrap .photo-input{ display:block; margin-top:10px; }
+  #photosWrap .photo-input{
+    display:block;
+    margin-top:10px;
+  }
 
   .photo-preview{
     margin-top:12px;
@@ -136,7 +153,11 @@
     grid-template-columns:repeat(2, 1fr);
     gap:12px;
   }
-  .photo-item{ position:relative; }
+
+  .photo-item{
+    position:relative;
+  }
+
   .photo-item img{
     width:100%;
     height:170px;
@@ -145,6 +166,7 @@
     background:#f2f4f7;
     border:1px solid var(--border);
   }
+
   .photo-item button{
     position:absolute;
     top:10px;
@@ -168,16 +190,19 @@
     text-align:center;
     padding: 18px 10px;
   }
+
   .scale-box > span{
     color: var(--muted);
     font-weight: 800;
   }
+
   #liveWeight{
     font-size: 64px;
     line-height: 1;
     letter-spacing: -1px;
     color: var(--text);
   }
+
   .scale-box b{
     font-size: 18px;
     color: var(--muted);
@@ -193,10 +218,21 @@
     background: #f9fafb;
     color: var(--text);
   }
-  #stable.stable{ border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.08); }
-  #stable.unstable{ border-color: rgba(245,158,11,.25); background: rgba(245,158,11,.10); }
 
-  #scaleStatus{ color: var(--muted); font-weight: 800; }
+  #stable.stable{
+    border-color: rgba(22,163,74,.25);
+    background: rgba(22,163,74,.08);
+  }
+
+  #stable.unstable{
+    border-color: rgba(245,158,11,.25);
+    background: rgba(245,158,11,.10);
+  }
+
+  #scaleStatus{
+    color: var(--muted);
+    font-weight: 800;
+  }
 
   .conn{
     margin-top: 6px;
@@ -210,19 +246,51 @@
     background: #f2f4f7;
     border: 1px solid var(--border);
   }
-  .dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
-  .dot.ok{ background: var(--ok); }
-  .dot.bad{ background: var(--warn); }
+
+  .dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    display:inline-block;
+  }
+
+  .dot.ok{
+    background: var(--ok);
+  }
+
+  .dot.bad{
+    background: var(--warn);
+  }
 
   @media(max-width: 760px){
-    .page-head{ align-items:flex-start; flex-direction:column; gap:8px; }
-    #liveWeight{ font-size: 54px; }
-    .photo-preview{ grid-template-columns:1fr; }
-    .mini-actions{ justify-content:stretch; }
-    .mini-actions .btn{ flex: 1; }
-    .form-grid{ grid-template-columns: 1fr; }
+    .page-head{
+      align-items:flex-start;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    #liveWeight{
+      font-size: 54px;
+    }
+
+    .photo-preview{
+      grid-template-columns:1fr;
+    }
+
+    .mini-actions{
+      justify-content:stretch;
+    }
+
+    .mini-actions .btn{
+      flex: 1;
+    }
+
+    .form-grid{
+      grid-template-columns: 1fr;
+    }
   }
 </style>
+
 
 <div class="page-head">
   <div>
@@ -231,248 +299,688 @@
   </div>
 </div>
 
+
 <div class="grid-2">
+
   <section class="card">
-    <form method="post" action="/weigh" enctype="multipart/form-data" id="weighForm">
+
+    <form
+      method="post"
+      action="/weigh"
+      enctype="multipart/form-data"
+      id="weighForm"
+    >
+
       <label>{{ _('truck_plate') }}</label>
-      <input id="plateInput"
-             name="plate"
-             placeholder="{{ _('plate_placeholder') }}"
-             required
-             dir="ltr"
-             style="text-align:left">
+
+      <input
+        id="plateInput"
+        name="plate"
+        placeholder="{{ _('plate_placeholder') }}"
+        required
+        dir="ltr"
+        style="text-align:left"
+      >
+
 
       <label>{{ _('weight_kg') }}</label>
-      <input id="weightInput"
-             name="weight"
-             type="number"
-             step="0.01"
-             value="{{ state.weight }}"
-             readonly
-             dir="ltr"
-             style="text-align:left; unicode-bidi:bidi-override;">
+
+      <input
+        id="weightInput"
+        name="weight"
+        type="number"
+        step="0.01"
+        value="{{ state.weight }}"
+        readonly
+        dir="ltr"
+        style="text-align:left; unicode-bidi:bidi-override;"
+      >
+
 
       <div class="mini-actions">
-        <button class="btn" type="button" id="copyScaleBtn" title="{{ _('copy_scale_weight_title') }}">{{ _('copy_scale_weight') }}</button>
-        <button class="btn" type="button" id="clearFormBtn" title="{{ _('clear_form_title') }}">{{ _('clear_form') }}</button>
+
+        <button
+          class="btn"
+          type="button"
+          id="copyScaleBtn"
+          title="{{ _('copy_scale_weight_title') }}"
+        >
+          {{ _('copy_scale_weight') }}
+        </button>
+
+        <button
+          class="btn"
+          type="button"
+          id="clearFormBtn"
+          title="{{ _('clear_form_title') }}"
+        >
+          {{ _('clear_form') }}
+        </button>
+
       </div>
+
 
       <div class="form-grid">
+
+        <!-- نوع خودرو: ورود دستی -->
         <div>
+
           <label>{{ _('vehicle_type') }}</label>
-          <select name="vehicle_type" id="vehicleType">
-            <option value="">{{ _('vehicle_type_select') }}</option>
-            <option value="truck">{{ _('vehicle_type_truck') }}</option>
-            <option value="trailer">{{ _('vehicle_type_trailer') }}</option>
-            <option value="flatbed">{{ _('vehicle_type_flatbed') }}</option>
-            <option value="dump">{{ _('vehicle_type_dump') }}</option>
-            <option value="other">{{ _('vehicle_type_other') }}</option>
-          </select>
+
+          <input
+            type="text"
+            name="vehicle_type"
+            id="vehicleType"
+            placeholder="{{ _('vehicle_type_placeholder') }}"
+          >
+
         </div>
 
+
         <div>
+
           <label>{{ _('driver_name') }}</label>
-          <input type="text" name="driver_name" placeholder="{{ _('driver_name_placeholder') }}">
+
+          <input
+            type="text"
+            name="driver_name"
+            placeholder="{{ _('driver_name_placeholder') }}"
+          >
+
         </div>
 
+
         <div>
+
           <label>{{ _('driver_phone') }}</label>
-          <input type="tel" name="driver_phone"
-                 placeholder="{{ _('driver_phone_placeholder') }}"
-                 dir="ltr" style="text-align:left" inputmode="tel">
+
+          <input
+            type="tel"
+            name="driver_phone"
+            placeholder="{{ _('driver_phone_placeholder') }}"
+            dir="ltr"
+            style="text-align:left"
+            inputmode="tel"
+          >
+
         </div>
 
+
         <div>
+
           <label>{{ _('cargo_type') }}</label>
-          <input type="text" name="cargo_type" placeholder="{{ _('cargo_type_placeholder') }}">
+
+          <input
+            type="text"
+            name="cargo_type"
+            placeholder="{{ _('cargo_type_placeholder') }}"
+          >
+
         </div>
 
+
         <div>
+
           <label>{{ _('cargo_owner') }}</label>
-          <input type="text" name="cargo_owner" placeholder="{{ _('cargo_owner_placeholder') }}">
+
+          <input
+            type="text"
+            name="cargo_owner"
+            placeholder="{{ _('cargo_owner_placeholder') }}"
+          >
+
         </div>
 
+
         <div>
+
           <label>{{ _('origin') }}</label>
-          <input type="text" name="origin" placeholder="{{ _('origin_placeholder') }}">
+
+          <input
+            type="text"
+            name="origin"
+            placeholder="{{ _('origin_placeholder') }}"
+          >
+
         </div>
 
+
         <div>
+
           <label>{{ _('destination') }}</label>
-          <input type="text" name="destination" placeholder="{{ _('destination_placeholder') }}">
+
+          <input
+            type="text"
+            name="destination"
+            placeholder="{{ _('destination_placeholder') }}"
+          >
+
         </div>
 
+
         <div>
+
           <label>{{ _('document_no') }}</label>
-          <input type="text" name="document_no"
-                 placeholder="{{ _('document_no_placeholder') }}"
-                 dir="ltr" style="text-align:left">
+
+          <input
+            type="text"
+            name="document_no"
+            placeholder="{{ _('document_no_placeholder') }}"
+            dir="ltr"
+            style="text-align:left"
+          >
+
         </div>
+
       </div>
+
 
       <label>{{ _('notes') }}</label>
-      <textarea name="notes" rows="3" placeholder="{{ _('notes_placeholder') }}"></textarea>
+
+      <textarea
+        name="notes"
+        rows="3"
+        placeholder="{{ _('notes_placeholder') }}"
+      ></textarea>
+
 
       <label>{{ _('truck_photo') }}</label>
+
       <div id="photosWrap">
-        <input class="camera photo-input" type="file" name="photo" accept="image/*" capture="environment">
+
+        <input
+          class="camera photo-input"
+          type="file"
+          name="photo"
+          accept="image/*"
+          capture="environment"
+        >
+
       </div>
 
-      <div id="photoPreview" class="photo-preview"></div>
-      <p class="hint">{{ _('hint_camera') }}</p>
 
-      <button class="btn primary full" type="submit">{{ _('submit_weigh') }}</button>
+      <div
+        id="photoPreview"
+        class="photo-preview"
+      ></div>
+
+
+      <p class="hint">
+        {{ _('hint_camera') }}
+      </p>
+
+
+      <button
+        class="btn primary full"
+        type="submit"
+      >
+        {{ _('submit_weigh') }}
+      </button>
+
     </form>
+
   </section>
 
+
   <section class="card">
+
     <div class="scale-box">
-      <span>{{ _('current_scale_weight') }}</span>
-      <strong id="liveWeight" class="num-ltr">{{ state.weight }}</strong>
+
+      <span>
+        {{ _('current_scale_weight') }}
+      </span>
+
+      <strong
+        id="liveWeight"
+        class="num-ltr"
+      >
+        {{ state.weight }}
+      </strong>
+
       <b>kg</b>
 
-      <div id="stable" class="{{ 'stable' if state.stable else 'unstable' }}">
+
+      <div
+        id="stable"
+        class="{{ 'stable' if state.stable else 'unstable' }}"
+      >
         {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
       </div>
 
-      <small id="scaleStatus">{{ _('scale') }}: {{ state.scale_id or '' }}</small>
-      <div class="conn" id="connStatus"><span class="dot bad"></span>{{ _('live_off') }}</div>
+
+      <small id="scaleStatus">
+        {{ _('scale') }}:
+        {{ state.scale_id or '' }}
+      </small>
+
+
+      <div
+        class="conn"
+        id="connStatus"
+      >
+        <span class="dot bad"></span>
+        {{ _('live_off') }}
+      </div>
+
     </div>
+
   </section>
+
 </div>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const plateInput = document.getElementById('plateInput');
+
+  const plateInput =
+    document.getElementById('plateInput');
+
   if (plateInput) {
-    plateInput.addEventListener('input', () => {
-      plateInput.value = plateInput.value.replace(/\s+/g, '').toUpperCase();
-    });
+
+    plateInput.addEventListener(
+      'input',
+      () => {
+
+        plateInput.value =
+          plateInput.value
+            .replace(/\s+/g, '')
+            .toUpperCase();
+
+      }
+    );
+
   }
 
-  const wi = document.getElementById('weightInput');
-  const lw = document.getElementById('liveWeight');
-  const s  = document.getElementById('stable');
-  const ss = document.getElementById('scaleStatus');
-  const cs = document.getElementById('connStatus');
 
-  const STABLE_TEXT  = {{ _('stable')|tojson|safe }};
-  const WAITING_TEXT = {{ _('waiting')|tojson|safe }};
-  const SCALE_LABEL  = {{ _('scale')|tojson|safe }};
-  const LIVE_ON      = {{ _('live_on')|tojson|safe }};
-  const LIVE_OFF     = {{ _('live_off')|tojson|safe }};
+  const wi =
+    document.getElementById('weightInput');
+
+  const lw =
+    document.getElementById('liveWeight');
+
+  const s =
+    document.getElementById('stable');
+
+  const ss =
+    document.getElementById('scaleStatus');
+
+  const cs =
+    document.getElementById('connStatus');
+
+
+  const STABLE_TEXT =
+    {{ _('stable')|tojson|safe }};
+
+  const WAITING_TEXT =
+    {{ _('waiting')|tojson|safe }};
+
+  const SCALE_LABEL =
+    {{ _('scale')|tojson|safe }};
+
+  const LIVE_ON =
+    {{ _('live_on')|tojson|safe }};
+
+  const LIVE_OFF =
+    {{ _('live_off')|tojson|safe }};
+
 
   async function refreshWeight() {
+
     try {
-      const r = await fetch('/api/scale/weight', { cache: 'no-store' });
+
+      const r = await fetch(
+        '/api/scale/weight',
+        {
+          cache: 'no-store'
+        }
+      );
+
       const d = await r.json();
 
-      if (cs) cs.innerHTML = `<span class="dot ok"></span>${LIVE_ON}`;
 
-      const w = (d.weight ?? 0);
-      if (lw) lw.textContent = String(w);
-      if (wi) wi.value = String(w);
+      if (cs) {
 
-      if (ss) ss.textContent = SCALE_LABEL + ': ' + (d.scale_id ?? '');
+        cs.innerHTML =
+          `<span class="dot ok"></span>${LIVE_ON}`;
+
+      }
+
+
+      const w =
+        (d.weight ?? 0);
+
+
+      if (lw) {
+        lw.textContent =
+          String(w);
+      }
+
+
+      if (wi) {
+        wi.value =
+          String(w);
+      }
+
+
+      if (ss) {
+
+        ss.textContent =
+          SCALE_LABEL
+          + ': '
+          + (d.scale_id ?? '');
+
+      }
+
 
       if (s) {
+
         if (d.stable) {
-          s.className = 'stable';
-          s.textContent = '🟢 ' + STABLE_TEXT;
+
+          s.className =
+            'stable';
+
+          s.textContent =
+            '🟢 ' + STABLE_TEXT;
+
         } else {
-          s.className = 'unstable';
-          s.textContent = '🟡 ' + WAITING_TEXT;
+
+          s.className =
+            'unstable';
+
+          s.textContent =
+            '🟡 ' + WAITING_TEXT;
+
         }
+
       }
+
     } catch (e) {
-      if (cs) cs.innerHTML = `<span class="dot bad"></span>${LIVE_OFF}`;
+
+      if (cs) {
+
+        cs.innerHTML =
+          `<span class="dot bad"></span>${LIVE_OFF}`;
+
+      }
+
     }
+
   }
+
 
   refreshWeight();
-  setInterval(refreshWeight, 1000);
 
-  const copyBtn = document.getElementById('copyScaleBtn');
-  if (copyBtn && wi && lw) {
-    copyBtn.addEventListener('click', () => {
-      wi.value = lw.textContent;
-    });
-  }
+  setInterval(
+    refreshWeight,
+    1000
+  );
 
-  const clearBtn = document.getElementById('clearFormBtn');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-      const form = document.getElementById('weighForm');
-      const preview = document.getElementById('photoPreview');
-      const wrap = document.getElementById('photosWrap');
 
-      if (form) form.reset();
-      if (preview) preview.innerHTML = '';
+  const copyBtn =
+    document.getElementById('copyScaleBtn');
 
-      if (wrap) {
-        wrap.innerHTML = '';
-        const first = document.createElement('input');
-        first.className = 'camera photo-input';
-        first.type = 'file';
-        first.name = 'photo';
-        first.accept = 'image/*';
-        first.setAttribute('capture', 'environment');
-        wrap.appendChild(first);
+
+  if (
+    copyBtn
+    && wi
+    && lw
+  ) {
+
+    copyBtn.addEventListener(
+      'click',
+      () => {
+
+        wi.value =
+          lw.textContent;
+
       }
+    );
 
-      if (lw) lw.textContent = '0';
-      if (wi) wi.value = '0';
-    });
   }
 
-  const photosWrap = document.getElementById('photosWrap');
-  const photoPreview = document.getElementById('photoPreview');
 
-  if (photosWrap && photoPreview) {
-    photosWrap.addEventListener('change', (e) => {
-      if (!e.target.classList.contains('photo-input')) return;
+  const clearBtn =
+    document.getElementById('clearFormBtn');
 
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
 
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const item = document.createElement('div');
-        item.className = 'photo-item';
-        item.innerHTML = `
-          <img src="${ev.target.result}">
-          <button type="button" aria-label="remove">×</button>
-        `;
+  if (clearBtn) {
 
-        item.querySelector('button').onclick = () => {
-          item.remove();
-          e.target.remove();
+    clearBtn.addEventListener(
+      'click',
+      () => {
 
-          const any = photosWrap.querySelector('input.photo-input');
-          if (!any) {
-            const first = document.createElement('input');
-            first.className = 'camera photo-input';
-            first.type = 'file';
-            first.name = 'photo';
-            first.accept = 'image/*';
-            first.setAttribute('capture', 'environment');
-            photosWrap.appendChild(first);
-          }
-        };
+        const form =
+          document.getElementById(
+            'weighForm'
+          );
 
-        photoPreview.appendChild(item);
-      };
-      reader.readAsDataURL(file);
+        const preview =
+          document.getElementById(
+            'photoPreview'
+          );
 
-      const newInput = document.createElement('input');
-      newInput.className = 'camera photo-input';
-      newInput.type = 'file';
-      newInput.name = 'photo';
-      newInput.accept = 'image/*';
-      newInput.setAttribute('capture', 'environment');
-      photosWrap.appendChild(newInput);
-    });
+        const wrap =
+          document.getElementById(
+            'photosWrap'
+          );
+
+
+        if (form) {
+          form.reset();
+        }
+
+
+        if (preview) {
+          preview.innerHTML = '';
+        }
+
+
+        if (wrap) {
+
+          wrap.innerHTML = '';
+
+          const first =
+            document.createElement(
+              'input'
+            );
+
+          first.className =
+            'camera photo-input';
+
+          first.type =
+            'file';
+
+          first.name =
+            'photo';
+
+          first.accept =
+            'image/*';
+
+          first.setAttribute(
+            'capture',
+            'environment'
+          );
+
+          wrap.appendChild(
+            first
+          );
+
+        }
+
+
+        if (lw) {
+          lw.textContent = '0';
+        }
+
+
+        if (wi) {
+          wi.value = '0';
+        }
+
+      }
+    );
+
   }
+
+
+  const photosWrap =
+    document.getElementById(
+      'photosWrap'
+    );
+
+  const photoPreview =
+    document.getElementById(
+      'photoPreview'
+    );
+
+
+  if (
+    photosWrap
+    && photoPreview
+  ) {
+
+    photosWrap.addEventListener(
+      'change',
+      (e) => {
+
+        if (
+          !e.target.classList.contains(
+            'photo-input'
+          )
+        ) {
+          return;
+        }
+
+
+        const file =
+          e.target.files
+          && e.target.files[0];
+
+
+        if (!file) {
+          return;
+        }
+
+
+        const reader =
+          new FileReader();
+
+
+        reader.onload =
+          (ev) => {
+
+            const item =
+              document.createElement(
+                'div'
+              );
+
+            item.className =
+              'photo-item';
+
+
+            item.innerHTML = `
+              <img src="${ev.target.result}">
+              <button
+                type="button"
+                aria-label="remove"
+              >
+                ×
+              </button>
+            `;
+
+
+            item.querySelector(
+              'button'
+            ).onclick =
+              () => {
+
+                item.remove();
+                e.target.remove();
+
+
+                const any =
+                  photosWrap.querySelector(
+                    'input.photo-input'
+                  );
+
+
+                if (!any) {
+
+                  const first =
+                    document.createElement(
+                      'input'
+                    );
+
+                  first.className =
+                    'camera photo-input';
+
+                  first.type =
+                    'file';
+
+                  first.name =
+                    'photo';
+
+                  first.accept =
+                    'image/*';
+
+                  first.setAttribute(
+                    'capture',
+                    'environment'
+                  );
+
+                  photosWrap.appendChild(
+                    first
+                  );
+
+                }
+
+              };
+
+
+            photoPreview.appendChild(
+              item
+            );
+
+          };
+
+
+        reader.readAsDataURL(
+          file
+        );
+
+
+        const newInput =
+          document.createElement(
+            'input'
+          );
+
+        newInput.className =
+          'camera photo-input';
+
+        newInput.type =
+          'file';
+
+        newInput.name =
+          'photo';
+
+        newInput.accept =
+          'image/*';
+
+        newInput.setAttribute(
+          'capture',
+          'environment'
+        );
+
+        photosWrap.appendChild(
+          newInput
+        );
+
+      }
+    );
+
+  }
+
 });
 </script>
+
 {% endblock %}
