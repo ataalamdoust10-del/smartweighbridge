@@ -1,154 +1,849 @@
 {% extends "base.html" %}
-{% block title %}{{ _('records') }}{% endblock %}
+
+{% block title %}
+{{ _('records') }}
+{% endblock %}
 
 {% block content %}
+
 <style>
-  .rec-meta{
-    margin-top:6px;
-    color:#667085;
-    font-size:12.5px;
-    line-height:1.7;
+
+.records-card{
+  margin-top:16px;
+}
+
+.table-wrap{
+  width:100%;
+  overflow-x:auto;
+}
+
+.records-table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:1150px;
+}
+
+.records-table th{
+  white-space:nowrap;
+  font-size:13px;
+  color:#475467;
+  background:#f9fafb;
+}
+
+.records-table th,
+.records-table td{
+  padding:14px 12px;
+  vertical-align:top;
+  border-bottom:1px solid #eaecf0;
+}
+
+.records-table tbody tr:hover{
+  background:#fcfcfd;
+}
+
+.ticket-link{
+  font-weight:900;
+  text-decoration:none;
+  color:#2563eb;
+  white-space:nowrap;
+}
+
+.weight-value{
+  direction:ltr;
+  unicode-bidi:embed;
+  display:inline-block;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.record-details{
+  min-width:310px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.detail-line{
+  color:#475467;
+  font-size:13px;
+  line-height:1.7;
+}
+
+.detail-line b{
+  color:#101828;
+  font-weight:900;
+}
+
+.route{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+}
+
+.route-arrow{
+  color:#98a2b3;
+  font-weight:900;
+}
+
+.record-notes{
+  margin-top:4px;
+  padding:8px 10px;
+  background:#f9fafb;
+  border:1px solid #eaecf0;
+  border-radius:9px;
+  color:#475467;
+  font-size:12.5px;
+  line-height:1.7;
+  max-width:420px;
+  overflow-wrap:anywhere;
+}
+
+.ltr-value{
+  direction:ltr;
+  unicode-bidi:embed;
+  display:inline-block;
+  text-align:left;
+}
+
+.status-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:6px 10px;
+  background:#ecfdf3;
+  color:#027a48;
+  border:1px solid #abefc6;
+  font-size:12px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.record-actions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:95px;
+}
+
+.view-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  white-space:nowrap;
+}
+
+.delete-btn{
+  background:#fee4e2 !important;
+  color:#b42318 !important;
+  border-color:#fecdca !important;
+}
+
+
+/* =========================================================
+   MINI IRANIAN PLATE
+========================================================= */
+
+.plate-table-cell{
+  min-width:245px;
+}
+
+.mini-plate{
+  direction:ltr;
+  width:235px;
+  height:50px;
+
+  display:grid;
+
+  grid-template-columns:
+    38px
+    1fr
+    .9fr
+    1.35fr
+    .85fr;
+
+  border:2px solid #111;
+  border-radius:7px;
+
+  overflow:hidden;
+
+  background:#fff;
+
+  box-sizing:border-box;
+}
+
+.mini-iran{
+  background:#073da5;
+  color:#fff;
+
+  display:flex;
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  font-family:Arial,sans-serif;
+}
+
+.mini-flag{
+  width:21px;
+  height:11px;
+
+  margin-bottom:2px;
+
+  border:1px solid rgba(255,255,255,.8);
+
+  background:
+    linear-gradient(
+      to bottom,
+      #239f40 0 33.333%,
+      #fff 33.333% 66.666%,
+      #da0000 66.666% 100%
+    );
+}
+
+.mini-ir{
+  font-size:7px;
+  font-weight:900;
+  line-height:1;
+}
+
+.mini-country{
+  font-size:6px;
+  font-weight:900;
+  margin-top:2px;
+}
+
+.mini-cell{
+  position:relative;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  background:#fff;
+
+  color:#101828;
+
+  border-left:1px solid #d0d5dd;
+
+  font-size:17px;
+  font-weight:900;
+
+  white-space:nowrap;
+}
+
+.mini-letter{
+  font-family:Tahoma,Arial,sans-serif;
+}
+
+.mini-city{
+  border-left:2px solid #111;
+  padding-top:6px;
+}
+
+.mini-city-label{
+  position:absolute;
+
+  top:1px;
+  left:0;
+  right:0;
+
+  text-align:center;
+
+  color:#667085;
+
+  font-size:6px;
+
+  line-height:1;
+
+  font-weight:800;
+}
+
+.fallback-plate{
+  direction:ltr;
+  unicode-bidi:embed;
+
+  display:inline-block;
+
+  font-weight:900;
+
+  white-space:nowrap;
+}
+
+
+/* ========================================================= */
+
+@media(max-width:760px){
+
+  .records-table th,
+  .records-table td{
+    padding:10px 9px;
   }
-  .rec-meta .line{ display:block; }
-  .rec-meta b{ color:#344054; font-weight:900; }
-  .rec-meta .sep{ margin: 0 6px; color:#98a2b3; }
-  @media(max-width:760px){
-    .rec-meta{ font-size:12px; }
+
+  .record-details{
+    min-width:260px;
   }
+
+  .detail-line{
+    font-size:12px;
+  }
+
+}
+
 </style>
 
+
 <div class="page-head">
+
   <div>
-    <h1>{{ _('records_title') }}</h1>
-    <p>{{ _('records_subtitle') }}</p>
+
+    <h1>
+      {{ _('records_title') }}
+    </h1>
+
+    <p>
+      {{ _('records_subtitle') }}
+    </p>
+
   </div>
+
 </div>
 
-<form class="search" method="get" action="/records">
-  <input name="q" value="{{ q }}" placeholder="{{ _('search_placeholder') }}" autocomplete="off">
-  <button class="btn primary" type="submit">{{ _('search') }}</button>
+
+<form
+  class="search"
+  method="get"
+  action="/records"
+>
+
+  <input
+    name="q"
+    value="{{ q }}"
+    placeholder="{{ _('search_placeholder') }}"
+    autocomplete="off"
+  >
+
+  <button
+    class="btn primary"
+    type="submit"
+  >
+    {{ _('search') }}
+  </button>
+
+
   {% if q %}
-    <a class="btn" href="/records">{{ _('clear') }}</a>
+
+  <a
+    class="btn"
+    href="/records"
+  >
+    {{ _('clear') }}
+  </a>
+
   {% endif %}
+
 </form>
 
-<div class="card">
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>{{ _('ticket') }}</th>
-          <th>{{ _('plate') }}</th>
-          <th>{{ _('weight') }}</th>
-          <th>{{ _('date') }}</th>
-          <th>{{ _('status') }}</th>
-          <th>{{ _('actions') }}</th>
-        </tr>
-      </thead>
 
-      <tbody>
-        {% for r in rows %}
-        <tr>
-          <td>
-            <a href="/weighments/{{ r.ticket_number }}">#{{ "%06d"|format(r.ticket_number) }}</a>
-          </td>
+<div class="card records-card">
 
-          <td>
-            <div style="font-weight:900;">{{ r.plate }}</div>
+<div class="table-wrap">
 
-            {# اطلاعات تکمیلی (اگر موجود باشد) #}
-            {% set has_extra = (r.vehicle_type or r.driver_name or r.driver_phone or r.cargo_type or r.cargo_owner or r.origin or r.destination or r.document_no) %}
-            {% if has_extra %}
-              <div class="rec-meta">
-                {% if r.vehicle_type or r.driver_name or r.driver_phone %}
-                  <span class="line">
-                    {% if r.vehicle_type %}
-                      <b>{{ _('vehicle_type') }}:</b>
-                      {% if r.vehicle_type == 'truck' %}{{ _('vehicle_type_truck') }}
-                      {% elif r.vehicle_type == 'trailer' %}{{ _('vehicle_type_trailer') }}
-                      {% elif r.vehicle_type == 'flatbed' %}{{ _('vehicle_type_flatbed') }}
-                      {% elif r.vehicle_type == 'dump' %}{{ _('vehicle_type_dump') }}
-                      {% elif r.vehicle_type == 'other' %}{{ _('vehicle_type_other') }}
-                      {% else %}{{ r.vehicle_type }}
-                      {% endif %}
-                    {% endif %}
+<table class="records-table">
 
-                    {% if r.vehicle_type and (r.driver_name or r.driver_phone) %}<span class="sep">|</span>{% endif %}
+<thead>
 
-                    {% if r.driver_name %}
-                      <b>{{ _('driver_name') }}:</b> {{ r.driver_name }}
-                    {% endif %}
+<tr>
 
-                    {% if r.driver_phone %}
-                      {% if r.driver_name %}<span class="sep">|</span>{% endif %}
-                      <b>{{ _('driver_phone') }}:</b> <span dir="ltr" style="text-align:left; display:inline-block;">{{ r.driver_phone }}</span>
-                    {% endif %}
-                  </span>
-                {% endif %}
+  <th>
+    {{ _('ticket') }}
+  </th>
 
-                {% if r.cargo_type or r.cargo_owner %}
-                  <span class="line">
-                    {% if r.cargo_type %}
-                      <b>{{ _('cargo_type') }}:</b> {{ r.cargo_type }}
-                    {% endif %}
-                    {% if r.cargo_type and r.cargo_owner %}<span class="sep">|</span>{% endif %}
-                    {% if r.cargo_owner %}
-                      <b>{{ _('cargo_owner') }}:</b> {{ r.cargo_owner }}
-                    {% endif %}
-                  </span>
-                {% endif %}
+  <th>
+    {{ _('plate') }}
+  </th>
 
-                {% if r.origin or r.destination %}
-                  <span class="line">
-                    {% if r.origin %}<b>{{ _('origin') }}:</b> {{ r.origin }}{% endif %}
-                    {% if r.origin and r.destination %}<span class="sep">→</span>{% endif %}
-                    {% if r.destination %}<b>{{ _('destination') }}:</b> {{ r.destination }}{% endif %}
-                  </span>
-                {% endif %}
+  <th>
+    {{ _('weight') }}
+  </th>
 
-                {% if r.document_no %}
-                  <span class="line">
-                    <b>{{ _('document_no') }}:</b>
-                    <span dir="ltr" style="text-align:left; display:inline-block;">{{ r.document_no }}</span>
-                  </span>
-                {% endif %}
-              </div>
-            {% endif %}
-          </td>
+  <th>
+    {{ _('date') }}
+  </th>
 
-          <td>{{ r.weight }} {{ r.unit }}</td>
+  <th>
+    {{ _('weighment_details') }}
+  </th>
 
-          <td>{{ (r.created_at|string)[:19].replace('T',' ') }}</td>
+  <th>
+    {{ _('status') }}
+  </th>
 
-          <td>
-            <span class="badge">
-              {% if r.status == 'SAVED' %}
-                {{ _('saved') }}
-              {% else %}
-                {{ r.status }}
-              {% endif %}
-            </span>
-          </td>
+  <th>
+    {{ _('actions') }}
+  </th>
 
-          <td>
-            <form method="post"
-                  action="/weighments/{{ r.ticket_number }}/delete"
-                  onsubmit="return confirm({{ _('confirm_delete')|tojson }});"
-                  style="margin:0;">
-              <input type="hidden" name="next" value="/records{% if q %}?q={{ q|urlencode }}{% endif %}">
-              <button class="btn" type="submit" style="background:#fee4e2;color:#b42318;">
-                {{ _('delete') }}
-              </button>
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6">{{ _('no_results') }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+</tr>
+
+</thead>
+
+
+<tbody>
+
+{% for r in rows %}
+
+<tr>
+
+
+<!-- =====================================================
+     TICKET
+===================================================== -->
+
+<td>
+
+  <a
+    class="ticket-link"
+    href="/weighments/{{ r.ticket_number }}"
+  >
+    #{{ "%06d"|format(r.ticket_number) }}
+  </a>
+
+</td>
+
+
+<!-- =====================================================
+     PLATE
+===================================================== -->
+
+<td class="plate-table-cell">
+
+{% set pp = plate_parts_map.get(r.id) %}
+
+
+{% if pp %}
+
+<div class="mini-plate">
+
+  <!-- IRAN -->
+
+  <div class="mini-iran">
+
+    <div class="mini-flag"></div>
+
+    <div class="mini-ir">
+      I.R.
+    </div>
+
+    <div class="mini-country">
+      IRAN
+    </div>
+
   </div>
+
+
+  <!-- FIRST 2 -->
+
+  <div class="mini-cell">
+
+    {{ pp.first }}
+
+  </div>
+
+
+  <!-- LETTER -->
+
+  <div class="mini-cell mini-letter">
+
+    {{ pp.letter }}
+
+  </div>
+
+
+  <!-- 3 DIGITS -->
+
+  <div class="mini-cell">
+
+    {{ pp.middle }}
+
+  </div>
+
+
+  <!-- CITY -->
+
+  <div class="mini-cell mini-city">
+
+    <div class="mini-city-label">
+      ایران
+    </div>
+
+    {{ pp.city }}
+
+  </div>
+
 </div>
+
+
+{% else %}
+
+
+<span class="fallback-plate">
+
+  {{ r.plate }}
+
+</span>
+
+
+{% endif %}
+
+</td>
+
+
+<!-- =====================================================
+     WEIGHT
+===================================================== -->
+
+<td>
+
+  <span class="weight-value">
+
+    {% if r.weight == r.weight|int %}
+
+      {{ r.weight|int }} {{ r.unit }}
+
+    {% else %}
+
+      {{ r.weight }} {{ r.unit }}
+
+    {% endif %}
+
+  </span>
+
+</td>
+
+
+<!-- =====================================================
+     DATE
+===================================================== -->
+
+<td style="white-space:nowrap;">
+
+  {{ (r.created_at|string)[:19].replace('T',' ') }}
+
+</td>
+
+
+<!-- =====================================================
+     DETAILS
+===================================================== -->
+
+<td>
+
+<div class="record-details">
+
+
+{% if r.vehicle_type %}
+
+<div class="detail-line">
+
+  <b>
+    {{ _('vehicle_type') }}:
+  </b>
+
+  {{ r.vehicle_type }}
+
+</div>
+
+{% endif %}
+
+
+{% if r.driver_name %}
+
+<div class="detail-line">
+
+  <b>
+    {{ _('driver_name') }}:
+  </b>
+
+  {{ r.driver_name }}
+
+</div>
+
+{% endif %}
+
+
+{% if r.driver_phone %}
+
+<div class="detail-line">
+
+  <b>
+    {{ _('driver_phone') }}:
+  </b>
+
+  <span class="ltr-value">
+
+    {{ r.driver_phone }}
+
+  </span>
+
+</div>
+
+{% endif %}
+
+
+{% if r.cargo_type %}
+
+<div class="detail-line">
+
+  <b>
+    {{ _('cargo_type') }}:
+  </b>
+
+  {{ r.cargo_type }}
+
+</div>
+
+{% endif %}
+
+
+{% if r.cargo_owner %}
+
+<div class="detail-line">
+
+  <b>
+    {{ _('cargo_owner') }}:
+  </b>
+
+  {{ r.cargo_owner }}
+
+</div>
+
+{% endif %}
+
+
+{% if r.origin or r.destination %}
+
+<div class="detail-line route">
+
+
+{% if r.origin %}
+
+<span>
+
+  <b>
+    {{ _('origin') }}:
+  </b>
+
+  {{ r.origin }}
+
+</span>
+
+{% endif %}
+
+
+{% if r.origin and r.destination %}
+
+<span class="route-arrow">
+  →
+</span>
+
+{% endif %}
+
+
+{% if r.destination %}
+
+<span>
+
+  <b>
+    {{ _('destination') }}:
+  </b>
+
+  {{ r.destination }}
+
+</span>
+
+{% endif %}
+
+
+</div>
+
+{% endif %}
+
+
+{% if r.document_no %}
+
+<div class="detail-line">
+
+  <b>
+    {{ _('document_no') }}:
+  </b>
+
+  <span class="ltr-value">
+
+    {{ r.document_no }}
+
+  </span>
+
+</div>
+
+{% endif %}
+
+
+{% if r.notes %}
+
+<div class="record-notes">
+
+  <b>
+    {{ _('notes') }}:
+  </b>
+
+  {{ r.notes }}
+
+</div>
+
+{% endif %}
+
+
+{% if not (
+    r.vehicle_type
+    or r.driver_name
+    or r.driver_phone
+    or r.cargo_type
+    or r.cargo_owner
+    or r.origin
+    or r.destination
+    or r.document_no
+    or r.notes
+) %}
+
+<span style="color:#98a2b3;">
+  —
+</span>
+
+{% endif %}
+
+
+</div>
+
+</td>
+
+
+<!-- =====================================================
+     STATUS
+===================================================== -->
+
+<td>
+
+<span class="status-badge">
+
+{% if r.status == 'SAVED' %}
+
+  {{ _('saved') }}
+
+{% else %}
+
+  {{ r.status }}
+
+{% endif %}
+
+</span>
+
+</td>
+
+
+<!-- =====================================================
+     ACTIONS
+===================================================== -->
+
+<td>
+
+<div class="record-actions">
+
+
+<a
+  class="btn view-btn"
+  href="/weighments/{{ r.ticket_number }}"
+>
+
+  {{ _('weighment_details') }}
+
+</a>
+
+
+<form
+  method="post"
+  action="/weighments/{{ r.ticket_number }}/delete"
+
+  onsubmit="return confirm({{ _('confirm_delete')|tojson }});"
+
+  style="margin:0;"
+>
+
+
+<input
+  type="hidden"
+
+  name="next"
+
+  value="/records{% if q %}?q={{ q|urlencode }}{% endif %}"
+>
+
+
+<button
+  class="btn delete-btn"
+  type="submit"
+>
+
+  {{ _('delete') }}
+
+</button>
+
+
+</form>
+
+
+</div>
+
+</td>
+
+
+</tr>
+
+
+{% else %}
+
+
+<tr>
+
+<td
+  colspan="7"
+
+  style="
+    text-align:center;
+    color:#667085;
+    padding:30px;
+  "
+>
+
+  {{ _('no_results') }}
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
 {% endblock %}
