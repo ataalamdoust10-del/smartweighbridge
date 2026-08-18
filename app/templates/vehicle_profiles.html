@@ -1,0 +1,624 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ _('vehicle_profiles') }}
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+.profile-grid{
+  display:grid;
+  grid-template-columns:.8fr 1.2fr;
+  gap:18px;
+  align-items:start;
+}
+
+.profile-form label{
+  display:block;
+  margin:12px 0 7px;
+  font-weight:900;
+}
+
+.profile-form input{
+  width:100%;
+  box-sizing:border-box;
+
+  border:1px solid #e4e7ec;
+  border-radius:12px;
+
+  padding:11px 13px;
+
+  font-size:15px;
+}
+
+.profile-form input:focus{
+  outline:none;
+  border-color:#2563eb;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(37,99,235,.10);
+}
+
+.field-unit{
+  position:relative;
+}
+
+.field-unit input{
+  padding-inline-end:72px;
+}
+
+.field-unit .unit{
+  position:absolute;
+
+  top:50%;
+  transform:translateY(-50%);
+
+  inset-inline-end:12px;
+
+  color:#667085;
+
+  font-size:12px;
+
+  pointer-events:none;
+}
+
+.save-profile{
+  width:100%;
+  margin-top:16px;
+}
+
+.profiles-table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.profiles-table th,
+.profiles-table td{
+  padding:12px 10px;
+  border-bottom:1px solid #eaecf0;
+  vertical-align:middle;
+}
+
+.profiles-table th{
+  color:#475467;
+  background:#f9fafb;
+  white-space:nowrap;
+}
+
+.money,
+.number{
+  direction:ltr;
+  unicode-bidi:embed;
+  white-space:nowrap;
+  display:inline-block;
+}
+
+.profile-actions{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+}
+
+.edit-btn{
+  background:#eff6ff!important;
+  color:#1d4ed8!important;
+  border-color:#bfdbfe!important;
+}
+
+.delete-profile{
+  background:#fee4e2!important;
+  color:#b42318!important;
+  border-color:#fecdca!important;
+}
+
+.empty-profiles{
+  text-align:center;
+  color:#667085;
+  padding:25px!important;
+}
+
+.profile-note{
+  margin-top:12px;
+
+  padding:10px 12px;
+
+  border-radius:10px;
+
+  background:#f9fafb;
+
+  color:#667085;
+
+  font-size:13px;
+
+  line-height:1.8;
+}
+
+.edit-banner{
+  display:none;
+
+  margin-bottom:12px;
+
+  padding:9px 11px;
+
+  border-radius:10px;
+
+  background:#eff6ff;
+
+  border:1px solid #bfdbfe;
+
+  color:#1d4ed8;
+
+  font-weight:800;
+}
+
+@media(max-width:900px){
+
+  .profile-grid{
+    grid-template-columns:1fr;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+  }
+
+  .profiles-table{
+    min-width:700px;
+  }
+
+}
+
+</style>
+
+
+<div class="page-head">
+
+  <div>
+
+    <h1>
+      {{ _('vehicle_profiles') }}
+    </h1>
+
+    <p>
+      {{ _('vehicle_profiles_subtitle') }}
+    </p>
+
+  </div>
+
+</div>
+
+
+<div class="profile-grid">
+
+
+<!-- ========================================================
+     FORM
+======================================================== -->
+
+<section class="card">
+
+<h3>
+  {{ _('vehicle_profile_form_title') }}
+</h3>
+
+
+<div
+  id="editBanner"
+  class="edit-banner"
+>
+  {{ _('editing_vehicle_profile') }}
+</div>
+
+
+<form
+  class="profile-form"
+  method="post"
+  action="/vehicle-profiles/save"
+  id="profileForm"
+>
+
+
+<label>
+  {{ _('vehicle_type') }}
+</label>
+
+<input
+  id="profileVehicleType"
+  name="vehicle_type"
+  type="text"
+  required
+  autocomplete="off"
+  placeholder="{{ _('vehicle_type_placeholder') }}"
+>
+
+
+<label>
+  {{ _('weighing_fee') }}
+</label>
+
+<div class="field-unit">
+
+  <input
+    id="profileFee"
+    name="weighing_fee"
+    type="number"
+    min="0"
+    step="1"
+    inputmode="decimal"
+    placeholder="0"
+  >
+
+  <span class="unit">
+    {{ _('rial') }}
+  </span>
+
+</div>
+
+
+<label>
+  {{ _('vehicle_weight') }}
+</label>
+
+<div class="field-unit">
+
+  <input
+    id="profileWeight"
+    name="vehicle_weight"
+    type="number"
+    min="0"
+    step="0.01"
+    inputmode="decimal"
+    placeholder="0"
+  >
+
+  <span class="unit">
+    kg
+  </span>
+
+</div>
+
+
+<button
+  class="btn primary save-profile"
+  type="submit"
+>
+  {{ _('save_vehicle_profile') }}
+</button>
+
+
+<button
+  id="cancelEdit"
+  class="btn save-profile"
+  type="button"
+  style="display:none;"
+>
+  {{ _('cancel_edit') }}
+</button>
+
+
+</form>
+
+
+<div class="profile-note">
+
+  {{ _('vehicle_profile_note') }}
+
+</div>
+
+</section>
+
+
+<!-- ========================================================
+     LIST
+======================================================== -->
+
+<section class="card">
+
+<h3>
+  {{ _('saved_vehicle_profiles') }}
+</h3>
+
+
+<div class="table-wrap">
+
+<table class="profiles-table">
+
+
+<thead>
+
+<tr>
+
+  <th>
+    {{ _('vehicle_type') }}
+  </th>
+
+  <th>
+    {{ _('weighing_fee') }}
+  </th>
+
+  <th>
+    {{ _('vehicle_weight') }}
+  </th>
+
+  <th>
+    {{ _('last_update') }}
+  </th>
+
+  <th>
+    {{ _('actions') }}
+  </th>
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+
+{% for p in profiles %}
+
+<tr>
+
+
+<td>
+
+  <strong>
+    {{ p.vehicle_type }}
+  </strong>
+
+</td>
+
+
+<td>
+
+{% if p.weighing_fee is not none %}
+
+  <span class="money">
+
+    {% if p.weighing_fee == p.weighing_fee|int %}
+
+      {{ "{:,}".format(p.weighing_fee|int) }}
+
+    {% else %}
+
+      {{ p.weighing_fee }}
+
+    {% endif %}
+
+    {{ _('rial') }}
+
+  </span>
+
+{% else %}
+
+  —
+
+{% endif %}
+
+</td>
+
+
+<td>
+
+{% if p.vehicle_weight is not none %}
+
+  <span class="number">
+
+    {% if p.vehicle_weight == p.vehicle_weight|int %}
+
+      {{ p.vehicle_weight|int }}
+
+    {% else %}
+
+      {{ p.vehicle_weight }}
+
+    {% endif %}
+
+    kg
+
+  </span>
+
+{% else %}
+
+  —
+
+{% endif %}
+
+</td>
+
+
+<td class="number">
+
+  {{ (p.updated_at|string)[:19].replace('T',' ') }}
+
+</td>
+
+
+<td>
+
+<div class="profile-actions">
+
+
+<button
+  class="btn edit-btn"
+  type="button"
+
+  data-type="{{ p.vehicle_type }}"
+
+  data-fee="{% if p.weighing_fee is not none %}{{ p.weighing_fee }}{% endif %}"
+
+  data-weight="{% if p.vehicle_weight is not none %}{{ p.vehicle_weight }}{% endif %}"
+>
+
+  {{ _('edit') }}
+
+</button>
+
+
+<form
+  method="post"
+
+  action="/vehicle-profiles/{{ p.id }}/delete"
+
+  onsubmit="return confirm({{ _('confirm_delete_vehicle_profile')|tojson }});"
+>
+
+  <button
+    class="btn delete-profile"
+    type="submit"
+  >
+    {{ _('delete') }}
+  </button>
+
+</form>
+
+
+</div>
+
+</td>
+
+
+</tr>
+
+
+{% else %}
+
+
+<tr>
+
+<td
+  colspan="5"
+  class="empty-profiles"
+>
+
+  {{ _('no_vehicle_profiles') }}
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+</div>
+
+</section>
+
+
+</div>
+
+
+<script>
+
+document.addEventListener(
+  'DOMContentLoaded',
+  () => {
+
+    const typeInput =
+      document.getElementById(
+        'profileVehicleType'
+      );
+
+    const feeInput =
+      document.getElementById(
+        'profileFee'
+      );
+
+    const weightInput =
+      document.getElementById(
+        'profileWeight'
+      );
+
+    const banner =
+      document.getElementById(
+        'editBanner'
+      );
+
+    const cancel =
+      document.getElementById(
+        'cancelEdit'
+      );
+
+
+    function resetEdit(){
+
+      typeInput.value = '';
+      feeInput.value = '';
+      weightInput.value = '';
+
+      banner.style.display =
+        'none';
+
+      cancel.style.display =
+        'none';
+
+      typeInput.focus();
+
+    }
+
+
+    document
+      .querySelectorAll(
+        '.edit-btn'
+      )
+      .forEach(
+        button => {
+
+          button.addEventListener(
+            'click',
+            () => {
+
+              typeInput.value =
+                button.dataset.type
+                || '';
+
+              feeInput.value =
+                button.dataset.fee
+                || '';
+
+              weightInput.value =
+                button.dataset.weight
+                || '';
+
+              banner.style.display =
+                'block';
+
+              cancel.style.display =
+                'block';
+
+              window.scrollTo({
+                top:0,
+                behavior:'smooth'
+              });
+
+              typeInput.focus();
+
+            }
+          );
+
+        }
+      );
+
+
+    cancel.addEventListener(
+      'click',
+      resetEdit
+    );
+
+  }
+);
+
+</script>
+
+
+{% endblock %}

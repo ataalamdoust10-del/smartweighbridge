@@ -1,37 +1,127 @@
 <!doctype html>
-<html lang="{{ request.state.lang }}" dir="{{ request.state.dir }}">
+
+<html
+  lang="{{ request.state.lang }}"
+  dir="{{ request.state.dir }}"
+>
+
 <head>
+
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{{ _('app_name') }}{% endblock %}</title>
-  <link rel="stylesheet" href="/static/style.css">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>
+    {% block title %}
+      {{ _('app_name') }}
+    {% endblock %}
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="/static/style.css"
+  >
+
 </head>
 
-<body>
-<header class="topbar">
-  <div class="brand">{{ _('app_name') }}</div>
 
-  <div style="display:flex; align-items:center; gap:14px;">
+<body>
+
+
+<header class="topbar">
+
+  <div class="brand">
+    {{ _('app_name') }}
+  </div>
+
+
+  <div
+    style="
+      display:flex;
+      align-items:center;
+      gap:14px;
+    "
+  >
+
+
+    <!-- Languages -->
+
     <div class="lang-switch">
-      <a href="/lang/fa" title="فارسی">FA</a>
-      <a href="/lang/en" title="English">EN</a>
-      <a href="/lang/hy" title="Հայերեն">HY</a>
+
+      <a
+        href="/lang/fa"
+        title="فارسی"
+      >
+        FA
+      </a>
+
+      <a
+        href="/lang/en"
+        title="English"
+      >
+        EN
+      </a>
+
+      <a
+        href="/lang/hy"
+        title="Հայերեն"
+      >
+        HY
+      </a>
+
     </div>
 
+
     {% if user %}
+
     <nav>
-      <a href="/dashboard">{{ _('dashboard') }}</a>
-      <a href="/weigh">{{ _('weigh') }}</a>
-      <a href="/records">{{ _('records') }}</a>
-      <a href="/device">{{ _('device') }}</a>
-      <a href="/logout">{{ _('logout') }}</a>
+
+      <a href="/dashboard">
+        {{ _('dashboard') }}
+      </a>
+
+      <a href="/weigh">
+        {{ _('weigh') }}
+      </a>
+
+      <a href="/records">
+        {{ _('records') }}
+      </a>
+
+      <!-- Vehicle tariffs -->
+      <a href="/vehicle-profiles">
+        {{ _('vehicle_profiles') }}
+      </a>
+
+      <a href="/device">
+        {{ _('device') }}
+      </a>
+
+      <a href="/logout">
+        {{ _('logout') }}
+      </a>
+
     </nav>
+
     {% endif %}
+
+
   </div>
+
 </header>
 
+
 <main class="container">
-  {% block content %}{% endblock %}
+
+  {% block content %}
+  {% endblock %}
+
 </main>
+
+
 </body>
+
 </html>

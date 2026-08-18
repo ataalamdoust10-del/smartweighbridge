@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('weigh') }}{% endblock %}
+{% block title %}
+{{ _('weigh') }}
+{% endblock %}
 
 {% block content %}
 
@@ -20,11 +22,17 @@
   --shadow:0 10px 30px rgba(16,24,40,.08);
 }
 
-body{background:var(--bg);}
-.container{padding-top:28px;padding-bottom:40px;}
+body{
+  background:var(--bg);
+}
+
+.container{
+  padding-top:28px;
+  padding-bottom:40px;
+}
 
 .card{
-  background:#fff;
+  background:var(--card);
   border:1px solid var(--border);
   border-radius:var(--radius);
   box-shadow:var(--shadow);
@@ -47,6 +55,11 @@ body{background:var(--bg);}
   color:var(--muted);
   margin:8px 0 0;
 }
+
+
+/* =========================================================
+   MODE
+========================================================= */
 
 .mode-box{
   display:grid;
@@ -74,7 +87,6 @@ body{background:var(--bg);}
   cursor:pointer;
   text-align:center;
   font-weight:900;
-  transition:.15s ease;
 }
 
 .mode-option input:checked + label{
@@ -90,6 +102,11 @@ body{background:var(--bg);}
   color:#667085;
   margin-top:5px;
 }
+
+
+/* =========================================================
+   FORM
+========================================================= */
 
 form label{
   display:block;
@@ -126,6 +143,70 @@ form textarea:focus{
   gap:12px;
 }
 
+.vehicle-profile-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
+  margin-top:8px;
+}
+
+.field-unit{
+  position:relative;
+}
+
+.field-unit input{
+  padding-inline-end:70px!important;
+}
+
+.field-unit .unit{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  inset-inline-end:13px;
+  color:#667085;
+  font-size:12px;
+  pointer-events:none;
+}
+
+.profile-suggestion{
+  display:none;
+  margin-top:9px;
+  padding:10px 12px;
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  border-radius:12px;
+  color:#344054;
+  font-size:13px;
+  line-height:1.8;
+}
+
+.profile-suggestion strong{
+  color:#1d4ed8;
+}
+
+.suggestion-values{
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  margin-top:5px;
+}
+
+.use-profile{
+  margin-top:8px;
+}
+
+.profile-memory-note{
+  margin-top:7px;
+  color:#98a2b3;
+  font-size:11.5px;
+  line-height:1.6;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
 .btn{
   border:1px solid var(--border);
   background:#f2f4f7;
@@ -160,70 +241,10 @@ form textarea:focus{
   flex-wrap:wrap;
 }
 
-.scale-box{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:10px;
-  text-align:center;
-  padding:18px 10px;
-}
 
-#liveWeight{
-  font-size:64px;
-  line-height:1;
-  direction:ltr;
-}
-
-.scale-box>span{
-  color:var(--muted);
-  font-weight:800;
-}
-
-.scale-box b{
-  color:var(--muted);
-  font-size:18px;
-}
-
-#stable{
-  padding:8px 12px;
-  border-radius:999px;
-  font-weight:900;
-}
-
-#stable.stable{
-  background:#ecfdf3;
-  border:1px solid #abefc6;
-}
-
-#stable.unstable{
-  background:#fffaeb;
-  border:1px solid #fedf89;
-}
-
-.conn{
-  padding:8px 12px;
-  background:#f2f4f7;
-  border-radius:999px;
-  color:#667085;
-  font-size:13px;
-}
-
-.dot{
-  width:10px;
-  height:10px;
-  display:inline-block;
-  border-radius:50%;
-  margin-inline-end:6px;
-}
-
-.dot.ok{background:#16a34a;}
-.dot.bad{background:#f59e0b;}
-
-
-/* ============================
+/* =========================================================
    PLATE
-============================ */
+========================================================= */
 
 .iran-plate{
   direction:ltr;
@@ -321,85 +342,79 @@ form textarea:focus{
 }
 
 
-/* ============================
-   WAITING SECOND
-============================ */
+/* =========================================================
+   LIVE SCALE
+========================================================= */
 
-.waiting-section{
-  margin-top:22px;
-}
-
-.waiting-head{
+.scale-box{
   display:flex;
-  justify-content:space-between;
+  flex-direction:column;
   align-items:center;
-  gap:12px;
-  margin-bottom:12px;
-}
-
-.waiting-head h2{
-  margin:0;
-  font-size:22px;
-}
-
-.waiting-list{
-  display:grid;
-  gap:12px;
-}
-
-.waiting-item{
-  display:grid;
-  grid-template-columns:1fr auto;
-  gap:14px;
-  align-items:center;
-  border:1px solid #fedf89;
-  background:#fffcf5;
-  border-radius:14px;
-  padding:14px;
-}
-
-.waiting-main{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px 20px;
-  align-items:center;
-}
-
-.waiting-ticket{
-  color:#2563eb;
-  font-weight:900;
-}
-
-.waiting-plate{
-  direction:ltr;
-  font-weight:900;
-  unicode-bidi:embed;
-}
-
-.waiting-weight{
-  direction:ltr;
-  font-weight:900;
-}
-
-.waiting-time{
-  color:#667085;
-  font-size:12px;
-}
-
-.second-btn{
-  background:#16a34a!important;
-  color:#fff!important;
-  border-color:#16a34a!important;
-  white-space:nowrap;
-}
-
-.empty-waiting{
-  padding:18px;
-  color:#667085;
+  gap:10px;
   text-align:center;
-  border:1px dashed #d0d5dd;
-  border-radius:12px;
+  padding:18px 10px;
 }
+
+#liveWeight{
+  font-size:64px;
+  line-height:1;
+  direction:ltr;
+}
+
+.scale-box>span{
+  color:var(--muted);
+  font-weight:800;
+}
+
+.scale-box b{
+  color:var(--muted);
+  font-size:18px;
+}
+
+#stable{
+  padding:8px 12px;
+  border-radius:999px;
+  font-weight:900;
+}
+
+#stable.stable{
+  background:#ecfdf3;
+  border:1px solid #abefc6;
+}
+
+#stable.unstable{
+  background:#fffaeb;
+  border:1px solid #fedf89;
+}
+
+.conn{
+  padding:8px 12px;
+  background:#f2f4f7;
+  border-radius:999px;
+  color:#667085;
+  font-size:13px;
+}
+
+.dot{
+  width:10px;
+  height:10px;
+  display:inline-block;
+  border-radius:50%;
+  margin-inline-end:6px;
+}
+
+.dot.ok{
+  background:#16a34a;
+}
+
+.dot.bad{
+  background:#f59e0b;
+}
+
+
+/* =========================================================
+   PHOTOS
+========================================================= */
 
 .photo-preview{
   display:grid;
@@ -437,6 +452,90 @@ form textarea:focus{
   line-height:1.8;
 }
 
+
+/* =========================================================
+   WAITING SECOND
+========================================================= */
+
+.waiting-section{
+  margin-top:22px;
+}
+
+.waiting-head{
+  margin-bottom:12px;
+}
+
+.waiting-head h2{
+  margin:0 0 5px;
+  font-size:22px;
+}
+
+.waiting-list{
+  display:grid;
+  gap:12px;
+}
+
+.waiting-item{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:14px;
+  align-items:center;
+  border:1px solid #fedf89;
+  background:#fffcf5;
+  border-radius:14px;
+  padding:14px;
+}
+
+.waiting-main{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 20px;
+  align-items:center;
+}
+
+.waiting-ticket{
+  color:#2563eb;
+  font-weight:900;
+}
+
+.waiting-plate,
+.waiting-weight{
+  direction:ltr;
+  unicode-bidi:embed;
+  font-weight:900;
+}
+
+.waiting-time{
+  color:#667085;
+  font-size:12px;
+}
+
+.second-btn{
+  background:#16a34a!important;
+  color:#fff!important;
+  border-color:#16a34a!important;
+  white-space:nowrap;
+}
+
+.empty-waiting{
+  padding:18px;
+  color:#667085;
+  text-align:center;
+  border:1px dashed #d0d5dd;
+  border-radius:12px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:900px){
+  .vehicle-profile-grid{
+    grid-template-columns:1fr;
+  }
+}
+
 @media(max-width:760px){
   .page-head{
     flex-direction:column;
@@ -450,10 +549,6 @@ form textarea:focus{
 
   .waiting-item{
     grid-template-columns:1fr;
-  }
-
-  .waiting-item form .btn{
-    width:100%;
   }
 
   .iran-plate{
@@ -497,609 +592,717 @@ form textarea:focus{
   enctype="multipart/form-data"
 >
 
-  <!-- ===============================
-       WEIGHING MODE
-  ================================ -->
 
-  <label>
-    {{ _('weighing_mode') }}
-  </label>
+<!-- ======================================================
+     MODE
+====================================================== -->
 
-  <div class="mode-box">
+<label>
+  {{ _('weighing_mode') }}
+</label>
 
-    <div class="mode-option">
+<div class="mode-box">
 
-      <input
-        id="modeSingle"
-        type="radio"
-        name="weighing_mode"
-        value="SINGLE"
-        checked
-      >
-
-      <label for="modeSingle">
-
-        {{ _('single_weigh') }}
-
-        <span class="mode-desc">
-          {{ _('single_weigh_help') }}
-        </span>
-
-      </label>
-
-    </div>
-
-
-    <div class="mode-option">
-
-      <input
-        id="modeDouble"
-        type="radio"
-        name="weighing_mode"
-        value="DOUBLE"
-      >
-
-      <label for="modeDouble">
-
-        {{ _('double_weigh') }}
-
-        <span class="mode-desc">
-          {{ _('double_weigh_help') }}
-        </span>
-
-      </label>
-
-    </div>
-
-  </div>
-
-
-  <!-- ===============================
-       PLATE
-  ================================ -->
-
-  <label>
-    {{ _('truck_plate') }}
-  </label>
-
-  <input
-    type="hidden"
-    id="plateInput"
-    name="plate"
-  >
-
-
-  <div class="iran-plate">
-
-    <div class="plate-iran">
-
-      <div class="plate-flag"></div>
-
-      <div class="plate-ir">
-        I.R.
-      </div>
-
-      <div class="plate-country">
-        IRAN
-      </div>
-
-    </div>
-
-
-    <div class="plate-cell">
-
-      <input
-        id="plateTwo"
-        type="text"
-        inputmode="numeric"
-        maxlength="2"
-        placeholder="12"
-        autocomplete="off"
-      >
-
-    </div>
-
-
-    <div class="plate-cell">
-
-      <select id="plateLetter">
-
-        <option value="">
-          {{ _('plate_letter') }}
-        </option>
-
-        <option value="ب">ب</option>
-        <option value="ج">ج</option>
-        <option value="د">د</option>
-        <option value="س">س</option>
-        <option value="ص">ص</option>
-        <option value="ط">ط</option>
-        <option value="ق">ق</option>
-        <option value="ل">ل</option>
-        <option value="م">م</option>
-        <option value="ن">ن</option>
-        <option value="و">و</option>
-        <option value="هـ">هـ</option>
-        <option value="ی">ی</option>
-        <option value="ع">ع</option>
-        <option value="ت">ت</option>
-        <option value="الف">الف</option>
-        <option value="پ">پ</option>
-        <option value="ث">ث</option>
-        <option value="ز">ز</option>
-        <option value="ف">ف</option>
-        <option value="ک">ک</option>
-        <option value="گ">گ</option>
-
-      </select>
-
-    </div>
-
-
-    <div class="plate-cell">
-
-      <input
-        id="plateThree"
-        type="text"
-        inputmode="numeric"
-        maxlength="3"
-        placeholder="365"
-        autocomplete="off"
-      >
-
-    </div>
-
-
-    <div class="plate-cell plate-city">
-
-      <span class="plate-city-label">
-        ایران
-      </span>
-
-      <input
-        id="plateCity"
-        type="text"
-        inputmode="numeric"
-        maxlength="2"
-        placeholder="11"
-        autocomplete="off"
-      >
-
-    </div>
-
-  </div>
-
-
-  <div
-    id="plateError"
-    class="plate-error"
-  >
-    {{ _('plate_incomplete') }}
-  </div>
-
-
-  <!-- ===============================
-       CURRENT WEIGHT
-  ================================ -->
-
-  <label>
-    {{ _('weight_kg') }}
-  </label>
-
-  <input
-    id="weightInput"
-    name="weight"
-    type="number"
-    step="0.01"
-    value="{{ state.weight }}"
-    readonly
-    dir="ltr"
-    style="text-align:left"
-  >
-
-
-  <div class="mini-actions">
-
-    <button
-      class="btn"
-      type="button"
-      id="copyScaleBtn"
-    >
-      {{ _('copy_scale_weight') }}
-    </button>
-
-
-    <button
-      class="btn"
-      type="button"
-      id="clearFormBtn"
-    >
-      {{ _('clear_form') }}
-    </button>
-
-  </div>
-
-
-  <!-- ===============================
-       EXTRA INFORMATION
-  ================================ -->
-
-  <div class="form-grid">
-
-    <div>
-
-      <label>
-        {{ _('vehicle_type') }}
-      </label>
-
-      <input
-        type="text"
-        name="vehicle_type"
-        placeholder="{{ _('vehicle_type_placeholder') }}"
-      >
-
-    </div>
-
-
-    <div>
-
-      <label>
-        {{ _('driver_name') }}
-      </label>
-
-      <input
-        type="text"
-        name="driver_name"
-        placeholder="{{ _('driver_name_placeholder') }}"
-      >
-
-    </div>
-
-
-    <div>
-
-      <label>
-        {{ _('driver_phone') }}
-      </label>
-
-      <input
-        type="tel"
-        name="driver_phone"
-        placeholder="{{ _('driver_phone_placeholder') }}"
-        dir="ltr"
-      >
-
-    </div>
-
-
-    <div>
-
-      <label>
-        {{ _('cargo_type') }}
-      </label>
-
-      <input
-        type="text"
-        name="cargo_type"
-        placeholder="{{ _('cargo_type_placeholder') }}"
-      >
-
-    </div>
-
-
-    <div>
-
-      <label>
-        {{ _('cargo_owner') }}
-      </label>
-
-      <input
-        type="text"
-        name="cargo_owner"
-        placeholder="{{ _('cargo_owner_placeholder') }}"
-      >
-
-    </div>
-
-
-    <div>
-
-      <label>
-        {{ _('origin') }}
-      </label>
-
-      <input
-        type="text"
-        name="origin"
-        placeholder="{{ _('origin_placeholder') }}"
-      >
-
-    </div>
-
-
-    <div>
-
-      <label>
-        {{ _('destination') }}
-      </label>
-
-      <input
-        type="text"
-        name="destination"
-        placeholder="{{ _('destination_placeholder') }}"
-      >
-
-    </div>
-
-
-    <div>
-
-      <label>
-        {{ _('document_no') }}
-      </label>
-
-      <input
-        type="text"
-        name="document_no"
-        placeholder="{{ _('document_no_placeholder') }}"
-      >
-
-    </div>
-
-  </div>
-
-
-  <label>
-    {{ _('notes') }}
-  </label>
-
-  <textarea
-    name="notes"
-    rows="3"
-    placeholder="{{ _('notes_placeholder') }}"
-  ></textarea>
-
-
-  <!-- ===============================
-       PHOTOS
-  ================================ -->
-
-  <label>
-    {{ _('truck_photo') }}
-  </label>
-
-  <div id="photosWrap">
+  <div class="mode-option">
 
     <input
-      class="photo-input"
-      type="file"
-      name="photo"
-      accept="image/*"
-      capture="environment"
+      id="modeSingle"
+      type="radio"
+      name="weighing_mode"
+      value="SINGLE"
+      checked
+    >
+
+    <label for="modeSingle">
+
+      {{ _('single_weigh') }}
+
+      <span class="mode-desc">
+        {{ _('single_weigh_help') }}
+      </span>
+
+    </label>
+
+  </div>
+
+
+  <div class="mode-option">
+
+    <input
+      id="modeDouble"
+      type="radio"
+      name="weighing_mode"
+      value="DOUBLE"
+    >
+
+    <label for="modeDouble">
+
+      {{ _('double_weigh') }}
+
+      <span class="mode-desc">
+        {{ _('double_weigh_help') }}
+      </span>
+
+    </label>
+
+  </div>
+
+</div>
+
+
+<!-- ======================================================
+     PLATE
+====================================================== -->
+
+<label>
+  {{ _('truck_plate') }}
+</label>
+
+<input
+  type="hidden"
+  id="plateInput"
+  name="plate"
+>
+
+
+<div class="iran-plate">
+
+  <div class="plate-iran">
+
+    <div class="plate-flag"></div>
+
+    <div class="plate-ir">
+      I.R.
+    </div>
+
+    <div class="plate-country">
+      IRAN
+    </div>
+
+  </div>
+
+
+  <div class="plate-cell">
+
+    <input
+      id="plateTwo"
+      type="text"
+      inputmode="numeric"
+      maxlength="2"
+      placeholder="12"
+      autocomplete="off"
     >
 
   </div>
 
-  <div
-    id="photoPreview"
-    class="photo-preview"
-  ></div>
 
-  <p class="hint">
-    {{ _('hint_camera') }}
-  </p>
+  <div class="plate-cell">
+
+    <select id="plateLetter">
+
+      <option value="">
+        {{ _('plate_letter') }}
+      </option>
+
+      <option value="ب">ب</option>
+      <option value="ج">ج</option>
+      <option value="د">د</option>
+      <option value="س">س</option>
+      <option value="ص">ص</option>
+      <option value="ط">ط</option>
+      <option value="ق">ق</option>
+      <option value="ل">ل</option>
+      <option value="م">م</option>
+      <option value="ن">ن</option>
+      <option value="و">و</option>
+      <option value="هـ">هـ</option>
+      <option value="ی">ی</option>
+      <option value="ع">ع</option>
+      <option value="ت">ت</option>
+      <option value="الف">الف</option>
+      <option value="پ">پ</option>
+      <option value="ث">ث</option>
+      <option value="ز">ز</option>
+      <option value="ف">ف</option>
+      <option value="ک">ک</option>
+      <option value="گ">گ</option>
+
+    </select>
+
+  </div>
 
 
-  <!-- ===============================
-       SUBMIT
-  ================================ -->
+  <div class="plate-cell">
+
+    <input
+      id="plateThree"
+      type="text"
+      inputmode="numeric"
+      maxlength="3"
+      placeholder="365"
+      autocomplete="off"
+    >
+
+  </div>
+
+
+  <div class="plate-cell plate-city">
+
+    <span class="plate-city-label">
+      ایران
+    </span>
+
+    <input
+      id="plateCity"
+      type="text"
+      inputmode="numeric"
+      maxlength="2"
+      placeholder="11"
+      autocomplete="off"
+    >
+
+  </div>
+
+</div>
+
+
+<div
+  id="plateError"
+  class="plate-error"
+>
+  {{ _('plate_incomplete') }}
+</div>
+
+
+<!-- ======================================================
+     SCALE WEIGHT
+====================================================== -->
+
+<label>
+  {{ _('weight_kg') }}
+</label>
+
+<input
+  id="weightInput"
+  name="weight"
+  type="number"
+  step="0.01"
+  value="{{ state.weight }}"
+  readonly
+  dir="ltr"
+>
+
+
+<div class="mini-actions">
 
   <button
-    id="submitButton"
-    class="btn primary full"
-    type="submit"
+    class="btn"
+    type="button"
+    id="copyScaleBtn"
   >
-    {{ _('submit_single_weigh') }}
+    {{ _('copy_scale_weight') }}
   </button>
+
+  <button
+    class="btn"
+    type="button"
+    id="clearFormBtn"
+  >
+    {{ _('clear_form') }}
+  </button>
+
+</div>
+
+
+<!-- ======================================================
+     VEHICLE PROFILE
+====================================================== -->
+
+<div class="vehicle-profile-grid">
+
+
+  <div>
+
+    <label>
+      {{ _('vehicle_type') }}
+    </label>
+
+    <input
+      id="vehicleType"
+      type="text"
+      name="vehicle_type"
+      list="vehicleTypesList"
+      autocomplete="off"
+      placeholder="{{ _('vehicle_type_placeholder') }}"
+    >
+
+    <datalist id="vehicleTypesList">
+
+      {% for p in vehicle_profiles %}
+
+      <option value="{{ p.vehicle_type }}"></option>
+
+      {% endfor %}
+
+    </datalist>
+
+  </div>
+
+
+  <div>
+
+    <label>
+      {{ _('weighing_fee') }}
+    </label>
+
+    <div class="field-unit">
+
+      <input
+        id="weighingFee"
+        type="number"
+        name="weighing_fee"
+        min="0"
+        step="1"
+        inputmode="decimal"
+        placeholder="{{ _('weighing_fee_placeholder') }}"
+      >
+
+      <span class="unit">
+        {{ _('rial') }}
+      </span>
+
+    </div>
+
+  </div>
+
+
+  <div>
+
+    <label>
+      {{ _('vehicle_weight') }}
+    </label>
+
+    <div class="field-unit">
+
+      <input
+        id="vehicleWeight"
+        type="number"
+        name="vehicle_weight"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        placeholder="{{ _('vehicle_weight_placeholder') }}"
+      >
+
+      <span class="unit">
+        kg
+      </span>
+
+    </div>
+
+  </div>
+
+
+</div>
+
+
+<div
+  id="profileSuggestion"
+  class="profile-suggestion"
+>
+
+  <strong>
+    {{ _('previous_vehicle_profile') }}
+  </strong>
+
+  <div class="suggestion-values">
+
+    <span>
+      {{ _('weighing_fee') }}:
+      <b id="suggestedFee">—</b>
+      {{ _('rial') }}
+    </span>
+
+    <span>
+      {{ _('vehicle_weight') }}:
+      <b id="suggestedWeight">—</b>
+      kg
+    </span>
+
+  </div>
+
+  <button
+    id="useProfileButton"
+    class="btn use-profile"
+    type="button"
+  >
+    {{ _('use_previous_values') }}
+  </button>
+
+</div>
+
+
+<div class="profile-memory-note">
+  {{ _('vehicle_profile_auto_save_note') }}
+</div>
+
+
+<!-- ======================================================
+     OTHER INFORMATION
+====================================================== -->
+
+<div class="form-grid">
+
+
+  <div>
+
+    <label>
+      {{ _('driver_name') }}
+    </label>
+
+    <input
+      type="text"
+      name="driver_name"
+      placeholder="{{ _('driver_name_placeholder') }}"
+    >
+
+  </div>
+
+
+  <div>
+
+    <label>
+      {{ _('driver_phone') }}
+    </label>
+
+    <input
+      type="tel"
+      name="driver_phone"
+      dir="ltr"
+      placeholder="{{ _('driver_phone_placeholder') }}"
+    >
+
+  </div>
+
+
+  <div>
+
+    <label>
+      {{ _('cargo_type') }}
+    </label>
+
+    <input
+      type="text"
+      name="cargo_type"
+      placeholder="{{ _('cargo_type_placeholder') }}"
+    >
+
+  </div>
+
+
+  <div>
+
+    <label>
+      {{ _('cargo_owner') }}
+    </label>
+
+    <input
+      type="text"
+      name="cargo_owner"
+      placeholder="{{ _('cargo_owner_placeholder') }}"
+    >
+
+  </div>
+
+
+  <div>
+
+    <label>
+      {{ _('origin') }}
+    </label>
+
+    <input
+      type="text"
+      name="origin"
+      placeholder="{{ _('origin_placeholder') }}"
+    >
+
+  </div>
+
+
+  <div>
+
+    <label>
+      {{ _('destination') }}
+    </label>
+
+    <input
+      type="text"
+      name="destination"
+      placeholder="{{ _('destination_placeholder') }}"
+    >
+
+  </div>
+
+
+  <div>
+
+    <label>
+      {{ _('document_no') }}
+    </label>
+
+    <input
+      type="text"
+      name="document_no"
+      placeholder="{{ _('document_no_placeholder') }}"
+    >
+
+  </div>
+
+
+</div>
+
+
+<label>
+  {{ _('notes') }}
+</label>
+
+<textarea
+  name="notes"
+  rows="3"
+  placeholder="{{ _('notes_placeholder') }}"
+></textarea>
+
+
+<!-- ======================================================
+     PHOTOS
+====================================================== -->
+
+<label>
+  {{ _('truck_photo') }}
+</label>
+
+<div id="photosWrap">
+
+  <input
+    class="photo-input"
+    type="file"
+    name="photo"
+    accept="image/*"
+    capture="environment"
+  >
+
+</div>
+
+<div
+  id="photoPreview"
+  class="photo-preview"
+></div>
+
+<p class="hint">
+  {{ _('hint_camera') }}
+</p>
+
+
+<button
+  id="submitButton"
+  class="btn primary full"
+  type="submit"
+>
+  {{ _('submit_single_weigh') }}
+</button>
+
 
 </form>
 
 </section>
 
 
-<!-- ===============================
+<!-- ======================================================
      LIVE SCALE
-================================ -->
+====================================================== -->
 
 <section class="card">
 
-  <div class="scale-box">
+<div class="scale-box">
 
-    <span>
-      {{ _('current_scale_weight') }}
-    </span>
+  <span>
+    {{ _('current_scale_weight') }}
+  </span>
 
-    <strong id="liveWeight">
-      {{ state.weight }}
-    </strong>
+  <strong id="liveWeight">
+    {{ state.weight }}
+  </strong>
 
-    <b>kg</b>
-
-
-    <div
-      id="stable"
-      class="{{ 'stable' if state.stable else 'unstable' }}"
-    >
-      {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
-    </div>
+  <b>kg</b>
 
 
-    <small id="scaleStatus">
-      {{ _('scale') }}:
-      {{ state.scale_id or '' }}
-    </small>
-
-
-    <div
-      id="connStatus"
-      class="conn"
-    >
-      <span class="dot bad"></span>
-      {{ _('live_off') }}
-    </div>
-
+  <div
+    id="stable"
+    class="{{ 'stable' if state.stable else 'unstable' }}"
+  >
+    {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
   </div>
 
+
+  <small id="scaleStatus">
+    {{ _('scale') }}:
+    {{ state.scale_id or '' }}
+  </small>
+
+
+  <div
+    id="connStatus"
+    class="conn"
+  >
+    <span class="dot bad"></span>
+    {{ _('live_off') }}
+  </div>
+
+</div>
+
 </section>
+
 
 </div>
 
 
-<!-- ==========================================================
-     WAITING FOR SECOND WEIGH
-========================================================== -->
+<!-- ======================================================
+     WAITING FOR SECOND WEIGHT
+====================================================== -->
 
 <section class="card waiting-section">
 
-  <div class="waiting-head">
+<div class="waiting-head">
 
-    <div>
+  <h2>
+    {{ _('waiting_second_title') }}
+  </h2>
 
-      <h2>
-        {{ _('waiting_second_title') }}
-      </h2>
+  <div class="hint">
+    {{ _('waiting_second_help') }}
+  </div>
 
-      <div class="hint">
-        {{ _('waiting_second_help') }}
-      </div>
+</div>
 
-    </div>
+
+{% if waiting %}
+
+<div class="waiting-list">
+
+{% for item in waiting %}
+
+{% set r = item.row %}
+{% set pp = item.plate_parts %}
+
+<div class="waiting-item">
+
+  <div class="waiting-main">
+
+    <a
+      class="waiting-ticket"
+      href="/weighments/{{ r.ticket_number }}"
+    >
+      #{{ "%06d"|format(r.ticket_number) }}
+    </a>
+
+
+    <span class="waiting-plate">
+
+    {% if pp %}
+
+      {{ pp.first }}
+      {{ pp.letter }}
+      {{ pp.middle }}
+      -
+      {{ pp.city }}
+
+    {% else %}
+
+      {{ r.plate }}
+
+    {% endif %}
+
+    </span>
+
+
+    <span class="waiting-weight">
+
+      {{ _('first_weight') }}:
+
+      {% if r.first_weight == r.first_weight|int %}
+        {{ r.first_weight|int }}
+      {% else %}
+        {{ r.first_weight }}
+      {% endif %}
+
+      kg
+
+    </span>
+
+
+    {% if r.vehicle_type %}
+
+    <span>
+      {{ _('vehicle_type') }}:
+      <b>{{ r.vehicle_type }}</b>
+    </span>
+
+    {% endif %}
+
+
+    {% if r.first_weighed_at %}
+
+    <span class="waiting-time">
+      {{ (r.first_weighed_at|string)[:19].replace('T',' ') }}
+    </span>
+
+    {% endif %}
 
   </div>
 
 
-  {% if waiting %}
+  <form
+    method="post"
+    action="/weighments/{{ r.ticket_number }}/second-weigh"
+    onsubmit="return confirm({{ _('confirm_second_weigh')|tojson }});"
+  >
 
-  <div class="waiting-list">
+    <button
+      class="btn second-btn"
+      type="submit"
+    >
+      {{ _('register_second_weight') }}
+    </button>
 
-    {% for item in waiting %}
+  </form>
 
-    {% set r = item.row %}
-    {% set pp = item.plate_parts %}
+</div>
 
-    <div class="waiting-item">
+{% endfor %}
 
-      <div class="waiting-main">
-
-        <a
-          class="waiting-ticket"
-          href="/weighments/{{ r.ticket_number }}"
-        >
-          #{{ "%06d"|format(r.ticket_number) }}
-        </a>
-
-
-        <span class="waiting-plate">
-
-          {% if pp %}
-
-            {{ pp.first }}
-            {{ pp.letter }}
-            {{ pp.middle }}
-            -
-            {{ pp.city }}
-
-          {% else %}
-
-            {{ r.plate }}
-
-          {% endif %}
-
-        </span>
+</div>
 
 
-        <span class="waiting-weight">
+{% else %}
 
-          {{ _('first_weight') }}:
+<div class="empty-waiting">
+  {{ _('no_waiting_second') }}
+</div>
 
-          {% if r.first_weight == r.first_weight|int %}
-
-            {{ r.first_weight|int }}
-
-          {% else %}
-
-            {{ r.first_weight }}
-
-          {% endif %}
-
-          kg
-
-        </span>
-
-
-        {% if r.driver_name %}
-
-        <span>
-          {{ _('driver_name') }}:
-          <b>{{ r.driver_name }}</b>
-        </span>
-
-        {% endif %}
-
-
-        {% if r.first_weighed_at %}
-
-        <span class="waiting-time">
-
-          {{ (r.first_weighed_at|string)[:19].replace('T',' ') }}
-
-        </span>
-
-        {% endif %}
-
-      </div>
-
-
-      <form
-        method="post"
-        action="/weighments/{{ r.ticket_number }}/second-weigh"
-        onsubmit="return confirm({{ _('confirm_second_weigh')|tojson }});"
-      >
-
-        <button
-          class="btn second-btn"
-          type="submit"
-        >
-          {{ _('register_second_weight') }}
-        </button>
-
-      </form>
-
-    </div>
-
-    {% endfor %}
-
-  </div>
-
-
-  {% else %}
-
-  <div class="empty-waiting">
-
-    {{ _('no_waiting_second') }}
-
-  </div>
-
-  {% endif %}
+{% endif %}
 
 </section>
 
 
 <script>
-
 document.addEventListener(
   'DOMContentLoaded',
   () => {
+
+    /* =====================================================
+       ELEMENTS
+    ===================================================== */
 
     const form =
       document.getElementById('weighForm');
@@ -1122,22 +1325,35 @@ document.addEventListener(
     const plateError =
       document.getElementById('plateError');
 
-    const modeSingle =
-      document.getElementById('modeSingle');
 
-    const modeDouble =
-      document.getElementById('modeDouble');
+    const vehicleType =
+      document.getElementById('vehicleType');
 
-    const submitButton =
-      document.getElementById('submitButton');
+    const weighingFee =
+      document.getElementById('weighingFee');
+
+    const vehicleWeight =
+      document.getElementById('vehicleWeight');
+
+    const profileSuggestion =
+      document.getElementById('profileSuggestion');
+
+    const suggestedFee =
+      document.getElementById('suggestedFee');
+
+    const suggestedWeight =
+      document.getElementById('suggestedWeight');
+
+    const useProfileButton =
+      document.getElementById('useProfileButton');
 
 
-    const SINGLE_BUTTON =
-      {{ _('submit_single_weigh')|tojson|safe }};
+    let currentSuggestion = null;
 
-    const FIRST_BUTTON =
-      {{ _('submit_first_weight')|tojson|safe }};
 
+    /* =====================================================
+       NUMBER NORMALIZATION
+    ===================================================== */
 
     function normalizeDigits(
       value,
@@ -1189,6 +1405,10 @@ document.addEventListener(
     }
 
 
+    /* =====================================================
+       PLATE
+    ===================================================== */
+
     function updatePlate(){
 
       plateInput.value =
@@ -1212,10 +1432,11 @@ document.addEventListener(
         &&
         plateCity.value.length === 2
       );
+
     }
 
 
-    function numericField(
+    function numericPlateField(
       input,
       length,
       next
@@ -1242,22 +1463,23 @@ document.addEventListener(
 
         }
       );
+
     }
 
 
-    numericField(
+    numericPlateField(
       plateTwo,
       2,
       plateLetter
     );
 
-    numericField(
+    numericPlateField(
       plateThree,
       3,
       plateCity
     );
 
-    numericField(
+    numericPlateField(
       plateCity,
       2,
       null
@@ -1280,21 +1502,33 @@ document.addEventListener(
     );
 
 
+    /* =====================================================
+       MODE
+    ===================================================== */
+
+    const modeSingle =
+      document.getElementById('modeSingle');
+
+    const modeDouble =
+      document.getElementById('modeDouble');
+
+    const submitButton =
+      document.getElementById('submitButton');
+
+
+    const SINGLE_BUTTON =
+      {{ _('submit_single_weigh')|tojson|safe }};
+
+    const FIRST_BUTTON =
+      {{ _('submit_first_weight')|tojson|safe }};
+
+
     function updateMode(){
 
-      if(
+      submitButton.textContent =
         modeDouble.checked
-      ){
-
-        submitButton.textContent =
-          FIRST_BUTTON;
-
-      }else{
-
-        submitButton.textContent =
-          SINGLE_BUTTON;
-
-      }
+        ? FIRST_BUTTON
+        : SINGLE_BUTTON;
 
     }
 
@@ -1311,6 +1545,192 @@ document.addEventListener(
 
     updateMode();
 
+
+    /* =====================================================
+       VEHICLE PROFILE MEMORY
+    ===================================================== */
+
+    function displayNumber(value){
+
+      if(
+        value === null
+        || value === undefined
+        || value === ''
+      ){
+        return '—';
+      }
+
+      const n = Number(value);
+
+      if(
+        Number.isFinite(n)
+      ){
+        return n.toLocaleString('en-US');
+      }
+
+      return value;
+    }
+
+
+    async function loadVehicleProfile(){
+
+      const type =
+        vehicleType.value.trim();
+
+      if(!type){
+
+        currentSuggestion = null;
+
+        profileSuggestion.style.display =
+          'none';
+
+        return;
+      }
+
+
+      try{
+
+        const response =
+          await fetch(
+            '/api/vehicle-profile?vehicle_type='
+            + encodeURIComponent(type),
+            {
+              cache:'no-store'
+            }
+          );
+
+        const data =
+          await response.json();
+
+
+        if(!data.found){
+
+          currentSuggestion = null;
+
+          profileSuggestion.style.display =
+            'none';
+
+          return;
+        }
+
+
+        currentSuggestion = data;
+
+
+        suggestedFee.textContent =
+          displayNumber(
+            data.weighing_fee
+          );
+
+
+        suggestedWeight.textContent =
+          displayNumber(
+            data.vehicle_weight
+          );
+
+
+        /*
+          علاوه بر کادر پیشنهاد، مقدار قبلی را به صورت
+          placeholder کم‌رنگ روی خود input نشان می‌دهیم.
+          اگر کاربر چیزی تایپ کرده باشد، آن را تغییر نمی‌دهیم.
+        */
+
+        if(
+          data.weighing_fee !== null
+          && data.weighing_fee !== undefined
+        ){
+          weighingFee.placeholder =
+            String(data.weighing_fee);
+        }
+
+
+        if(
+          data.vehicle_weight !== null
+          && data.vehicle_weight !== undefined
+        ){
+          vehicleWeight.placeholder =
+            String(data.vehicle_weight);
+        }
+
+
+        profileSuggestion.style.display =
+          'block';
+
+      }
+      catch(error){
+
+        currentSuggestion = null;
+
+        profileSuggestion.style.display =
+          'none';
+
+      }
+
+    }
+
+
+    let profileTimer = null;
+
+
+    vehicleType.addEventListener(
+      'input',
+      () => {
+
+        clearTimeout(
+          profileTimer
+        );
+
+        profileTimer =
+          setTimeout(
+            loadVehicleProfile,
+            300
+          );
+
+      }
+    );
+
+
+    vehicleType.addEventListener(
+      'change',
+      loadVehicleProfile
+    );
+
+
+    useProfileButton.addEventListener(
+      'click',
+      () => {
+
+        if(
+          !currentSuggestion
+        ){
+          return;
+        }
+
+
+        if(
+          currentSuggestion.weighing_fee !== null
+          && currentSuggestion.weighing_fee !== undefined
+        ){
+          weighingFee.value =
+            currentSuggestion.weighing_fee;
+        }
+
+
+        if(
+          currentSuggestion.vehicle_weight !== null
+          && currentSuggestion.vehicle_weight !== undefined
+        ){
+          vehicleWeight.value =
+            currentSuggestion.vehicle_weight;
+        }
+
+      }
+    );
+
+
+    /* =====================================================
+       SUBMIT
+    ===================================================== */
 
     form.addEventListener(
       'submit',
@@ -1338,9 +1758,9 @@ document.addEventListener(
     );
 
 
-    /* ============================
-       LIVE WEIGHT
-    ============================ */
+    /* =====================================================
+       LIVE SCALE
+    ===================================================== */
 
     const liveWeight =
       document.getElementById('liveWeight');
@@ -1389,14 +1809,14 @@ document.addEventListener(
         const data =
           await response.json();
 
-        const weight =
+        const w =
           data.weight ?? 0;
 
         liveWeight.textContent =
-          String(weight);
+          String(w);
 
         weightInput.value =
-          String(weight);
+          String(w);
 
         scaleStatus.textContent =
           SCALE_TEXT
@@ -1406,9 +1826,8 @@ document.addEventListener(
               ?? ''
             );
 
-        if(
-          data.stable
-        ){
+
+        if(data.stable){
 
           stable.className =
             'stable';
@@ -1427,6 +1846,7 @@ document.addEventListener(
             + WAITING_TEXT;
 
         }
+
 
         connStatus.innerHTML =
           '<span class="dot ok"></span>'
@@ -1452,14 +1872,12 @@ document.addEventListener(
     );
 
 
-    /* ============================
-       CLEAR
-    ============================ */
+    /* =====================================================
+       CLEAR FORM
+    ===================================================== */
 
     const clearButton =
-      document.getElementById(
-        'clearFormBtn'
-      );
+      document.getElementById('clearFormBtn');
 
     clearButton.addEventListener(
       'click',
@@ -1472,41 +1890,49 @@ document.addEventListener(
         plateError.style.display =
           'none';
 
+        currentSuggestion = null;
+
+        profileSuggestion.style.display =
+          'none';
+
+        weighingFee.placeholder =
+          {{ _('weighing_fee_placeholder')|tojson|safe }};
+
+        vehicleWeight.placeholder =
+          {{ _('vehicle_weight_placeholder')|tojson|safe }};
+
         updateMode();
 
       }
     );
 
 
-    const copyButton =
-      document.getElementById(
-        'copyScaleBtn'
+    /* =====================================================
+       COPY SCALE
+    ===================================================== */
+
+    document
+      .getElementById('copyScaleBtn')
+      .addEventListener(
+        'click',
+        () => {
+
+          weightInput.value =
+            liveWeight.textContent;
+
+        }
       );
 
-    copyButton.addEventListener(
-      'click',
-      () => {
 
-        weightInput.value =
-          liveWeight.textContent;
-
-      }
-    );
-
-
-    /* ============================
+    /* =====================================================
        PHOTOS
-    ============================ */
+    ===================================================== */
 
     const photosWrap =
-      document.getElementById(
-        'photosWrap'
-      );
+      document.getElementById('photosWrap');
 
     const photoPreview =
-      document.getElementById(
-        'photoPreview'
-      );
+      document.getElementById('photoPreview');
 
 
     photosWrap.addEventListener(
@@ -1521,24 +1947,26 @@ document.addEventListener(
           return;
         }
 
+
         const file =
           event.target.files
           && event.target.files[0];
+
 
         if(!file){
           return;
         }
 
+
         const reader =
           new FileReader();
+
 
         reader.onload =
           (result) => {
 
             const item =
-              document.createElement(
-                'div'
-              );
+              document.createElement('div');
 
             item.className =
               'photo-item';
@@ -1549,15 +1977,18 @@ document.addEventListener(
               <button type="button">×</button>
               `;
 
-            item.querySelector(
-              'button'
-            ).onclick =
+
+            item
+              .querySelector('button')
+              .onclick =
               () => {
 
                 item.remove();
+
                 event.target.remove();
 
               };
+
 
             photoPreview.appendChild(
               item
@@ -1565,15 +1996,14 @@ document.addEventListener(
 
           };
 
+
         reader.readAsDataURL(
           file
         );
 
 
         const nextInput =
-          document.createElement(
-            'input'
-          );
+          document.createElement('input');
 
         nextInput.className =
           'photo-input';
@@ -1601,7 +2031,6 @@ document.addEventListener(
 
   }
 );
-
 </script>
 
 {% endblock %}
