@@ -3,429 +3,478 @@
 {% block title %}{{ _('weigh') }}{% endblock %}
 
 {% block content %}
+
 <style>
-  :root{
-    --bg:#f6f7fb;
-    --card:#fff;
-    --text:#101828;
-    --muted:#667085;
-    --border:#e6e8ef;
-    --shadow:0 10px 30px rgba(16,24,40,.08);
-    --primary:#2563eb;
-    --primary2:#1d4ed8;
-    --ok:#16a34a;
-    --warn:#f59e0b;
-    --radius:18px;
-  }
+:root{
+  --bg:#f6f7fb;
+  --card:#fff;
+  --text:#101828;
+  --muted:#667085;
+  --border:#e6e8ef;
+  --primary:#2563eb;
+  --primary2:#1d4ed8;
+  --ok:#16a34a;
+  --warn:#f59e0b;
+  --danger:#b42318;
+  --radius:18px;
+  --shadow:0 10px 30px rgba(16,24,40,.08);
+}
 
-  body{background:var(--bg);}
-  .container{padding-top:28px;padding-bottom:40px;}
+body{background:var(--bg);}
+.container{padding-top:28px;padding-bottom:40px;}
 
+.card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:18px;
+}
+
+.page-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  margin:12px 0 18px;
+}
+
+.page-head h1{
+  margin:0;
+  font-size:34px;
+}
+
+.page-head p{
+  color:var(--muted);
+  margin:8px 0 0;
+}
+
+.mode-box{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-bottom:18px;
+}
+
+.mode-option{
+  position:relative;
+}
+
+.mode-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+
+.mode-option label{
+  display:block;
+  margin:0;
+  padding:14px;
+  border:2px solid var(--border);
+  border-radius:14px;
+  cursor:pointer;
+  text-align:center;
+  font-weight:900;
+  transition:.15s ease;
+}
+
+.mode-option input:checked + label{
+  border-color:var(--primary);
+  background:#eff6ff;
+  color:#1d4ed8;
+}
+
+.mode-desc{
+  display:block;
+  font-size:12px;
+  font-weight:500;
+  color:#667085;
+  margin-top:5px;
+}
+
+form label{
+  display:block;
+  margin:12px 0 8px;
+  font-weight:800;
+}
+
+form input[type="text"],
+form input[type="number"],
+form input[type="tel"],
+form input[type="file"],
+form select,
+form textarea{
+  width:100%;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 14px;
+  background:#fff;
+  box-sizing:border-box;
+  font-size:15px;
+  outline:none;
+}
+
+form input:focus,
+form select:focus,
+form textarea:focus{
+  border-color:rgba(37,99,235,.55);
+  box-shadow:0 0 0 4px rgba(37,99,235,.12);
+}
+
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.btn{
+  border:1px solid var(--border);
+  background:#f2f4f7;
+  color:#111827;
+  border-radius:14px;
+  padding:10px 14px;
+  cursor:pointer;
+  font-weight:900;
+  text-decoration:none;
+}
+
+.btn.primary{
+  background:var(--primary);
+  color:#fff;
+  border-color:transparent;
+}
+
+.btn.primary:hover{
+  background:var(--primary2);
+}
+
+.btn.full{
+  width:100%;
+  margin-top:16px;
+  padding:13px;
+}
+
+.mini-actions{
+  display:flex;
+  gap:10px;
+  margin-top:12px;
+  flex-wrap:wrap;
+}
+
+.scale-box{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  text-align:center;
+  padding:18px 10px;
+}
+
+#liveWeight{
+  font-size:64px;
+  line-height:1;
+  direction:ltr;
+}
+
+.scale-box>span{
+  color:var(--muted);
+  font-weight:800;
+}
+
+.scale-box b{
+  color:var(--muted);
+  font-size:18px;
+}
+
+#stable{
+  padding:8px 12px;
+  border-radius:999px;
+  font-weight:900;
+}
+
+#stable.stable{
+  background:#ecfdf3;
+  border:1px solid #abefc6;
+}
+
+#stable.unstable{
+  background:#fffaeb;
+  border:1px solid #fedf89;
+}
+
+.conn{
+  padding:8px 12px;
+  background:#f2f4f7;
+  border-radius:999px;
+  color:#667085;
+  font-size:13px;
+}
+
+.dot{
+  width:10px;
+  height:10px;
+  display:inline-block;
+  border-radius:50%;
+  margin-inline-end:6px;
+}
+
+.dot.ok{background:#16a34a;}
+.dot.bad{background:#f59e0b;}
+
+
+/* ============================
+   PLATE
+============================ */
+
+.iran-plate{
+  direction:ltr;
+  width:100%;
+  height:92px;
+  display:grid;
+  grid-template-columns:74px 1fr 1fr 1.45fr .9fr;
+  border:4px solid #111;
+  border-radius:12px;
+  overflow:hidden;
+  background:#fff;
+}
+
+.plate-iran{
+  background:#073da5;
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+
+.plate-flag{
+  width:36px;
+  height:19px;
+  margin-bottom:5px;
+  border:1px solid #fff;
+  background:
+    linear-gradient(
+      to bottom,
+      #239f40 0 33.333%,
+      #fff 33.333% 66.666%,
+      #da0000 66.666% 100%
+    );
+}
+
+.plate-ir{
+  font:900 12px Arial;
+}
+
+.plate-country{
+  font:900 11px Arial;
+}
+
+.plate-cell{
+  position:relative;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  border-left:1px solid #d0d5dd;
+}
+
+.plate-cell input,
+.plate-cell select{
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  width:100%!important;
+  height:100%;
+  text-align:center;
+  padding:0!important;
+  font-size:29px!important;
+  font-weight:900;
+}
+
+.plate-city{
+  border-left:4px solid #111;
+}
+
+.plate-city-label{
+  position:absolute;
+  top:4px;
+  left:0;
+  right:0;
+  text-align:center;
+  font-size:9px;
+  color:#667085;
+  z-index:2;
+}
+
+.plate-city input{
+  padding-top:12px!important;
+}
+
+.plate-error{
+  display:none;
+  margin-top:8px;
+  padding:8px 10px;
+  border-radius:10px;
+  color:#b42318;
+  background:#fef3f2;
+  border:1px solid #fecdca;
+  font-weight:800;
+  font-size:13px;
+}
+
+
+/* ============================
+   WAITING SECOND
+============================ */
+
+.waiting-section{
+  margin-top:22px;
+}
+
+.waiting-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.waiting-head h2{
+  margin:0;
+  font-size:22px;
+}
+
+.waiting-list{
+  display:grid;
+  gap:12px;
+}
+
+.waiting-item{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:14px;
+  align-items:center;
+  border:1px solid #fedf89;
+  background:#fffcf5;
+  border-radius:14px;
+  padding:14px;
+}
+
+.waiting-main{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 20px;
+  align-items:center;
+}
+
+.waiting-ticket{
+  color:#2563eb;
+  font-weight:900;
+}
+
+.waiting-plate{
+  direction:ltr;
+  font-weight:900;
+  unicode-bidi:embed;
+}
+
+.waiting-weight{
+  direction:ltr;
+  font-weight:900;
+}
+
+.waiting-time{
+  color:#667085;
+  font-size:12px;
+}
+
+.second-btn{
+  background:#16a34a!important;
+  color:#fff!important;
+  border-color:#16a34a!important;
+  white-space:nowrap;
+}
+
+.empty-waiting{
+  padding:18px;
+  color:#667085;
+  text-align:center;
+  border:1px dashed #d0d5dd;
+  border-radius:12px;
+}
+
+.photo-preview{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin-top:12px;
+}
+
+.photo-item{
+  position:relative;
+}
+
+.photo-item img{
+  width:100%;
+  height:170px;
+  object-fit:cover;
+  border-radius:14px;
+}
+
+.photo-item button{
+  position:absolute;
+  top:8px;
+  left:8px;
+  border:0;
+  border-radius:10px;
+  background:#101828cc;
+  color:#fff;
+  padding:6px 10px;
+  cursor:pointer;
+}
+
+.hint{
+  color:#667085;
+  font-size:13px;
+  line-height:1.8;
+}
+
+@media(max-width:760px){
   .page-head{
-    display:flex;
-    align-items:flex-end;
-    justify-content:space-between;
-    margin:12px 0 18px;
+    flex-direction:column;
+    align-items:flex-start;
   }
 
-  .page-head h1{
-    margin:0;
-    font-size:34px;
-    letter-spacing:-.5px;
-    color:var(--text);
+  .form-grid,
+  .mode-box{
+    grid-template-columns:1fr;
   }
 
-  .page-head p{
-    margin:8px 0 0;
-    color:var(--muted);
-    line-height:1.9;
+  .waiting-item{
+    grid-template-columns:1fr;
   }
 
-  .card{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    padding:18px;
-  }
-
-  form label{
-    display:block;
-    margin:12px 0 8px;
-    font-weight:800;
-    color:var(--text);
-  }
-
-  form input[type="text"],
-  form input[type="number"],
-  form input[type="file"],
-  form input[type="tel"],
-  form select,
-  form textarea{
+  .waiting-item form .btn{
     width:100%;
-    border:1px solid var(--border);
-    background:#fff;
-    border-radius:14px;
-    padding:12px 14px;
-    outline:none;
-    font-size:15px;
-    transition:box-shadow .15s ease,border-color .15s ease;
-    box-sizing:border-box;
   }
-
-  form input:focus,
-  form select:focus,
-  form textarea:focus{
-    border-color:rgba(37,99,235,.55);
-    box-shadow:0 0 0 4px rgba(37,99,235,.12);
-  }
-
-  /* ---------------------------
-     Iranian license plate
-  --------------------------- */
 
   .iran-plate{
-    direction:ltr;
-    width:100%;
-    max-width:650px;
-    height:92px;
-    display:grid;
-    grid-template-columns:74px 1fr 1fr 1.45fr .9fr;
-    border:4px solid #111;
-    border-radius:12px;
-    overflow:hidden;
-    background:#fff;
-    box-sizing:border-box;
-    margin-top:8px;
-  }
-
-  .plate-iran{
-    background:#063da5;
-    color:#fff;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    padding:5px;
-    font-family:Arial,sans-serif;
-  }
-
-  .plate-flag{
-    width:36px;
-    height:19px;
-    border:1px solid rgba(255,255,255,.8);
-    margin-bottom:5px;
-    overflow:hidden;
-    background:
-      linear-gradient(
-        to bottom,
-        #239f40 0 33.333%,
-        #fff 33.333% 66.666%,
-        #da0000 66.666% 100%
-      );
-  }
-
-  .plate-ir{
-    font-weight:800;
-    font-size:12px;
-    line-height:1.05;
-  }
-
-  .plate-country{
-    font-size:11px;
-    font-weight:800;
-    margin-top:2px;
-  }
-
-  .plate-cell{
-    position:relative;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#fff;
-  }
-
-  .plate-cell + .plate-cell{
-    border-left:1px solid #d0d5dd;
+    height:76px;
+    grid-template-columns:58px 1fr 1fr 1.35fr .9fr;
+    border-width:3px;
   }
 
   .plate-cell input,
   .plate-cell select{
-    width:100% !important;
-    height:100%;
-    border:0 !important;
-    border-radius:0 !important;
-    box-shadow:none !important;
-    padding:0 6px !important;
-    background:#fff;
-    color:#111827;
-    text-align:center;
-    font-weight:900;
-    font-size:30px !important;
-    outline:none;
-    box-sizing:border-box;
-  }
-
-  .plate-cell select{
-    cursor:pointer;
-    direction:rtl;
-  }
-
-  .plate-city{
-    border-left:4px solid #111 !important;
-  }
-
-  .plate-city-label{
-    position:absolute;
-    top:4px;
-    right:0;
-    left:0;
-    text-align:center;
-    font-size:9px;
-    font-weight:800;
-    color:#667085;
-    pointer-events:none;
-  }
-
-  .plate-city input{
-    padding-top:12px !important;
-  }
-
-  .plate-help{
-    color:var(--muted);
-    font-size:12px;
-    margin-top:7px;
-    line-height:1.8;
-  }
-
-  .plate-error{
-    display:none;
-    color:#b42318;
-    background:#fef3f2;
-    border:1px solid #fecdca;
-    border-radius:10px;
-    padding:8px 10px;
-    margin-top:8px;
-    font-size:13px;
-    font-weight:700;
-  }
-
-  /* --------------------------- */
-
-  .hint{
-    margin-top:10px;
-    color:var(--muted);
-    font-size:13px;
-    line-height:1.8;
-  }
-
-  .btn{
-    border:1px solid var(--border);
-    background:#f2f4f7;
-    color:#111827;
-    cursor:pointer;
-    border-radius:14px;
-    padding:10px 14px;
-    font-weight:900;
-    user-select:none;
-  }
-
-  .btn:hover{
-    background:#eef2ff;
-    border-color:#d7dcff;
-  }
-
-  .btn.primary{
-    background:var(--primary);
-    border-color:transparent;
-    color:#fff;
-  }
-
-  .btn.primary:hover{background:var(--primary2);}
-
-  .btn.full{
-    width:100%;
-    padding:12px 16px;
-  }
-
-  .mini-actions{
-    display:flex;
-    gap:10px;
-    justify-content:flex-end;
-    margin-top:12px;
-    flex-wrap:wrap;
-  }
-
-  .form-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-    margin-top:6px;
-  }
-
-  .form-grid>div{min-width:0;}
-
-  .num-ltr{
-    direction:ltr;
-    unicode-bidi:bidi-override;
-    display:inline-block;
-  }
-
-  #photosWrap .photo-input{
-    display:block;
-    margin-top:10px;
-  }
-
-  .photo-preview{
-    margin-top:12px;
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:12px;
-  }
-
-  .photo-item{position:relative;}
-
-  .photo-item img{
-    width:100%;
-    height:170px;
-    object-fit:cover;
-    border-radius:16px;
-    background:#f2f4f7;
-    border:1px solid var(--border);
-  }
-
-  .photo-item button{
-    position:absolute;
-    top:10px;
-    left:10px;
-    border:0;
-    border-radius:12px;
-    padding:7px 10px;
-    cursor:pointer;
-    background:rgba(16,24,40,.65);
-    color:#fff;
-    font-weight:900;
-    line-height:1;
-  }
-
-  .scale-box{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    align-items:center;
-    text-align:center;
-    padding:18px 10px;
-  }
-
-  .scale-box>span{
-    color:var(--muted);
-    font-weight:800;
+    font-size:21px!important;
   }
 
   #liveWeight{
-    font-size:64px;
-    line-height:1;
-    letter-spacing:-1px;
-    color:var(--text);
+    font-size:52px;
   }
 
-  .scale-box b{
-    font-size:18px;
-    color:var(--muted);
-    font-weight:900;
-    margin-top:-6px;
+  .photo-preview{
+    grid-template-columns:1fr;
   }
-
-  #stable{
-    padding:8px 12px;
-    border-radius:999px;
-    font-weight:900;
-    border:1px solid var(--border);
-    background:#f9fafb;
-    color:var(--text);
-  }
-
-  #stable.stable{
-    border-color:rgba(22,163,74,.25);
-    background:rgba(22,163,74,.08);
-  }
-
-  #stable.unstable{
-    border-color:rgba(245,158,11,.25);
-    background:rgba(245,158,11,.10);
-  }
-
-  #scaleStatus{
-    color:var(--muted);
-    font-weight:800;
-  }
-
-  .conn{
-    margin-top:6px;
-    font-size:13px;
-    color:var(--muted);
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    padding:8px 12px;
-    border-radius:999px;
-    background:#f2f4f7;
-    border:1px solid var(--border);
-  }
-
-  .dot{
-    width:10px;
-    height:10px;
-    border-radius:50%;
-    display:inline-block;
-  }
-
-  .dot.ok{background:var(--ok);}
-  .dot.bad{background:var(--warn);}
-
-  @media(max-width:760px){
-    .page-head{
-      align-items:flex-start;
-      flex-direction:column;
-      gap:8px;
-    }
-
-    #liveWeight{font-size:54px;}
-
-    .photo-preview{
-      grid-template-columns:1fr;
-    }
-
-    .mini-actions{
-      justify-content:stretch;
-    }
-
-    .mini-actions .btn{flex:1;}
-
-    .form-grid{
-      grid-template-columns:1fr;
-    }
-
-    .iran-plate{
-      height:76px;
-      grid-template-columns:58px 1fr 1fr 1.35fr .9fr;
-      border-width:3px;
-    }
-
-    .plate-cell input,
-    .plate-cell select{
-      font-size:22px !important;
-    }
-
-    .plate-city{
-      border-left-width:3px !important;
-    }
-
-    .plate-flag{
-      width:30px;
-      height:16px;
-    }
-  }
+}
 </style>
 
 
@@ -442,50 +491,123 @@
 <section class="card">
 
 <form
+  id="weighForm"
   method="post"
   action="/weigh"
   enctype="multipart/form-data"
-  id="weighForm"
 >
 
-  <label>{{ _('truck_plate') }}</label>
+  <!-- ===============================
+       WEIGHING MODE
+  ================================ -->
 
-  <!-- مقداری که واقعاً برای FastAPI ارسال می‌شود -->
+  <label>
+    {{ _('weighing_mode') }}
+  </label>
+
+  <div class="mode-box">
+
+    <div class="mode-option">
+
+      <input
+        id="modeSingle"
+        type="radio"
+        name="weighing_mode"
+        value="SINGLE"
+        checked
+      >
+
+      <label for="modeSingle">
+
+        {{ _('single_weigh') }}
+
+        <span class="mode-desc">
+          {{ _('single_weigh_help') }}
+        </span>
+
+      </label>
+
+    </div>
+
+
+    <div class="mode-option">
+
+      <input
+        id="modeDouble"
+        type="radio"
+        name="weighing_mode"
+        value="DOUBLE"
+      >
+
+      <label for="modeDouble">
+
+        {{ _('double_weigh') }}
+
+        <span class="mode-desc">
+          {{ _('double_weigh_help') }}
+        </span>
+
+      </label>
+
+    </div>
+
+  </div>
+
+
+  <!-- ===============================
+       PLATE
+  ================================ -->
+
+  <label>
+    {{ _('truck_plate') }}
+  </label>
+
   <input
     type="hidden"
     id="plateInput"
     name="plate"
-    value=""
   >
+
 
   <div class="iran-plate">
 
     <div class="plate-iran">
+
       <div class="plate-flag"></div>
-      <div class="plate-ir">I.R.</div>
-      <div class="plate-country">IRAN</div>
+
+      <div class="plate-ir">
+        I.R.
+      </div>
+
+      <div class="plate-country">
+        IRAN
+      </div>
+
     </div>
 
-    <!-- دو رقم سمت چپ -->
+
     <div class="plate-cell">
+
       <input
         id="plateTwo"
         type="text"
         inputmode="numeric"
-        autocomplete="off"
         maxlength="2"
         placeholder="12"
-        aria-label="plate first two digits"
+        autocomplete="off"
       >
+
     </div>
 
-    <!-- یک حرف -->
+
     <div class="plate-cell">
-      <select
-        id="plateLetter"
-        aria-label="plate letter"
-      >
-        <option value="">حرف</option>
+
+      <select id="plateLetter">
+
+        <option value="">
+          {{ _('plate_letter') }}
+        </option>
+
         <option value="ب">ب</option>
         <option value="ج">ج</option>
         <option value="د">د</option>
@@ -508,49 +630,61 @@
         <option value="ف">ف</option>
         <option value="ک">ک</option>
         <option value="گ">گ</option>
+
       </select>
+
     </div>
 
-    <!-- سه رقم -->
+
     <div class="plate-cell">
+
       <input
         id="plateThree"
         type="text"
         inputmode="numeric"
-        autocomplete="off"
         maxlength="3"
         placeholder="365"
-        aria-label="plate three digits"
+        autocomplete="off"
       >
+
     </div>
 
-    <!-- دو رقم کد شهر -->
+
     <div class="plate-cell plate-city">
-      <span class="plate-city-label">ایران</span>
+
+      <span class="plate-city-label">
+        ایران
+      </span>
 
       <input
         id="plateCity"
         type="text"
         inputmode="numeric"
-        autocomplete="off"
         maxlength="2"
         placeholder="11"
-        aria-label="plate city code"
+        autocomplete="off"
       >
+
     </div>
 
   </div>
 
-  <div class="plate-help">
-    ۲ رقم، یک حرف، ۳ رقم و در انتها کد ۲ رقمی شهر را وارد کنید.
+
+  <div
+    id="plateError"
+    class="plate-error"
+  >
+    {{ _('plate_incomplete') }}
   </div>
 
-  <div id="plateError" class="plate-error">
-    لطفاً پلاک ماشین را کامل وارد کنید.
-  </div>
 
+  <!-- ===============================
+       CURRENT WEIGHT
+  ================================ -->
 
-  <label>{{ _('weight_kg') }}</label>
+  <label>
+    {{ _('weight_kg') }}
+  </label>
 
   <input
     id="weightInput"
@@ -560,7 +694,7 @@
     value="{{ state.weight }}"
     readonly
     dir="ltr"
-    style="text-align:left;unicode-bidi:bidi-override;"
+    style="text-align:left"
   >
 
 
@@ -570,16 +704,15 @@
       class="btn"
       type="button"
       id="copyScaleBtn"
-      title="{{ _('copy_scale_weight_title') }}"
     >
       {{ _('copy_scale_weight') }}
     </button>
+
 
     <button
       class="btn"
       type="button"
       id="clearFormBtn"
-      title="{{ _('clear_form_title') }}"
     >
       {{ _('clear_form') }}
     </button>
@@ -587,105 +720,138 @@
   </div>
 
 
+  <!-- ===============================
+       EXTRA INFORMATION
+  ================================ -->
+
   <div class="form-grid">
 
     <div>
-      <label>{{ _('vehicle_type') }}</label>
+
+      <label>
+        {{ _('vehicle_type') }}
+      </label>
 
       <input
         type="text"
         name="vehicle_type"
-        id="vehicleType"
         placeholder="{{ _('vehicle_type_placeholder') }}"
       >
+
     </div>
 
 
     <div>
-      <label>{{ _('driver_name') }}</label>
+
+      <label>
+        {{ _('driver_name') }}
+      </label>
 
       <input
         type="text"
         name="driver_name"
         placeholder="{{ _('driver_name_placeholder') }}"
       >
+
     </div>
 
 
     <div>
-      <label>{{ _('driver_phone') }}</label>
+
+      <label>
+        {{ _('driver_phone') }}
+      </label>
 
       <input
         type="tel"
         name="driver_phone"
         placeholder="{{ _('driver_phone_placeholder') }}"
         dir="ltr"
-        style="text-align:left"
-        inputmode="tel"
       >
+
     </div>
 
 
     <div>
-      <label>{{ _('cargo_type') }}</label>
+
+      <label>
+        {{ _('cargo_type') }}
+      </label>
 
       <input
         type="text"
         name="cargo_type"
         placeholder="{{ _('cargo_type_placeholder') }}"
       >
+
     </div>
 
 
     <div>
-      <label>{{ _('cargo_owner') }}</label>
+
+      <label>
+        {{ _('cargo_owner') }}
+      </label>
 
       <input
         type="text"
         name="cargo_owner"
         placeholder="{{ _('cargo_owner_placeholder') }}"
       >
+
     </div>
 
 
     <div>
-      <label>{{ _('origin') }}</label>
+
+      <label>
+        {{ _('origin') }}
+      </label>
 
       <input
         type="text"
         name="origin"
         placeholder="{{ _('origin_placeholder') }}"
       >
+
     </div>
 
 
     <div>
-      <label>{{ _('destination') }}</label>
+
+      <label>
+        {{ _('destination') }}
+      </label>
 
       <input
         type="text"
         name="destination"
         placeholder="{{ _('destination_placeholder') }}"
       >
+
     </div>
 
 
     <div>
-      <label>{{ _('document_no') }}</label>
+
+      <label>
+        {{ _('document_no') }}
+      </label>
 
       <input
         type="text"
         name="document_no"
         placeholder="{{ _('document_no_placeholder') }}"
-        dir="ltr"
-        style="text-align:left"
       >
+
     </div>
 
   </div>
 
 
-  <label>{{ _('notes') }}</label>
+  <label>
+    {{ _('notes') }}
+  </label>
 
   <textarea
     name="notes"
@@ -694,12 +860,18 @@
   ></textarea>
 
 
-  <label>{{ _('truck_photo') }}</label>
+  <!-- ===============================
+       PHOTOS
+  ================================ -->
+
+  <label>
+    {{ _('truck_photo') }}
+  </label>
 
   <div id="photosWrap">
 
     <input
-      class="camera photo-input"
+      class="photo-input"
       type="file"
       name="photo"
       accept="image/*"
@@ -708,29 +880,36 @@
 
   </div>
 
-
   <div
     id="photoPreview"
     class="photo-preview"
   ></div>
-
 
   <p class="hint">
     {{ _('hint_camera') }}
   </p>
 
 
+  <!-- ===============================
+       SUBMIT
+  ================================ -->
+
   <button
+    id="submitButton"
     class="btn primary full"
     type="submit"
   >
-    {{ _('submit_weigh') }}
+    {{ _('submit_single_weigh') }}
   </button>
 
 </form>
 
 </section>
 
+
+<!-- ===============================
+     LIVE SCALE
+================================ -->
 
 <section class="card">
 
@@ -740,14 +919,12 @@
       {{ _('current_scale_weight') }}
     </span>
 
-    <strong
-      id="liveWeight"
-      class="num-ltr"
-    >
+    <strong id="liveWeight">
       {{ state.weight }}
     </strong>
 
     <b>kg</b>
+
 
     <div
       id="stable"
@@ -756,13 +933,16 @@
       {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
     </div>
 
+
     <small id="scaleStatus">
-      {{ _('scale') }}: {{ state.scale_id or '' }}
+      {{ _('scale') }}:
+      {{ state.scale_id or '' }}
     </small>
 
+
     <div
-      class="conn"
       id="connStatus"
+      class="conn"
     >
       <span class="dot bad"></span>
       {{ _('live_off') }}
@@ -775,340 +955,513 @@
 </div>
 
 
+<!-- ==========================================================
+     WAITING FOR SECOND WEIGH
+========================================================== -->
+
+<section class="card waiting-section">
+
+  <div class="waiting-head">
+
+    <div>
+
+      <h2>
+        {{ _('waiting_second_title') }}
+      </h2>
+
+      <div class="hint">
+        {{ _('waiting_second_help') }}
+      </div>
+
+    </div>
+
+  </div>
+
+
+  {% if waiting %}
+
+  <div class="waiting-list">
+
+    {% for item in waiting %}
+
+    {% set r = item.row %}
+    {% set pp = item.plate_parts %}
+
+    <div class="waiting-item">
+
+      <div class="waiting-main">
+
+        <a
+          class="waiting-ticket"
+          href="/weighments/{{ r.ticket_number }}"
+        >
+          #{{ "%06d"|format(r.ticket_number) }}
+        </a>
+
+
+        <span class="waiting-plate">
+
+          {% if pp %}
+
+            {{ pp.first }}
+            {{ pp.letter }}
+            {{ pp.middle }}
+            -
+            {{ pp.city }}
+
+          {% else %}
+
+            {{ r.plate }}
+
+          {% endif %}
+
+        </span>
+
+
+        <span class="waiting-weight">
+
+          {{ _('first_weight') }}:
+
+          {% if r.first_weight == r.first_weight|int %}
+
+            {{ r.first_weight|int }}
+
+          {% else %}
+
+            {{ r.first_weight }}
+
+          {% endif %}
+
+          kg
+
+        </span>
+
+
+        {% if r.driver_name %}
+
+        <span>
+          {{ _('driver_name') }}:
+          <b>{{ r.driver_name }}</b>
+        </span>
+
+        {% endif %}
+
+
+        {% if r.first_weighed_at %}
+
+        <span class="waiting-time">
+
+          {{ (r.first_weighed_at|string)[:19].replace('T',' ') }}
+
+        </span>
+
+        {% endif %}
+
+      </div>
+
+
+      <form
+        method="post"
+        action="/weighments/{{ r.ticket_number }}/second-weigh"
+        onsubmit="return confirm({{ _('confirm_second_weigh')|tojson }});"
+      >
+
+        <button
+          class="btn second-btn"
+          type="submit"
+        >
+          {{ _('register_second_weight') }}
+        </button>
+
+      </form>
+
+    </div>
+
+    {% endfor %}
+
+  </div>
+
+
+  {% else %}
+
+  <div class="empty-waiting">
+
+    {{ _('no_waiting_second') }}
+
+  </div>
+
+  {% endif %}
+
+</section>
+
+
 <script>
-document.addEventListener('DOMContentLoaded', () => {
 
-  const form = document.getElementById('weighForm');
+document.addEventListener(
+  'DOMContentLoaded',
+  () => {
 
-  const plateInput =
-    document.getElementById('plateInput');
+    const form =
+      document.getElementById('weighForm');
 
-  const plateTwo =
-    document.getElementById('plateTwo');
+    const plateInput =
+      document.getElementById('plateInput');
 
-  const plateLetter =
-    document.getElementById('plateLetter');
+    const plateTwo =
+      document.getElementById('plateTwo');
 
-  const plateThree =
-    document.getElementById('plateThree');
+    const plateLetter =
+      document.getElementById('plateLetter');
 
-  const plateCity =
-    document.getElementById('plateCity');
+    const plateThree =
+      document.getElementById('plateThree');
 
-  const plateError =
-    document.getElementById('plateError');
+    const plateCity =
+      document.getElementById('plateCity');
+
+    const plateError =
+      document.getElementById('plateError');
+
+    const modeSingle =
+      document.getElementById('modeSingle');
+
+    const modeDouble =
+      document.getElementById('modeDouble');
+
+    const submitButton =
+      document.getElementById('submitButton');
 
 
-  function normalizeDigits(value, maxLength) {
+    const SINGLE_BUTTON =
+      {{ _('submit_single_weigh')|tojson|safe }};
 
-    const fa = '۰۱۲۳۴۵۶۷۸۹';
-    const ar = '٠١٢٣٤٥٦٧٨٩';
+    const FIRST_BUTTON =
+      {{ _('submit_first_weight')|tojson|safe }};
 
-    let out = '';
 
-    for (const ch of String(value)) {
+    function normalizeDigits(
+      value,
+      maxLength
+    ){
 
-      if (ch >= '0' && ch <= '9') {
-        out += ch;
-        continue;
+      const fa =
+        '۰۱۲۳۴۵۶۷۸۹';
+
+      const ar =
+        '٠١٢٣٤٥٦٧٨٩';
+
+      let result = '';
+
+      for(
+        const ch
+        of String(value)
+      ){
+
+        if(
+          ch >= '0'
+          && ch <= '9'
+        ){
+          result += ch;
+          continue;
+        }
+
+        const fi =
+          fa.indexOf(ch);
+
+        if(fi !== -1){
+          result += String(fi);
+          continue;
+        }
+
+        const ai =
+          ar.indexOf(ch);
+
+        if(ai !== -1){
+          result += String(ai);
+        }
+
       }
 
-      const fi = fa.indexOf(ch);
-
-      if (fi !== -1) {
-        out += String(fi);
-        continue;
-      }
-
-      const ai = ar.indexOf(ch);
-
-      if (ai !== -1) {
-        out += String(ai);
-      }
+      return result.slice(
+        0,
+        maxLength
+      );
     }
 
-    return out.slice(0, maxLength);
-  }
 
+    function updatePlate(){
 
-  function digitsOnly(input, length) {
-
-    input.addEventListener('input', () => {
-
-      input.value =
-        normalizeDigits(
-          input.value,
-          length
-        );
-
-      if (
-        input.value.length === length
-      ) {
-
-        if (input === plateTwo) {
-          plateLetter.focus();
-        }
-
-        if (input === plateThree) {
-          plateCity.focus();
-        }
-
-      }
-
-      updatePlateValue();
-
-    });
-
-  }
-
-
-  digitsOnly(plateTwo, 2);
-  digitsOnly(plateThree, 3);
-  digitsOnly(plateCity, 2);
-
-
-  plateLetter.addEventListener(
-    'change',
-    () => {
-
-      updatePlateValue();
-
-      if (plateLetter.value) {
-        plateThree.focus();
-      }
+      plateInput.value =
+        plateTwo.value
+        + plateLetter.value
+        + plateThree.value
+        + '-'
+        + plateCity.value;
 
     }
-  );
 
 
-  function updatePlateValue() {
+    function plateValid(){
 
-    const a = plateTwo.value;
-    const b = plateLetter.value;
-    const c = plateThree.value;
-    const d = plateCity.value;
-
-    /*
-      مقدار ذخیره:
-      12ن365-11
-    */
-    plateInput.value =
-      `${a}${b}${c}-${d}`;
-
-  }
-
-
-  function plateIsValid() {
-
-    return (
-      plateTwo.value.length === 2 &&
-      plateLetter.value !== '' &&
-      plateThree.value.length === 3 &&
-      plateCity.value.length === 2
-    );
-
-  }
-
-
-  form.addEventListener(
-    'submit',
-    (e) => {
-
-      updatePlateValue();
-
-      if (!plateIsValid()) {
-
-        e.preventDefault();
-
-        plateError.style.display =
-          'block';
-
-        if (
-          plateTwo.value.length !== 2
-        ) {
-          plateTwo.focus();
-        }
-        else if (
-          !plateLetter.value
-        ) {
-          plateLetter.focus();
-        }
-        else if (
-          plateThree.value.length !== 3
-        ) {
-          plateThree.focus();
-        }
-        else {
-          plateCity.focus();
-        }
-
-        return;
-
-      }
-
-      plateError.style.display =
-        'none';
-
+      return(
+        plateTwo.value.length === 2
+        &&
+        plateLetter.value !== ''
+        &&
+        plateThree.value.length === 3
+        &&
+        plateCity.value.length === 2
+      );
     }
-  );
 
 
-  const wi =
-    document.getElementById(
-      'weightInput'
-    );
+    function numericField(
+      input,
+      length,
+      next
+    ){
 
-  const lw =
-    document.getElementById(
-      'liveWeight'
-    );
+      input.addEventListener(
+        'input',
+        () => {
 
-  const s =
-    document.getElementById(
-      'stable'
-    );
+          input.value =
+            normalizeDigits(
+              input.value,
+              length
+            );
 
-  const ss =
-    document.getElementById(
-      'scaleStatus'
-    );
+          updatePlate();
 
-  const cs =
-    document.getElementById(
-      'connStatus'
-    );
+          if(
+            input.value.length === length
+            && next
+          ){
+            next.focus();
+          }
 
-
-  const STABLE_TEXT =
-    {{ _('stable')|tojson|safe }};
-
-  const WAITING_TEXT =
-    {{ _('waiting')|tojson|safe }};
-
-  const SCALE_LABEL =
-    {{ _('scale')|tojson|safe }};
-
-  const LIVE_ON =
-    {{ _('live_on')|tojson|safe }};
-
-  const LIVE_OFF =
-    {{ _('live_off')|tojson|safe }};
-
-
-  async function refreshWeight() {
-
-    try {
-
-      const r = await fetch(
-        '/api/scale/weight',
-        {
-          cache:'no-store'
         }
       );
-
-      const d = await r.json();
-
-      if (cs) {
-        cs.innerHTML =
-          `<span class="dot ok"></span>${LIVE_ON}`;
-      }
-
-      const w =
-        d.weight ?? 0;
-
-      if (lw) {
-        lw.textContent =
-          String(w);
-      }
-
-      if (wi) {
-        wi.value =
-          String(w);
-      }
-
-      if (ss) {
-        ss.textContent =
-          SCALE_LABEL
-          + ': '
-          + (d.scale_id ?? '');
-      }
-
-      if (s) {
-
-        if (d.stable) {
-
-          s.className =
-            'stable';
-
-          s.textContent =
-            '🟢 ' + STABLE_TEXT;
-
-        }
-        else {
-
-          s.className =
-            'unstable';
-
-          s.textContent =
-            '🟡 ' + WAITING_TEXT;
-
-        }
-
-      }
-
-    }
-    catch(e) {
-
-      if (cs) {
-        cs.innerHTML =
-          `<span class="dot bad"></span>${LIVE_OFF}`;
-      }
-
     }
 
-  }
 
-
-  refreshWeight();
-
-  setInterval(
-    refreshWeight,
-    1000
-  );
-
-
-  const copyBtn =
-    document.getElementById(
-      'copyScaleBtn'
+    numericField(
+      plateTwo,
+      2,
+      plateLetter
     );
 
-  if (
-    copyBtn &&
-    wi &&
-    lw
-  ) {
+    numericField(
+      plateThree,
+      3,
+      plateCity
+    );
 
-    copyBtn.addEventListener(
-      'click',
+    numericField(
+      plateCity,
+      2,
+      null
+    );
+
+
+    plateLetter.addEventListener(
+      'change',
       () => {
 
-        wi.value =
-          lw.textContent;
+        updatePlate();
+
+        if(
+          plateLetter.value
+        ){
+          plateThree.focus();
+        }
 
       }
     );
 
-  }
+
+    function updateMode(){
+
+      if(
+        modeDouble.checked
+      ){
+
+        submitButton.textContent =
+          FIRST_BUTTON;
+
+      }else{
+
+        submitButton.textContent =
+          SINGLE_BUTTON;
+
+      }
+
+    }
 
 
-  const clearBtn =
-    document.getElementById(
-      'clearFormBtn'
+    modeSingle.addEventListener(
+      'change',
+      updateMode
     );
 
-  if (clearBtn) {
+    modeDouble.addEventListener(
+      'change',
+      updateMode
+    );
 
-    clearBtn.addEventListener(
+    updateMode();
+
+
+    form.addEventListener(
+      'submit',
+      (event) => {
+
+        updatePlate();
+
+        if(
+          !plateValid()
+        ){
+
+          event.preventDefault();
+
+          plateError.style.display =
+            'block';
+
+          return;
+
+        }
+
+        plateError.style.display =
+          'none';
+
+      }
+    );
+
+
+    /* ============================
+       LIVE WEIGHT
+    ============================ */
+
+    const liveWeight =
+      document.getElementById('liveWeight');
+
+    const weightInput =
+      document.getElementById('weightInput');
+
+    const stable =
+      document.getElementById('stable');
+
+    const scaleStatus =
+      document.getElementById('scaleStatus');
+
+    const connStatus =
+      document.getElementById('connStatus');
+
+
+    const STABLE_TEXT =
+      {{ _('stable')|tojson|safe }};
+
+    const WAITING_TEXT =
+      {{ _('waiting')|tojson|safe }};
+
+    const SCALE_TEXT =
+      {{ _('scale')|tojson|safe }};
+
+    const LIVE_ON =
+      {{ _('live_on')|tojson|safe }};
+
+    const LIVE_OFF =
+      {{ _('live_off')|tojson|safe }};
+
+
+    async function refreshWeight(){
+
+      try{
+
+        const response =
+          await fetch(
+            '/api/scale/weight',
+            {
+              cache:'no-store'
+            }
+          );
+
+        const data =
+          await response.json();
+
+        const weight =
+          data.weight ?? 0;
+
+        liveWeight.textContent =
+          String(weight);
+
+        weightInput.value =
+          String(weight);
+
+        scaleStatus.textContent =
+          SCALE_TEXT
+          + ': '
+          + (
+              data.scale_id
+              ?? ''
+            );
+
+        if(
+          data.stable
+        ){
+
+          stable.className =
+            'stable';
+
+          stable.textContent =
+            '🟢 '
+            + STABLE_TEXT;
+
+        }else{
+
+          stable.className =
+            'unstable';
+
+          stable.textContent =
+            '🟡 '
+            + WAITING_TEXT;
+
+        }
+
+        connStatus.innerHTML =
+          '<span class="dot ok"></span>'
+          + LIVE_ON;
+
+      }
+      catch(error){
+
+        connStatus.innerHTML =
+          '<span class="dot bad"></span>'
+          + LIVE_OFF;
+
+      }
+
+    }
+
+
+    refreshWeight();
+
+    setInterval(
+      refreshWeight,
+      1000
+    );
+
+
+    /* ============================
+       CLEAR
+    ============================ */
+
+    const clearButton =
+      document.getElementById(
+        'clearFormBtn'
+      );
+
+    clearButton.addEventListener(
       'click',
       () => {
 
@@ -1119,98 +1472,60 @@ document.addEventListener('DOMContentLoaded', () => {
         plateError.style.display =
           'none';
 
-
-        const preview =
-          document.getElementById(
-            'photoPreview'
-          );
-
-        const wrap =
-          document.getElementById(
-            'photosWrap'
-          );
-
-
-        if (preview) {
-          preview.innerHTML = '';
-        }
-
-
-        if (wrap) {
-
-          wrap.innerHTML = '';
-
-          const first =
-            document.createElement(
-              'input'
-            );
-
-          first.className =
-            'camera photo-input';
-
-          first.type = 'file';
-          first.name = 'photo';
-          first.accept = 'image/*';
-
-          first.setAttribute(
-            'capture',
-            'environment'
-          );
-
-          wrap.appendChild(
-            first
-          );
-
-        }
-
-
-        if (lw) {
-          lw.textContent = '0';
-        }
-
-        if (wi) {
-          wi.value = '0';
-        }
+        updateMode();
 
       }
     );
 
-  }
 
+    const copyButton =
+      document.getElementById(
+        'copyScaleBtn'
+      );
 
-  const photosWrap =
-    document.getElementById(
-      'photosWrap'
+    copyButton.addEventListener(
+      'click',
+      () => {
+
+        weightInput.value =
+          liveWeight.textContent;
+
+      }
     );
 
-  const photoPreview =
-    document.getElementById(
-      'photoPreview'
-    );
 
+    /* ============================
+       PHOTOS
+    ============================ */
 
-  if (
-    photosWrap &&
-    photoPreview
-  ) {
+    const photosWrap =
+      document.getElementById(
+        'photosWrap'
+      );
+
+    const photoPreview =
+      document.getElementById(
+        'photoPreview'
+      );
+
 
     photosWrap.addEventListener(
       'change',
-      (e) => {
+      (event) => {
 
-        if (
-          !e.target.classList.contains(
-            'photo-input'
-          )
-        ) {
+        if(
+          !event.target
+            .classList
+            .contains('photo-input')
+        ){
           return;
         }
 
         const file =
-          e.target.files &&
-          e.target.files[0];
+          event.target.files
+          && event.target.files[0];
 
-        if (!file) {
+        if(!file){
           return;
         }
 
@@ -1218,7 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
           new FileReader();
 
         reader.onload =
-          (ev) => {
+          (result) => {
 
             const item =
               document.createElement(
@@ -1228,13 +1543,11 @@ document.addEventListener('DOMContentLoaded', () => {
             item.className =
               'photo-item';
 
-            item.innerHTML = `
-              <img src="${ev.target.result}">
-              <button
-                type="button"
-                aria-label="remove"
-              >×</button>
-            `;
+            item.innerHTML =
+              `
+              <img src="${result.target.result}">
+              <button type="button">×</button>
+              `;
 
             item.querySelector(
               'button'
@@ -1242,7 +1555,7 @@ document.addEventListener('DOMContentLoaded', () => {
               () => {
 
                 item.remove();
-                e.target.remove();
+                event.target.remove();
 
               };
 
@@ -1256,38 +1569,39 @@ document.addEventListener('DOMContentLoaded', () => {
           file
         );
 
-        const newInput =
+
+        const nextInput =
           document.createElement(
             'input'
           );
 
-        newInput.className =
-          'camera photo-input';
+        nextInput.className =
+          'photo-input';
 
-        newInput.type =
+        nextInput.type =
           'file';
 
-        newInput.name =
+        nextInput.name =
           'photo';
 
-        newInput.accept =
+        nextInput.accept =
           'image/*';
 
-        newInput.setAttribute(
+        nextInput.setAttribute(
           'capture',
           'environment'
         );
 
         photosWrap.appendChild(
-          newInput
+          nextInput
         );
 
       }
     );
 
   }
+);
 
-});
 </script>
 
 {% endblock %}

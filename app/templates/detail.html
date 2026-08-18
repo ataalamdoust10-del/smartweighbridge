@@ -7,7 +7,6 @@
 {% block content %}
 
 <style>
-
 .photo-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -19,7 +18,6 @@
   max-height:300px;
   object-fit:cover;
   border-radius:14px;
-  background:#f2f4f7;
   border:1px solid #eaecf0;
 }
 
@@ -31,197 +29,170 @@
 }
 
 .ticket-info>div{
-  background:#fff;
   border:1px solid #eaecf0;
   border-radius:12px;
   padding:12px;
+  background:#fff;
 }
 
 .ticket-info span{
   display:block;
   color:#667085;
-  font-weight:800;
   font-size:13px;
+  font-weight:800;
   margin-bottom:6px;
 }
 
 .ticket-info strong{
   display:block;
   color:#101828;
-  font-weight:900;
   font-size:15px;
+  font-weight:900;
   line-height:1.7;
-  overflow-wrap:anywhere;
 }
 
 .ticket-info .full{
   grid-column:1/-1;
 }
 
-
-/* =========================================
-   Iranian plate
-========================================= */
-
-.plate-info-box{
-  grid-column:1/-1;
-}
-
-.saved-plate{
-  direction:ltr;
-  width:100%;
-  max-width:580px;
-  height:100px;
-
-  display:grid;
-
-  grid-template-columns:
-    84px
-    1fr
-    1fr
-    1.5fr
-    .95fr;
-
-  margin-top:8px;
-
-  border:4px solid #111;
-  border-radius:12px;
-
-  overflow:hidden;
-
-  background:white;
-}
-
-.saved-plate-iran{
-  background:#073da5;
-  color:white;
-
-  display:flex;
-  flex-direction:column;
-
-  align-items:center;
-  justify-content:center;
-
-  font-family:Arial,sans-serif;
-
-  padding:5px;
-}
-
-.saved-flag{
-  width:40px;
-  height:21px;
-
-  margin-bottom:6px;
-
-  border:1px solid white;
-
-  background:
-    linear-gradient(
-      to bottom,
-      #239f40 0 33.333%,
-      white 33.333% 66.666%,
-      #da0000 66.666% 100%
-    );
-}
-
-.saved-ir{
-  font-size:13px;
-  font-weight:900;
-}
-
-.saved-iran{
-  font-size:12px;
-  font-weight:900;
-  margin-top:2px;
-}
-
-.saved-plate-cell{
-  display:flex;
-
-  align-items:center;
-  justify-content:center;
-
-  position:relative;
-
-  background:white;
-
-  color:#111827;
-
-  font-size:34px;
-  font-weight:900;
-
-  border-left:1px solid #d0d5dd;
-}
-
-.saved-plate-letter{
-  font-family:Tahoma,Arial,sans-serif;
-}
-
-.saved-plate-city{
-  border-left:4px solid #111;
-  padding-top:10px;
-}
-
-.saved-city-label{
-  position:absolute;
-
-  top:4px;
-
-  left:0;
-  right:0;
-
-  font-size:10px;
-
-  color:#667085;
-
-  text-align:center;
-
-  font-weight:800;
-}
-
-.old-plate{
-  direction:ltr;
-
-  display:inline-block;
-
-  font-size:20px !important;
-
-  letter-spacing:.5px;
-}
-
-
-/* ========================================= */
-
 .number-ltr{
   direction:ltr;
   unicode-bidi:embed;
-  display:inline-block !important;
-  text-align:left;
+  display:inline-block!important;
 }
 
 .notes{
   white-space:pre-wrap;
 }
 
-.no-photo{
-  padding:30px;
 
-  text-align:center;
+/* plate */
 
-  background:#f9fafb;
-
-  border:1px dashed #d0d5dd;
-
-  border-radius:12px;
-
-  color:#667085;
+.plate-info{
+  grid-column:1/-1;
 }
 
+.saved-plate{
+  direction:ltr;
+  max-width:580px;
+  height:100px;
+  display:grid;
+  grid-template-columns:84px 1fr 1fr 1.5fr .95fr;
+  border:4px solid #111;
+  border-radius:12px;
+  overflow:hidden;
+}
+
+.saved-iran{
+  background:#073da5;
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
+
+.saved-flag{
+  width:40px;
+  height:21px;
+  border:1px solid #fff;
+  background:
+    linear-gradient(
+      to bottom,
+      #239f40 0 33.333%,
+      #fff 33.333% 66.666%,
+      #da0000 66.666% 100%
+    );
+}
+
+.saved-cell{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:34px;
+  font-weight:900;
+  border-left:1px solid #d0d5dd;
+  position:relative;
+}
+
+.saved-city{
+  border-left:4px solid #111;
+  padding-top:10px;
+}
+
+.city-label{
+  position:absolute;
+  top:4px;
+  left:0;
+  right:0;
+  font-size:10px;
+  color:#667085;
+  text-align:center;
+}
+
+.weight-panel{
+  grid-column:1/-1;
+  display:grid!important;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  border:0!important;
+  padding:0!important;
+}
+
+.weight-card{
+  border:1px solid #eaecf0;
+  border-radius:12px;
+  padding:14px;
+  background:#f9fafb;
+  text-align:center;
+}
+
+.weight-card.net{
+  background:#ecfdf3;
+  border-color:#abefc6;
+}
+
+.weight-card .big{
+  font-size:25px;
+  font-weight:900;
+  direction:ltr;
+}
+
+.wait-badge{
+  display:inline-block;
+  background:#fffaeb;
+  border:1px solid #fedf89;
+  color:#b54708;
+  border-radius:999px;
+  padding:7px 11px;
+  font-weight:900;
+}
+
+.done-badge{
+  display:inline-block;
+  background:#ecfdf3;
+  border:1px solid #abefc6;
+  color:#027a48;
+  border-radius:999px;
+  padding:7px 11px;
+  font-weight:900;
+}
+
+.no-photo{
+  padding:25px;
+  text-align:center;
+  color:#667085;
+  border:1px dashed #d0d5dd;
+  border-radius:12px;
+}
 
 @media(max-width:760px){
-
   .ticket-info{
     grid-template-columns:1fr;
+  }
+
+  .weight-panel{
+    grid-template-columns:1fr!important;
   }
 
   .photo-grid{
@@ -230,65 +201,27 @@
 
   .saved-plate{
     height:78px;
-
-    grid-template-columns:
-      62px
-      1fr
-      1fr
-      1.4fr
-      .9fr;
-
+    grid-template-columns:62px 1fr 1fr 1.4fr .9fr;
     border-width:3px;
   }
 
-  .saved-plate-cell{
-    font-size:24px;
+  .saved-cell{
+    font-size:23px;
   }
-
-  .saved-plate-city{
-    border-left-width:3px;
-  }
-
-  .saved-flag{
-    width:30px;
-    height:16px;
-  }
-
-  .saved-ir{
-    font-size:10px;
-  }
-
-  .saved-iran{
-    font-size:9px;
-  }
-
 }
-
 
 @media print{
-
   .page-head button,
   nav{
-    display:none !important;
+    display:none!important;
   }
-
-  .card{
-    box-shadow:none !important;
-  }
-
-  .saved-plate{
-    break-inside:avoid;
-  }
-
 }
-
 </style>
 
 
 <div class="page-head">
 
   <div>
-
     <h1>
       {{ _('ticket') }}
       #{{ "%06d"|format(row.ticket_number) }}
@@ -297,9 +230,7 @@
     <p>
       {{ _('weighment_details') }}
     </p>
-
   </div>
-
 
   <button
     class="btn"
@@ -312,407 +243,375 @@
 </div>
 
 
-<div class="card ticket">
+<div class="card">
 
 
-  <!-- ==========================
-       PHOTOS
-  =========================== -->
+<!-- photos -->
 
-  <div class="ticket-photo">
+{% if photos %}
 
-    {% if photos and photos|length > 0 %}
+<div class="photo-grid">
 
-      <div class="photo-grid">
+{% for fn in photos %}
 
-        {% for fn in photos %}
+<a
+  href="/uploads/{{ fn }}"
+  target="_blank"
+>
+  <img
+    src="/uploads/{{ fn }}"
+    alt="photo"
+  >
+</a>
 
-          <a
-            href="/uploads/{{ fn }}"
-            target="_blank"
-          >
+{% endfor %}
 
-            <img
-              src="/uploads/{{ fn }}"
-              alt="photo"
-            >
+</div>
 
-          </a>
+{% else %}
 
-        {% endfor %}
+<div class="no-photo">
+  {{ _('no_photo') }}
+</div>
 
-      </div>
+{% endif %}
+
+
+<div class="ticket-info">
+
+
+<!-- plate -->
+
+<div class="plate-info">
+
+<span>
+  {{ _('truck_plate') }}
+</span>
+
+
+{% if plate_parts %}
+
+<div class="saved-plate">
+
+  <div class="saved-iran">
+
+    <div class="saved-flag"></div>
+
+    <b>I.R.</b>
+
+    <small>IRAN</small>
+
+  </div>
+
+
+  <div class="saved-cell">
+    {{ plate_parts.first }}
+  </div>
+
+
+  <div class="saved-cell">
+    {{ plate_parts.letter }}
+  </div>
+
+
+  <div class="saved-cell">
+    {{ plate_parts.middle }}
+  </div>
+
+
+  <div class="saved-cell saved-city">
+
+    <div class="city-label">
+      ایران
+    </div>
+
+    {{ plate_parts.city }}
+
+  </div>
+
+</div>
+
+{% else %}
+
+<strong class="number-ltr">
+  {{ row.plate }}
+</strong>
+
+{% endif %}
+
+</div>
+
+
+<!-- mode -->
+
+<div>
+
+<span>
+  {{ _('weighing_mode') }}
+</span>
+
+<strong>
+
+{% if row.weighing_mode == 'DOUBLE' %}
+
+  {{ _('double_weigh') }}
+
+{% else %}
+
+  {{ _('single_weigh') }}
+
+{% endif %}
+
+</strong>
+
+</div>
+
+
+<!-- status -->
+
+<div>
+
+<span>
+  {{ _('status') }}
+</span>
+
+{% if row.status == 'WAITING_SECOND' %}
+
+  <strong>
+    <span class="wait-badge">
+      {{ _('waiting_second') }}
+    </span>
+  </strong>
+
+{% else %}
+
+  <strong>
+    <span class="done-badge">
+      {{ _('completed') }}
+    </span>
+  </strong>
+
+{% endif %}
+
+</div>
+
+
+<!-- weights -->
+
+{% if row.weighing_mode == 'DOUBLE' %}
+
+<div class="weight-panel">
+
+  <div class="weight-card">
+
+    <span>
+      {{ _('first_weight') }}
+    </span>
+
+    <div class="big">
+
+      {% if row.first_weight == row.first_weight|int %}
+        {{ row.first_weight|int }}
+      {% else %}
+        {{ row.first_weight }}
+      {% endif %}
+
+      kg
+
+    </div>
+
+    {% if row.first_weighed_at %}
+    <small>
+      {{ (row.first_weighed_at|string)[:19].replace('T',' ') }}
+    </small>
+    {% endif %}
+
+  </div>
+
+
+  <div class="weight-card">
+
+    <span>
+      {{ _('second_weight') }}
+    </span>
+
+    <div class="big">
+
+    {% if row.second_weight is not none %}
+
+      {% if row.second_weight == row.second_weight|int %}
+        {{ row.second_weight|int }}
+      {% else %}
+        {{ row.second_weight }}
+      {% endif %}
+
+      kg
 
     {% else %}
 
-      <div class="no-photo">
-        {{ _('no_photo') }}
-      </div>
+      —
 
+    {% endif %}
+
+    </div>
+
+    {% if row.second_weighed_at %}
+    <small>
+      {{ (row.second_weighed_at|string)[:19].replace('T',' ') }}
+    </small>
     {% endif %}
 
   </div>
 
 
-  <!-- ==========================
-       INFORMATION
-  =========================== -->
+  <div class="weight-card net">
 
-  <div class="ticket-info">
+    <span>
+      {{ _('net_weight') }}
+    </span>
 
+    <div class="big">
 
-    <!-- ========================
-         PLATE
-    ========================= -->
+    {% if row.net_weight is not none %}
 
-    <div class="plate-info-box">
-
-      <span>
-        {{ _('truck_plate') }}
-      </span>
-
-
-      {% if plate_parts %}
-
-      <div class="saved-plate">
-
-        <!-- IRAN -->
-
-        <div class="saved-plate-iran">
-
-          <div class="saved-flag"></div>
-
-          <div class="saved-ir">
-            I.R.
-          </div>
-
-          <div class="saved-iran">
-            IRAN
-          </div>
-
-        </div>
-
-
-        <!-- TWO DIGITS -->
-
-        <div class="saved-plate-cell">
-
-          {{ plate_parts.first }}
-
-        </div>
-
-
-        <!-- LETTER -->
-
-        <div class="saved-plate-cell saved-plate-letter">
-
-          {{ plate_parts.letter }}
-
-        </div>
-
-
-        <!-- THREE DIGITS -->
-
-        <div class="saved-plate-cell">
-
-          {{ plate_parts.middle }}
-
-        </div>
-
-
-        <!-- CITY -->
-
-        <div class="saved-plate-cell saved-plate-city">
-
-          <div class="saved-city-label">
-            ایران
-          </div>
-
-          {{ plate_parts.city }}
-
-        </div>
-
-      </div>
-
-
+      {% if row.net_weight == row.net_weight|int %}
+        {{ row.net_weight|int }}
       {% else %}
-
-      <!-- برای پلاک‌های قدیمی یا فرمت‌های متفاوت -->
-
-      <strong class="old-plate">
-        {{ row.plate }}
-      </strong>
-
+        {{ row.net_weight }}
       {% endif %}
 
-    </div>
+      kg
 
+    {% else %}
 
-    <!-- ========================
-         WEIGHT
-    ========================= -->
-
-    <div>
-
-      <span>
-        {{ _('weight') }}
-      </span>
-
-      <strong class="number-ltr">
-
-        {% if row.weight == row.weight|int %}
-
-          {{ row.weight|int }} {{ row.unit }}
-
-        {% else %}
-
-          {{ row.weight }} {{ row.unit }}
-
-        {% endif %}
-
-      </strong>
-
-    </div>
-
-
-    <!-- ========================
-         VEHICLE
-    ========================= -->
-
-    {% if row.vehicle_type %}
-
-    <div>
-
-      <span>
-        {{ _('vehicle_type') }}
-      </span>
-
-      <strong>
-        {{ row.vehicle_type }}
-      </strong>
-
-    </div>
+      —
 
     {% endif %}
 
-
-    <!-- DRIVER -->
-
-    {% if row.driver_name %}
-
-    <div>
-
-      <span>
-        {{ _('driver_name') }}
-      </span>
-
-      <strong>
-        {{ row.driver_name }}
-      </strong>
-
     </div>
-
-    {% endif %}
-
-
-    {% if row.driver_phone %}
-
-    <div>
-
-      <span>
-        {{ _('driver_phone') }}
-      </span>
-
-      <strong class="number-ltr">
-        {{ row.driver_phone }}
-      </strong>
-
-    </div>
-
-    {% endif %}
-
-
-    <!-- CARGO -->
-
-    {% if row.cargo_type %}
-
-    <div>
-
-      <span>
-        {{ _('cargo_type') }}
-      </span>
-
-      <strong>
-        {{ row.cargo_type }}
-      </strong>
-
-    </div>
-
-    {% endif %}
-
-
-    {% if row.cargo_owner %}
-
-    <div>
-
-      <span>
-        {{ _('cargo_owner') }}
-      </span>
-
-      <strong>
-        {{ row.cargo_owner }}
-      </strong>
-
-    </div>
-
-    {% endif %}
-
-
-    <!-- ROUTE -->
-
-    {% if row.origin %}
-
-    <div>
-
-      <span>
-        {{ _('origin') }}
-      </span>
-
-      <strong>
-        {{ row.origin }}
-      </strong>
-
-    </div>
-
-    {% endif %}
-
-
-    {% if row.destination %}
-
-    <div>
-
-      <span>
-        {{ _('destination') }}
-      </span>
-
-      <strong>
-        {{ row.destination }}
-      </strong>
-
-    </div>
-
-    {% endif %}
-
-
-    <!-- DOCUMENT -->
-
-    {% if row.document_no %}
-
-    <div>
-
-      <span>
-        {{ _('document_no') }}
-      </span>
-
-      <strong class="number-ltr">
-        {{ row.document_no }}
-      </strong>
-
-    </div>
-
-    {% endif %}
-
-
-    <!-- SCALE -->
-
-    <div>
-
-      <span>
-        {{ _('scale') }}
-      </span>
-
-      <strong>
-        {{ row.scale_id }}
-      </strong>
-
-    </div>
-
-
-    <!-- OPERATOR -->
-
-    <div>
-
-      <span>
-        {{ _('operator') }}
-      </span>
-
-      <strong>
-        {{ row.operator }}
-      </strong>
-
-    </div>
-
-
-    <!-- DATE -->
-
-    <div>
-
-      <span>
-        {{ _('datetime') }}
-      </span>
-
-      <strong class="number-ltr">
-        {{ (row.created_at|string)[:19].replace('T',' ') }}
-      </strong>
-
-    </div>
-
-
-    <!-- STATUS -->
-
-    <div>
-
-      <span>
-        {{ _('status') }}
-      </span>
-
-      <strong>
-
-        {% if row.status == 'SAVED' %}
-
-          {{ _('saved') }}
-
-        {% else %}
-
-          {{ row.status }}
-
-        {% endif %}
-
-      </strong>
-
-    </div>
-
-
-    <!-- NOTES -->
-
-    {% if row.notes %}
-
-    <div class="full">
-
-      <span>
-        {{ _('notes') }}
-      </span>
-
-      <strong class="notes">
-        {{ row.notes }}
-      </strong>
-
-    </div>
-
-    {% endif %}
-
 
   </div>
+
+</div>
+
+{% else %}
+
+<div>
+
+<span>
+  {{ _('weight') }}
+</span>
+
+<strong class="number-ltr">
+
+{% if row.weight == row.weight|int %}
+  {{ row.weight|int }}
+{% else %}
+  {{ row.weight }}
+{% endif %}
+
+kg
+
+</strong>
+
+</div>
+
+{% endif %}
+
+
+{% if row.vehicle_type %}
+<div>
+  <span>{{ _('vehicle_type') }}</span>
+  <strong>{{ row.vehicle_type }}</strong>
+</div>
+{% endif %}
+
+
+{% if row.driver_name %}
+<div>
+  <span>{{ _('driver_name') }}</span>
+  <strong>{{ row.driver_name }}</strong>
+</div>
+{% endif %}
+
+
+{% if row.driver_phone %}
+<div>
+  <span>{{ _('driver_phone') }}</span>
+  <strong class="number-ltr">{{ row.driver_phone }}</strong>
+</div>
+{% endif %}
+
+
+{% if row.cargo_type %}
+<div>
+  <span>{{ _('cargo_type') }}</span>
+  <strong>{{ row.cargo_type }}</strong>
+</div>
+{% endif %}
+
+
+{% if row.cargo_owner %}
+<div>
+  <span>{{ _('cargo_owner') }}</span>
+  <strong>{{ row.cargo_owner }}</strong>
+</div>
+{% endif %}
+
+
+{% if row.origin %}
+<div>
+  <span>{{ _('origin') }}</span>
+  <strong>{{ row.origin }}</strong>
+</div>
+{% endif %}
+
+
+{% if row.destination %}
+<div>
+  <span>{{ _('destination') }}</span>
+  <strong>{{ row.destination }}</strong>
+</div>
+{% endif %}
+
+
+{% if row.document_no %}
+<div>
+  <span>{{ _('document_no') }}</span>
+  <strong>{{ row.document_no }}</strong>
+</div>
+{% endif %}
+
+
+<div>
+  <span>{{ _('scale') }}</span>
+  <strong>{{ row.scale_id }}</strong>
+</div>
+
+
+<div>
+  <span>{{ _('operator') }}</span>
+  <strong>{{ row.operator }}</strong>
+</div>
+
+
+<div>
+  <span>{{ _('datetime') }}</span>
+  <strong class="number-ltr">
+    {{ (row.created_at|string)[:19].replace('T',' ') }}
+  </strong>
+</div>
+
+
+{% if row.notes %}
+<div class="full">
+  <span>{{ _('notes') }}</span>
+  <strong class="notes">{{ row.notes }}</strong>
+</div>
+{% endif %}
+
+
+</div>
 
 </div>
 

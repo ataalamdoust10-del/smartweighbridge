@@ -1,200 +1,62 @@
 {% extends "base.html" %}
 
-{% block title %}
-{{ _('records') }}
-{% endblock %}
+{% block title %}{{ _('records') }}{% endblock %}
 
 {% block content %}
 
 <style>
-
-.records-card{
-  margin-top:16px;
-}
-
 .table-wrap{
-  width:100%;
   overflow-x:auto;
 }
 
 .records-table{
   width:100%;
+  min-width:1200px;
   border-collapse:collapse;
-  min-width:1150px;
-}
-
-.records-table th{
-  white-space:nowrap;
-  font-size:13px;
-  color:#475467;
-  background:#f9fafb;
 }
 
 .records-table th,
 .records-table td{
-  padding:14px 12px;
+  padding:13px 11px;
   vertical-align:top;
   border-bottom:1px solid #eaecf0;
 }
 
-.records-table tbody tr:hover{
-  background:#fcfcfd;
+.records-table th{
+  background:#f9fafb;
+  white-space:nowrap;
 }
 
 .ticket-link{
   font-weight:900;
-  text-decoration:none;
   color:#2563eb;
-  white-space:nowrap;
-}
-
-.weight-value{
-  direction:ltr;
-  unicode-bidi:embed;
-  display:inline-block;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.record-details{
-  min-width:310px;
-  display:flex;
-  flex-direction:column;
-  gap:7px;
-}
-
-.detail-line{
-  color:#475467;
-  font-size:13px;
-  line-height:1.7;
-}
-
-.detail-line b{
-  color:#101828;
-  font-weight:900;
-}
-
-.route{
-  display:inline-flex;
-  align-items:center;
-  gap:7px;
-  flex-wrap:wrap;
-}
-
-.route-arrow{
-  color:#98a2b3;
-  font-weight:900;
-}
-
-.record-notes{
-  margin-top:4px;
-  padding:8px 10px;
-  background:#f9fafb;
-  border:1px solid #eaecf0;
-  border-radius:9px;
-  color:#475467;
-  font-size:12.5px;
-  line-height:1.7;
-  max-width:420px;
-  overflow-wrap:anywhere;
-}
-
-.ltr-value{
-  direction:ltr;
-  unicode-bidi:embed;
-  display:inline-block;
-  text-align:left;
-}
-
-.status-badge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:999px;
-  padding:6px 10px;
-  background:#ecfdf3;
-  color:#027a48;
-  border:1px solid #abefc6;
-  font-size:12px;
-  font-weight:900;
-  white-space:nowrap;
-}
-
-.record-actions{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  min-width:95px;
-}
-
-.view-btn{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
   text-decoration:none;
-  white-space:nowrap;
-}
-
-.delete-btn{
-  background:#fee4e2 !important;
-  color:#b42318 !important;
-  border-color:#fecdca !important;
-}
-
-
-/* =========================================================
-   MINI IRANIAN PLATE
-========================================================= */
-
-.plate-table-cell{
-  min-width:245px;
 }
 
 .mini-plate{
   direction:ltr;
-  width:235px;
-  height:50px;
-
+  width:230px;
+  height:49px;
   display:grid;
-
-  grid-template-columns:
-    38px
-    1fr
-    .9fr
-    1.35fr
-    .85fr;
-
+  grid-template-columns:37px 1fr .9fr 1.35fr .85fr;
   border:2px solid #111;
   border-radius:7px;
-
   overflow:hidden;
-
-  background:#fff;
-
-  box-sizing:border-box;
 }
 
 .mini-iran{
   background:#073da5;
   color:#fff;
-
   display:flex;
   flex-direction:column;
-
-  align-items:center;
   justify-content:center;
-
-  font-family:Arial,sans-serif;
+  align-items:center;
+  font-size:7px;
 }
 
 .mini-flag{
-  width:21px;
-  height:11px;
-
-  margin-bottom:2px;
-
-  border:1px solid rgba(255,255,255,.8);
-
+  width:20px;
+  height:10px;
   background:
     linear-gradient(
       to bottom,
@@ -204,111 +66,97 @@
     );
 }
 
-.mini-ir{
-  font-size:7px;
-  font-weight:900;
-  line-height:1;
-}
-
-.mini-country{
-  font-size:6px;
-  font-weight:900;
-  margin-top:2px;
-}
-
 .mini-cell{
-  position:relative;
-
   display:flex;
-
-  align-items:center;
   justify-content:center;
-
-  background:#fff;
-
-  color:#101828;
-
+  align-items:center;
   border-left:1px solid #d0d5dd;
-
   font-size:17px;
   font-weight:900;
-
-  white-space:nowrap;
-}
-
-.mini-letter{
-  font-family:Tahoma,Arial,sans-serif;
+  position:relative;
 }
 
 .mini-city{
   border-left:2px solid #111;
-  padding-top:6px;
+  padding-top:5px;
 }
 
-.mini-city-label{
+.city-label{
   position:absolute;
-
   top:1px;
-  left:0;
-  right:0;
-
-  text-align:center;
-
-  color:#667085;
-
   font-size:6px;
-
-  line-height:1;
-
-  font-weight:800;
+  color:#667085;
 }
 
-.fallback-plate{
-  direction:ltr;
-  unicode-bidi:embed;
+.details{
+  min-width:290px;
+  font-size:13px;
+  line-height:1.8;
+}
 
+.details b{
+  color:#101828;
+}
+
+.status{
   display:inline-block;
-
+  border-radius:999px;
+  padding:6px 9px;
+  font-size:12px;
   font-weight:900;
-
   white-space:nowrap;
 }
 
-
-/* ========================================================= */
-
-@media(max-width:760px){
-
-  .records-table th,
-  .records-table td{
-    padding:10px 9px;
-  }
-
-  .record-details{
-    min-width:260px;
-  }
-
-  .detail-line{
-    font-size:12px;
-  }
-
+.status.done{
+  color:#027a48;
+  background:#ecfdf3;
+  border:1px solid #abefc6;
 }
 
+.status.wait{
+  color:#b54708;
+  background:#fffaeb;
+  border:1px solid #fedf89;
+}
+
+.mode{
+  font-size:12px;
+  font-weight:900;
+  color:#475467;
+  white-space:nowrap;
+}
+
+.weight-lines{
+  direction:ltr;
+  text-align:left;
+  font-size:12px;
+  line-height:1.8;
+  white-space:nowrap;
+}
+
+.net{
+  color:#027a48;
+  font-weight:900;
+}
+
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+
+.delete-btn{
+  background:#fee4e2!important;
+  color:#b42318!important;
+}
 </style>
 
 
 <div class="page-head">
 
   <div>
-
-    <h1>
-      {{ _('records_title') }}
-    </h1>
-
-    <p>
-      {{ _('records_subtitle') }}
-    </p>
-
+    <h1>{{ _('records_title') }}</h1>
+    <p>{{ _('records_subtitle') }}</p>
   </div>
 
 </div>
@@ -334,12 +182,11 @@
     {{ _('search') }}
   </button>
 
-
   {% if q %}
 
   <a
-    class="btn"
     href="/records"
+    class="btn"
   >
     {{ _('clear') }}
   </a>
@@ -349,7 +196,7 @@
 </form>
 
 
-<div class="card records-card">
+<div class="card">
 
 <div class="table-wrap">
 
@@ -358,35 +205,14 @@
 <thead>
 
 <tr>
-
-  <th>
-    {{ _('ticket') }}
-  </th>
-
-  <th>
-    {{ _('plate') }}
-  </th>
-
-  <th>
-    {{ _('weight') }}
-  </th>
-
-  <th>
-    {{ _('date') }}
-  </th>
-
-  <th>
-    {{ _('weighment_details') }}
-  </th>
-
-  <th>
-    {{ _('status') }}
-  </th>
-
-  <th>
-    {{ _('actions') }}
-  </th>
-
+  <th>{{ _('ticket') }}</th>
+  <th>{{ _('plate') }}</th>
+  <th>{{ _('weighing_mode') }}</th>
+  <th>{{ _('weight') }}</th>
+  <th>{{ _('date') }}</th>
+  <th>{{ _('weighment_details') }}</th>
+  <th>{{ _('status') }}</th>
+  <th>{{ _('actions') }}</th>
 </tr>
 
 </thead>
@@ -396,414 +222,223 @@
 
 {% for r in rows %}
 
+{% set pp = plate_parts_map.get(r.id) %}
+
 <tr>
 
 
-<!-- =====================================================
-     TICKET
-===================================================== -->
-
 <td>
 
-  <a
-    class="ticket-link"
-    href="/weighments/{{ r.ticket_number }}"
-  >
-    #{{ "%06d"|format(r.ticket_number) }}
-  </a>
+<a
+  class="ticket-link"
+  href="/weighments/{{ r.ticket_number }}"
+>
+  #{{ "%06d"|format(r.ticket_number) }}
+</a>
 
 </td>
 
 
-<!-- =====================================================
-     PLATE
-===================================================== -->
-
-<td class="plate-table-cell">
-
-{% set pp = plate_parts_map.get(r.id) %}
-
+<td>
 
 {% if pp %}
 
 <div class="mini-plate">
 
-  <!-- IRAN -->
-
   <div class="mini-iran">
-
     <div class="mini-flag"></div>
-
-    <div class="mini-ir">
-      I.R.
-    </div>
-
-    <div class="mini-country">
-      IRAN
-    </div>
-
+    <b>I.R.</b>
+    <small>IRAN</small>
   </div>
 
-
-  <!-- FIRST 2 -->
-
   <div class="mini-cell">
-
     {{ pp.first }}
-
   </div>
-
-
-  <!-- LETTER -->
-
-  <div class="mini-cell mini-letter">
-
-    {{ pp.letter }}
-
-  </div>
-
-
-  <!-- 3 DIGITS -->
 
   <div class="mini-cell">
-
-    {{ pp.middle }}
-
+    {{ pp.letter }}
   </div>
 
-
-  <!-- CITY -->
+  <div class="mini-cell">
+    {{ pp.middle }}
+  </div>
 
   <div class="mini-cell mini-city">
-
-    <div class="mini-city-label">
-      ایران
-    </div>
-
+    <span class="city-label">ایران</span>
     {{ pp.city }}
-
   </div>
 
 </div>
 
-
 {% else %}
 
-
-<span class="fallback-plate">
-
+<span dir="ltr">
   {{ r.plate }}
-
 </span>
-
 
 {% endif %}
 
 </td>
 
 
-<!-- =====================================================
-     WEIGHT
-===================================================== -->
-
 <td>
 
-  <span class="weight-value">
+<div class="mode">
 
-    {% if r.weight == r.weight|int %}
+{% if r.weighing_mode == 'DOUBLE' %}
+  {{ _('double_weigh') }}
+{% else %}
+  {{ _('single_weigh') }}
+{% endif %}
 
-      {{ r.weight|int }} {{ r.unit }}
-
-    {% else %}
-
-      {{ r.weight }} {{ r.unit }}
-
-    {% endif %}
-
-  </span>
+</div>
 
 </td>
 
 
-<!-- =====================================================
-     DATE
-===================================================== -->
+<td>
+
+<div class="weight-lines">
+
+{% if r.weighing_mode == 'DOUBLE' %}
+
+  <div>
+    {{ _('first_weight') }}:
+    {{ r.first_weight }}
+  </div>
+
+  <div>
+    {{ _('second_weight') }}:
+    {{ r.second_weight if r.second_weight is not none else '—' }}
+  </div>
+
+  <div class="net">
+    {{ _('net_weight') }}:
+    {{ r.net_weight if r.net_weight is not none else '—' }}
+  </div>
+
+{% else %}
+
+  {{ r.weight }} kg
+
+{% endif %}
+
+</div>
+
+</td>
+
 
 <td style="white-space:nowrap;">
 
-  {{ (r.created_at|string)[:19].replace('T',' ') }}
+{{ (r.created_at|string)[:19].replace('T',' ') }}
 
 </td>
 
 
-<!-- =====================================================
-     DETAILS
-===================================================== -->
-
 <td>
 
-<div class="record-details">
-
+<div class="details">
 
 {% if r.vehicle_type %}
-
-<div class="detail-line">
-
-  <b>
-    {{ _('vehicle_type') }}:
-  </b>
-
-  {{ r.vehicle_type }}
-
-</div>
-
+  <div><b>{{ _('vehicle_type') }}:</b> {{ r.vehicle_type }}</div>
 {% endif %}
-
 
 {% if r.driver_name %}
-
-<div class="detail-line">
-
-  <b>
-    {{ _('driver_name') }}:
-  </b>
-
-  {{ r.driver_name }}
-
-</div>
-
+  <div><b>{{ _('driver_name') }}:</b> {{ r.driver_name }}</div>
 {% endif %}
-
 
 {% if r.driver_phone %}
-
-<div class="detail-line">
-
-  <b>
-    {{ _('driver_phone') }}:
-  </b>
-
-  <span class="ltr-value">
-
-    {{ r.driver_phone }}
-
-  </span>
-
-</div>
-
+  <div><b>{{ _('driver_phone') }}:</b> {{ r.driver_phone }}</div>
 {% endif %}
-
 
 {% if r.cargo_type %}
-
-<div class="detail-line">
-
-  <b>
-    {{ _('cargo_type') }}:
-  </b>
-
-  {{ r.cargo_type }}
-
-</div>
-
+  <div><b>{{ _('cargo_type') }}:</b> {{ r.cargo_type }}</div>
 {% endif %}
-
 
 {% if r.cargo_owner %}
-
-<div class="detail-line">
-
-  <b>
-    {{ _('cargo_owner') }}:
-  </b>
-
-  {{ r.cargo_owner }}
-
-</div>
-
+  <div><b>{{ _('cargo_owner') }}:</b> {{ r.cargo_owner }}</div>
 {% endif %}
-
 
 {% if r.origin or r.destination %}
+  <div>
+    {% if r.origin %}
+      <b>{{ _('origin') }}:</b> {{ r.origin }}
+    {% endif %}
 
-<div class="detail-line route">
+    {% if r.origin and r.destination %}
+      →
+    {% endif %}
 
-
-{% if r.origin %}
-
-<span>
-
-  <b>
-    {{ _('origin') }}:
-  </b>
-
-  {{ r.origin }}
-
-</span>
-
+    {% if r.destination %}
+      <b>{{ _('destination') }}:</b> {{ r.destination }}
+    {% endif %}
+  </div>
 {% endif %}
-
-
-{% if r.origin and r.destination %}
-
-<span class="route-arrow">
-  →
-</span>
-
-{% endif %}
-
-
-{% if r.destination %}
-
-<span>
-
-  <b>
-    {{ _('destination') }}:
-  </b>
-
-  {{ r.destination }}
-
-</span>
-
-{% endif %}
-
-
-</div>
-
-{% endif %}
-
 
 {% if r.document_no %}
-
-<div class="detail-line">
-
-  <b>
-    {{ _('document_no') }}:
-  </b>
-
-  <span class="ltr-value">
-
-    {{ r.document_no }}
-
-  </span>
-
-</div>
-
+  <div><b>{{ _('document_no') }}:</b> {{ r.document_no }}</div>
 {% endif %}
-
 
 {% if r.notes %}
-
-<div class="record-notes">
-
-  <b>
-    {{ _('notes') }}:
-  </b>
-
-  {{ r.notes }}
-
-</div>
-
+  <div><b>{{ _('notes') }}:</b> {{ r.notes }}</div>
 {% endif %}
-
-
-{% if not (
-    r.vehicle_type
-    or r.driver_name
-    or r.driver_phone
-    or r.cargo_type
-    or r.cargo_owner
-    or r.origin
-    or r.destination
-    or r.document_no
-    or r.notes
-) %}
-
-<span style="color:#98a2b3;">
-  —
-</span>
-
-{% endif %}
-
 
 </div>
 
 </td>
 
 
-<!-- =====================================================
-     STATUS
-===================================================== -->
-
 <td>
 
-<span class="status-badge">
+{% if r.status == 'WAITING_SECOND' %}
 
-{% if r.status == 'SAVED' %}
-
-  {{ _('saved') }}
+<span class="status wait">
+  {{ _('waiting_second') }}
+</span>
 
 {% else %}
 
-  {{ r.status }}
+<span class="status done">
+  {{ _('completed') }}
+</span>
 
 {% endif %}
-
-</span>
 
 </td>
 
 
-<!-- =====================================================
-     ACTIONS
-===================================================== -->
-
 <td>
 
-<div class="record-actions">
-
+<div class="actions">
 
 <a
-  class="btn view-btn"
+  class="btn"
   href="/weighments/{{ r.ticket_number }}"
 >
-
   {{ _('weighment_details') }}
-
 </a>
 
 
 <form
   method="post"
   action="/weighments/{{ r.ticket_number }}/delete"
-
   onsubmit="return confirm({{ _('confirm_delete')|tojson }});"
-
-  style="margin:0;"
 >
 
+  <input
+    type="hidden"
+    name="next"
+    value="/records{% if q %}?q={{ q|urlencode }}{% endif %}"
+  >
 
-<input
-  type="hidden"
-
-  name="next"
-
-  value="/records{% if q %}?q={{ q|urlencode }}{% endif %}"
->
-
-
-<button
-  class="btn delete-btn"
-  type="submit"
->
-
-  {{ _('delete') }}
-
-</button>
-
+  <button
+    class="btn delete-btn"
+    type="submit"
+  >
+    {{ _('delete') }}
+  </button>
 
 </form>
-
 
 </div>
 
@@ -815,28 +450,15 @@
 
 {% else %}
 
-
 <tr>
 
-<td
-  colspan="7"
-
-  style="
-    text-align:center;
-    color:#667085;
-    padding:30px;
-  "
->
-
+<td colspan="8">
   {{ _('no_results') }}
-
 </td>
 
 </tr>
 
-
 {% endfor %}
-
 
 </tbody>
 

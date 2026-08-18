@@ -45,20 +45,9 @@ DB_PATH = BASE_DIR / "weighbridge.db"
 UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-USERNAME = os.getenv(
-    "SWB_USERNAME",
-    "admin",
-)
-
-PASSWORD = os.getenv(
-    "SWB_PASSWORD",
-    "admin123",
-)
-
-SECRET = os.getenv(
-    "SWB_SECRET",
-    "CHANGE-ME-IN-PRODUCTION",
-)
+USERNAME = os.getenv("SWB_USERNAME", "admin")
+PASSWORD = os.getenv("SWB_PASSWORD", "admin123")
+SECRET = os.getenv("SWB_SECRET", "CHANGE-ME-IN-PRODUCTION")
 
 DEVICE_TOKEN = os.getenv(
     "SWB_DEVICE_TOKEN",
@@ -66,11 +55,10 @@ DEVICE_TOKEN = os.getenv(
 )
 
 # local:
-# خود FastAPI مستقیماً COM را باز می‌کند
+# خود FastAPI پورت COM را باز می‌کند.
 #
 # agent:
-# Railway تنظیمات را نگه می‌دارد و
-# scale_agent.py روی ویندوز COM را باز می‌کند
+# Railway وزن را از scale_agent.py می‌گیرد.
 SERIAL_MODE = os.getenv(
     "SWB_SERIAL_MODE",
     "local",
@@ -83,7 +71,7 @@ MAX_SCALE_AGE_SEC = float(
     )
 )
 
-# برای تست لوکال بدون اتصال کابل
+# فقط برای تست لوکال بدون کابل
 TEST_MODE = os.getenv(
     "SWB_TEST_MODE",
     "0",
@@ -108,7 +96,7 @@ DEFAULT_LANG = "fa"
 # ============================================================
 
 app = FastAPI(
-    title="Smart Weighbridge v1"
+    title="Smart Weighbridge v2"
 )
 
 app.add_middleware(
@@ -192,7 +180,7 @@ def change_lang(
     )
 
     response = RedirectResponse(
-        url=back,
+        back,
         status_code=303,
     )
 
@@ -235,7 +223,8 @@ templates.env.globals["_"] = _
 
 def db():
     conn = sqlite3.connect(
-        DB_PATH
+        DB_PATH,
+        timeout=30,
     )
 
     conn.row_factory = sqlite3.Row
@@ -247,17 +236,28 @@ def db():
     return conn
 
 
-def _ensure_weighments_columns(
+def _table_columns(
     conn: sqlite3.Connection,
+    table: str,
 ):
-    existing = {
+    return {
         row["name"]
         for row in conn.execute(
-            "PRAGMA table_info(weighments)"
+            f"PRAGMA table_info({table})"
         ).fetchall()
     }
 
+
+def _ensure_weighments_columns(
+    conn: sqlite3.Connection,
+):
+    existing = _table_columns(
+        conn,
+        "weighments",
+    )
+
     additions = {
+        # اطلاعات قبلی
         "vehicle_type":
             "vehicle_type TEXT",
 
@@ -284,6 +284,31 @@ def _ensure_weighments_columns(
 
         "notes":
             "notes TEXT",
+
+        # تک / دو توزین
+        "weighing_mode":
+            "weighing_mode TEXT NOT NULL DEFAULT 'SINGLE'",
+
+        "first_weight":
+            "first_weight REAL",
+
+        "first_weighed_at":
+            "first_weighed_at TEXT",
+
+        "first_operator":
+            "first_operator TEXT",
+
+        "second_weight":
+            "second_weight REAL",
+
+        "second_weighed_at":
+            "second_weighed_at TEXT",
+
+        "second_operator":
+            "second_operator TEXT",
+
+        "net_weight":
+            "net_weight REAL",
     }
 
     for name, ddl in additions.items():
@@ -302,7 +327,6 @@ def init_db():
     conn.executescript(
         """
         CREATE TABLE IF NOT EXISTS weighments (
-
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
             ticket_number INTEGER
@@ -334,7 +358,6 @@ def init_db():
 
 
         CREATE TABLE IF NOT EXISTS weighment_photos (
-
             id INTEGER PRIMARY KEY AUTOINCREMENT,
 
             weighment_id INTEGER NOT NULL,
@@ -350,7 +373,6 @@ def init_db():
 
 
         CREATE TABLE IF NOT EXISTS scale_state (
-
             id INTEGER
                 PRIMARY KEY
                 CHECK(id=1),
@@ -377,7 +399,6 @@ def init_db():
             stable,
             updated_at
         )
-
         VALUES
         (
             1,
@@ -389,7 +410,6 @@ def init_db():
 
 
         CREATE TABLE IF NOT EXISTS device_config (
-
             id INTEGER
                 PRIMARY KEY
                 CHECK(id=1),
@@ -439,6 +459,43 @@ def init_db():
 
     _ensure_weighments_columns(
         conn
+    )
+
+    # رکوردهای قدیمی را به تک توزین تبدیل می‌کنیم.
+    conn.execute(
+        """
+        UPDATE weighments
+
+        SET
+            weighing_mode =
+                COALESCE(
+                    NULLIF(weighing_mode, ''),
+                    'SINGLE'
+                ),
+
+            first_weight =
+                COALESCE(
+                    first_weight,
+                    weight
+                ),
+
+            first_weighed_at =
+                COALESCE(
+                    first_weighed_at,
+                    created_at
+                ),
+
+            first_operator =
+                COALESCE(
+                    first_operator,
+                    operator
+                )
+
+        WHERE
+            weighing_mode IS NULL
+            OR weighing_mode = ''
+            OR first_weight IS NULL
+        """
     )
 
     conn.commit()
@@ -525,29 +582,37 @@ def _parse_dt(
     return dt
 
 
+def calculate_net_weight(
+    first_weight: float,
+    second_weight: float,
+) -> float:
+    """
+    وزن خالص همیشه مثبت است.
+
+    18450 و 7200
+    => 11250
+
+    -18450 و -7200
+    => 11250
+
+    -18450 و 7200
+    => 11250
+    """
+
+    return abs(
+        abs(float(first_weight))
+        -
+        abs(float(second_weight))
+    )
+
+
 # ============================================================
-# IRAN PLATE
+# IRANIAN PLATE
 # ============================================================
 
 def parse_iran_plate(
     plate: str,
 ):
-    """
-    فرمت ذخیره‌شده:
-        12ع365-11
-
-    خروجی:
-        {
-            "first": "12",
-            "letter": "ع",
-            "middle": "365",
-            "city": "11"
-        }
-
-    اگر پلاک فرمت دیگری داشته باشد:
-        None
-    """
-
     if not plate:
         return None
 
@@ -578,11 +643,110 @@ def parse_iran_plate(
     }
 
 
+def normalize_plate_search(
+    value: str,
+) -> str:
+    """
+    برای جستجوی پلاک:
+
+    12 ع 365 11
+    12ع365-11
+
+    هر دو تا حد ممکن قابل جستجو شوند.
+    """
+
+    value = (
+        value
+        .strip()
+        .replace(" ", "")
+        .replace("ـ", "")
+    )
+
+    return value
+
+
+# ============================================================
+# SCALE VALIDATION
+# ============================================================
+
+def get_scale_state():
+    conn = db()
+
+    row = conn.execute(
+        """
+        SELECT *
+        FROM scale_state
+        WHERE id=1
+        """
+    ).fetchone()
+
+    conn.close()
+
+    return row
+
+
+def validate_live_scale(
+    state,
+):
+    """
+    خروجی:
+        None -> معتبر
+
+    یا:
+        unstable
+        stale
+        weight
+        scale
+    """
+
+    if not state:
+        return "scale"
+
+    scale_weight = float(
+        state["weight"]
+    )
+
+    if (
+        scale_weight < -1000000
+        or scale_weight > 1000000
+    ):
+        return "weight"
+
+    # در تست لوکال وزن قدیمی مجاز است
+    if TEST_MODE:
+        return None
+
+    if not bool(
+        state["stable"]
+    ):
+        return "unstable"
+
+    try:
+        age = (
+            datetime.now(
+                timezone.utc
+            )
+            - _parse_dt(
+                str(
+                    state["updated_at"]
+                )
+            )
+        ).total_seconds()
+
+        if age > MAX_SCALE_AGE_SEC:
+            return "stale"
+
+    except Exception:
+        return "stale"
+
+    return None
+
+
 # ============================================================
 # DEVICE CONFIG
 # ============================================================
 
-def load_device_config() -> DeviceConfig:
+def load_device_config():
     conn = db()
 
     row = conn.execute(
@@ -654,24 +818,15 @@ def save_device_config(
 
         WHERE id=1
         """,
-
         (
-            int(
-                cfg.enabled
-            ),
+            1 if cfg.enabled else 0,
 
             cfg.port,
-
             cfg.baud,
-
             cfg.indicator,
-
             cfg.stable_tol,
-
             cfg.stable_seconds,
-
             cfg.send_every_sec,
-
             cfg.scale_id,
 
             datetime.now(
@@ -707,14 +862,9 @@ def update_scale_state(
 
         WHERE id=1
         """,
-
         (
             scale_id,
-
-            float(
-                weight
-            ),
-
+            float(weight),
             1 if stable else 0,
 
             datetime.now(
@@ -728,7 +878,7 @@ def update_scale_state(
 
 
 # ============================================================
-# STARTUP / SHUTDOWN
+# STARTUP
 # ============================================================
 
 @app.on_event("startup")
@@ -757,7 +907,7 @@ def shutdown():
 
 
 # ============================================================
-# LOGIN / HOME
+# LOGIN
 # ============================================================
 
 @app.get("/")
@@ -798,9 +948,7 @@ async def login_page(
 @app.post("/login")
 async def login(
     request: Request,
-
     username: str = Form(...),
-
     password: str = Form(...),
 ):
     if (
@@ -878,10 +1026,9 @@ async def dashboard(
 
     total = conn.execute(
         """
-        SELECT
-            COUNT(*) AS c
-
+        SELECT COUNT(*) AS c
         FROM weighments
+        WHERE status != 'WAITING_SECOND'
         """
     ).fetchone()["c"]
 
@@ -889,11 +1036,19 @@ async def dashboard(
         """
         SELECT
             COALESCE(
-                SUM(weight),
+                SUM(
+                    CASE
+                        WHEN weighing_mode = 'DOUBLE'
+                            THEN COALESCE(net_weight, 0)
+                        ELSE weight
+                    END
+                ),
                 0
             ) AS total
 
         FROM weighments
+
+        WHERE status != 'WAITING_SECOND'
         """
     ).fetchone()["total"]
 
@@ -951,7 +1106,36 @@ async def weigh_page(
         """
     ).fetchone()
 
+    waiting_rows = conn.execute(
+        """
+        SELECT *
+        FROM weighments
+
+        WHERE
+            weighing_mode = 'DOUBLE'
+            AND status = 'WAITING_SECOND'
+            AND second_weight IS NULL
+
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
     conn.close()
+
+    waiting = []
+
+    for row in waiting_rows:
+        waiting.append(
+            {
+                "row":
+                    row,
+
+                "plate_parts":
+                    parse_iran_plate(
+                        row["plate"]
+                    ),
+            }
+        )
 
     return templates.TemplateResponse(
         "weigh.html",
@@ -962,6 +1146,9 @@ async def weigh_page(
             "state":
                 state,
 
+            "waiting":
+                waiting,
+
             "user":
                 request.session[
                     "user"
@@ -971,7 +1158,7 @@ async def weigh_page(
 
 
 # ============================================================
-# CREATE WEIGHMENT
+# SINGLE WEIGH / FIRST WEIGH
 # ============================================================
 
 @app.post("/weigh")
@@ -980,6 +1167,10 @@ async def create_weighment(
     request: Request,
 
     plate: str = Form(...),
+
+    weighing_mode: str = Form(
+        "SINGLE"
+    ),
 
     weight: float | None = Form(
         None
@@ -1031,27 +1222,77 @@ async def create_weighment(
         plate.strip()
     )
 
+    weighing_mode = (
+        weighing_mode
+        .strip()
+        .upper()
+    )
+
+    if weighing_mode not in {
+        "SINGLE",
+        "DOUBLE",
+    }:
+        weighing_mode = "SINGLE"
+
     if not plate:
         return RedirectResponse(
             "/weigh?error=plate",
             status_code=303,
         )
 
-    conn = db()
+    # --------------------------------------------
+    # اگر دو توزین باشد، همان پلاک نباید
+    # رکورد باز دیگری داشته باشد.
+    # --------------------------------------------
 
-    scale = conn.execute(
-        """
-        SELECT *
-        FROM scale_state
-        WHERE id=1
-        """
-    ).fetchone()
+    if weighing_mode == "DOUBLE":
 
-    conn.close()
+        conn = db()
 
-    if not scale:
+        existing = conn.execute(
+            """
+            SELECT ticket_number
+            FROM weighments
+
+            WHERE
+                plate = ?
+                AND weighing_mode = 'DOUBLE'
+                AND status = 'WAITING_SECOND'
+                AND second_weight IS NULL
+
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (
+                plate,
+            ),
+        ).fetchone()
+
+        conn.close()
+
+        if existing:
+            return RedirectResponse(
+                f"/weigh?error=open_double&ticket={existing['ticket_number']}",
+                status_code=303,
+            )
+
+    # --------------------------------------------
+    # وزن واقعی باسکول
+    # --------------------------------------------
+
+    scale = (
+        get_scale_state()
+    )
+
+    scale_error = (
+        validate_live_scale(
+            scale
+        )
+    )
+
+    if scale_error:
         return RedirectResponse(
-            "/weigh?error=scale",
+            f"/weigh?error={scale_error}",
             status_code=303,
         )
 
@@ -1059,68 +1300,26 @@ async def create_weighment(
         scale["weight"]
     )
 
-    scale_stable = bool(
-        scale["stable"]
-    )
-
     scale_id = str(
         scale["scale_id"]
     )
 
-    updated_at = str(
-        scale["updated_at"]
+    # علامت عیناً نگهداری می‌شود
+    weight_final = scale_weight
+
+    now = datetime.now(
+        timezone.utc
+    ).isoformat()
+
+    operator = (
+        request.session[
+            "user"
+        ]
     )
 
     # --------------------------------------------
-    # Production:
-    # وزن حتماً تازه و Stable باشد
-    #
-    # Test mode:
-    # اجازه تست آخرین وزن بدون کابل
+    # فیلدهای تکمیلی
     # --------------------------------------------
-
-    if not TEST_MODE:
-
-        if not scale_stable:
-            return RedirectResponse(
-                "/weigh?error=unstable",
-                status_code=303,
-            )
-
-        try:
-            age = (
-                datetime.now(
-                    timezone.utc
-                )
-                - _parse_dt(
-                    updated_at
-                )
-            ).total_seconds()
-
-            if (
-                age
-                > MAX_SCALE_AGE_SEC
-            ):
-                return RedirectResponse(
-                    "/weigh?error=stale",
-                    status_code=303,
-                )
-
-        except Exception:
-            pass
-
-    # مثبت و منفی هر دو معتبر
-    if (
-        scale_weight < -1000000
-        or scale_weight > 1000000
-    ):
-        return RedirectResponse(
-            "/weigh?error=weight",
-            status_code=303,
-        )
-
-    # علامت بدون تغییر حفظ می‌شود
-    weight_final = scale_weight
 
     vehicle_type = _clean_text(
         vehicle_type
@@ -1158,9 +1357,9 @@ async def create_weighment(
         notes
     )
 
-    # ========================================================
-    # PHOTOS
-    # ========================================================
+    # --------------------------------------------
+    # عکس‌ها
+    # --------------------------------------------
 
     filenames: list[str] = []
 
@@ -1232,23 +1431,69 @@ async def create_weighment(
         else None
     )
 
-    # ========================================================
-    # SAVE RECORD
-    # ========================================================
+    # --------------------------------------------
+    # SINGLE
+    # --------------------------------------------
+
+    if weighing_mode == "SINGLE":
+
+        status = "SAVED"
+
+        first_weight = (
+            weight_final
+        )
+
+        first_weighed_at = (
+            now
+        )
+
+        first_operator = (
+            operator
+        )
+
+        second_weight = None
+        second_weighed_at = None
+        second_operator = None
+
+        # تک توزین وزن خالص جدا ندارد
+        net_weight = None
+
+    # --------------------------------------------
+    # DOUBLE - FIRST
+    # --------------------------------------------
+
+    else:
+
+        status = (
+            "WAITING_SECOND"
+        )
+
+        first_weight = (
+            weight_final
+        )
+
+        first_weighed_at = (
+            now
+        )
+
+        first_operator = (
+            operator
+        )
+
+        second_weight = None
+        second_weighed_at = None
+        second_operator = None
+        net_weight = None
+
+    # --------------------------------------------
+    # SAVE
+    # --------------------------------------------
 
     conn = db()
-
-    _ensure_weighments_columns(
-        conn
-    )
 
     ticket = next_ticket(
         conn
     )
-
-    now = datetime.now(
-        timezone.utc
-    ).isoformat()
 
     cursor = conn.execute(
         """
@@ -1258,7 +1503,9 @@ async def create_weighment(
             plate,
             weight,
             unit,
+
             photo_filename,
+
             scale_id,
             operator,
             created_at,
@@ -1275,54 +1522,83 @@ async def create_weighment(
             destination,
 
             document_no,
-            notes
+            notes,
+
+            weighing_mode,
+
+            first_weight,
+            first_weighed_at,
+            first_operator,
+
+            second_weight,
+            second_weighed_at,
+            second_operator,
+
+            net_weight
         )
 
         VALUES
         (
             ?, ?, ?, 'kg',
-            ?, ?, ?, ?, 'SAVED',
+
+            ?,
+
+            ?, ?, ?, ?,
+
             ?, ?, ?,
+
             ?, ?,
+
             ?, ?,
-            ?, ?
+
+            ?, ?,
+
+            ?,
+
+            ?, ?, ?,
+
+            ?, ?, ?,
+
+            ?
         )
         """,
 
         (
             ticket,
-
             plate,
-
             weight_final,
 
             first_photo,
 
             scale_id,
-
-            request.session[
-                "user"
-            ],
-
+            operator,
             now,
+            status,
 
             vehicle_type,
-
             driver_name,
-
             driver_phone,
 
             cargo_type,
-
             cargo_owner,
 
             origin,
-
             destination,
 
             document_no,
-
             notes,
+
+            weighing_mode,
+
+            first_weight,
+            first_weighed_at,
+            first_operator,
+
+            second_weight,
+            second_weighed_at,
+            second_operator,
+
+            net_weight,
         ),
     )
 
@@ -1341,14 +1617,8 @@ async def create_weighment(
                 created_at
             )
 
-            VALUES
-            (
-                ?,
-                ?,
-                ?
-            )
+            VALUES (?, ?, ?)
             """,
-
             (
                 weighment_id,
                 filename,
@@ -1359,8 +1629,137 @@ async def create_weighment(
     conn.commit()
     conn.close()
 
+    if weighing_mode == "DOUBLE":
+        return RedirectResponse(
+            f"/weighments/{ticket}?first_saved=1",
+            status_code=303,
+        )
+
     return RedirectResponse(
         f"/weighments/{ticket}?saved=1",
+        status_code=303,
+    )
+
+
+# ============================================================
+# SECOND WEIGH
+# ============================================================
+
+@app.post(
+    "/weighments/{ticket}/second-weigh"
+)
+async def second_weigh(
+    request: Request,
+    ticket: int,
+):
+    require_login(request)
+
+    # وزن زنده باید معتبر باشد
+    scale = (
+        get_scale_state()
+    )
+
+    scale_error = (
+        validate_live_scale(
+            scale
+        )
+    )
+
+    if scale_error:
+        return RedirectResponse(
+            f"/weigh?error={scale_error}&ticket={ticket}",
+            status_code=303,
+        )
+
+    second_weight = float(
+        scale["weight"]
+    )
+
+    second_weighed_at = (
+        datetime.now(
+            timezone.utc
+        ).isoformat()
+    )
+
+    second_operator = (
+        request.session[
+            "user"
+        ]
+    )
+
+    conn = db()
+
+    row = conn.execute(
+        """
+        SELECT *
+        FROM weighments
+
+        WHERE
+            ticket_number = ?
+            AND weighing_mode = 'DOUBLE'
+            AND status = 'WAITING_SECOND'
+            AND second_weight IS NULL
+        """,
+        (
+            ticket,
+        ),
+    ).fetchone()
+
+    if not row:
+        conn.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="Open double weighment not found",
+        )
+
+    first_weight = float(
+        row["first_weight"]
+    )
+
+    net_weight = (
+        calculate_net_weight(
+            first_weight,
+            second_weight,
+        )
+    )
+
+    conn.execute(
+        """
+        UPDATE weighments
+
+        SET
+            second_weight=?,
+            second_weighed_at=?,
+            second_operator=?,
+
+            net_weight=?,
+
+            weight=?,
+
+            status='SAVED'
+
+        WHERE id=?
+        """,
+
+        (
+            second_weight,
+            second_weighed_at,
+            second_operator,
+
+            net_weight,
+
+            net_weight,
+
+            row["id"],
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return RedirectResponse(
+        f"/weighments/{ticket}?second_saved=1",
         status_code=303,
     )
 
@@ -1387,7 +1786,9 @@ async def detail(
         FROM weighments
         WHERE ticket_number=?
         """,
-        (ticket,),
+        (
+            ticket,
+        ),
     ).fetchone()
 
     if not row:
@@ -1405,12 +1806,16 @@ async def detail(
         WHERE weighment_id=?
         ORDER BY id ASC
         """,
-        (row["id"],),
+        (
+            row["id"],
+        ),
     ).fetchall()
 
     photos = [
-        p["filename"]
-        for p in photo_rows
+        photo[
+            "filename"
+        ]
+        for photo in photo_rows
     ]
 
     if (
@@ -1418,12 +1823,15 @@ async def detail(
         and row["photo_filename"]
     ):
         photos = [
-            row["photo_filename"]
+            row[
+                "photo_filename"
+            ]
         ]
 
-    # برای نمایش گرافیکی پلاک
-    plate_parts = parse_iran_plate(
-        row["plate"]
+    plate_parts = (
+        parse_iran_plate(
+            row["plate"]
+        )
     )
 
     conn.close()
@@ -1471,8 +1879,20 @@ async def records(
 
     if q:
 
+        # جستجوی عادی
         like = (
             f"%{q}%"
+        )
+
+        # جستجوی پلاک بدون فاصله
+        normalized = (
+            normalize_plate_search(
+                q
+            )
+        )
+
+        normalized_like = (
+            f"%{normalized}%"
         )
 
         rows = conn.execute(
@@ -1483,6 +1903,12 @@ async def records(
 
             WHERE
                 plate LIKE ?
+
+                OR REPLACE(
+                    plate,
+                    ' ',
+                    ''
+                ) LIKE ?
 
                 OR CAST(
                     ticket_number
@@ -1512,6 +1938,7 @@ async def records(
 
             (
                 like,
+                normalized_like,
                 like,
                 like,
                 like,
@@ -1537,17 +1964,9 @@ async def records(
 
     conn.close()
 
-    # --------------------------------------------
-    # فقط برای نمایش پلاک در جدول سوابق.
-    #
-    # دیتابیس دست‌کاری نمی‌شود.
-    # جستجو همچنان روی row.plate اصلی است.
-    # --------------------------------------------
-
     plate_parts_map = {}
 
     for row in rows:
-
         plate_parts_map[
             row["id"]
         ] = parse_iran_plate(
@@ -1604,11 +2023,12 @@ async def delete_weighment(
         FROM weighments
         WHERE ticket_number=?
         """,
-        (ticket,),
+        (
+            ticket,
+        ),
     ).fetchone()
 
     if not row:
-
         conn.close()
 
         return RedirectResponse(
@@ -1617,14 +2037,12 @@ async def delete_weighment(
         )
 
     filenames = [
-        p["filename"]
+        photo["filename"]
 
-        for p in conn.execute(
+        for photo in conn.execute(
             """
             SELECT filename
-
             FROM weighment_photos
-
             WHERE weighment_id=?
             """,
             (
@@ -1638,7 +2056,9 @@ async def delete_weighment(
         and row["photo_filename"]
     ):
         filenames.append(
-            row["photo_filename"]
+            row[
+                "photo_filename"
+            ]
         )
 
     conn.execute(
@@ -1669,7 +2089,6 @@ async def delete_weighment(
     for filename in filenames:
 
         try:
-
             path = (
                 UPLOAD_DIR
                 / filename
@@ -2172,7 +2591,9 @@ async def agent_status(
 
     agent_state[
         "last_seen_ts"
-    ] = time.time()
+    ] = (
+        time.time()
+    )
 
     if raw:
 
