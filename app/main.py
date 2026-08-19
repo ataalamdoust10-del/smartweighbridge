@@ -496,7 +496,6 @@ def next_ticket(conn):
                 MAX(ticket_number),
                 0
             ) + 1 AS n
-
         FROM weighments
         """
     ).fetchone()
@@ -528,7 +527,6 @@ def clean_optional_float(value):
 
     try:
         return float(value)
-
     except ValueError:
         return None
 
@@ -609,6 +607,33 @@ def validate_manual_weight(value):
         return None
 
     return number
+
+
+def get_open_double_by_plate(
+    plate,
+):
+    conn = db()
+
+    row = conn.execute(
+        """
+        SELECT *
+        FROM weighments
+
+        WHERE
+            plate=?
+            AND weighing_mode='DOUBLE'
+            AND status='WAITING_SECOND'
+            AND second_weight IS NULL
+
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (str(plate).strip(),),
+    ).fetchone()
+
+    conn.close()
+
+    return row
 
 
 # ============================================================
@@ -1112,9 +1137,7 @@ async def dashboard(
     total = conn.execute(
         """
         SELECT COUNT(*) AS c
-
         FROM weighments
-
         WHERE status != 'WAITING_SECOND'
         """
     ).fetchone()["c"]
@@ -1226,10 +1249,8 @@ async def vehicle_profile_save(
         weighing_fee
     )
 
-    ref_weight = (
-        clean_optional_float(
-            vehicle_weight
-        )
+    ref_weight = clean_optional_float(
+        vehicle_weight
     )
 
     if (
@@ -1339,6 +1360,101 @@ async def vehicle_profile_api(
 
 
 # ============================================================
+# OPEN DOUBLE WEIGHMENT API
+# ============================================================
+
+@app.get(
+    "/api/open-weighment"
+)
+async def open_weighment_api(
+    request: Request,
+    plate: str = "",
+):
+    require_login(request)
+
+    plate = str(
+        plate
+    ).strip()
+
+    if not plate:
+        return {
+            "found": False,
+        }
+
+    row = get_open_double_by_plate(
+        plate
+    )
+
+    if not row:
+        return {
+            "found": False,
+        }
+
+    return {
+        "found": True,
+
+        "ticket_number":
+            row["ticket_number"],
+
+        "plate":
+            row["plate"],
+
+        "first_weight":
+            row["first_weight"],
+
+        "first_weight_manual":
+            bool(
+                row["first_weight_manual"]
+            ),
+
+        "first_weighed_at":
+            row["first_weighed_at"],
+
+        "first_operator":
+            row["first_operator"],
+
+        "vehicle_type":
+            row["vehicle_type"],
+
+        "weighing_fee":
+            row["weighing_fee"],
+
+        "vehicle_weight":
+            row["vehicle_weight"],
+
+        "driver_name":
+            row["driver_name"],
+
+        "driver_phone":
+            row["driver_phone"],
+
+        "cargo_type":
+            row["cargo_type"],
+
+        "cargo_owner":
+            row["cargo_owner"],
+
+        "density":
+            row["density"],
+
+        "unit_price":
+            row["unit_price"],
+
+        "origin":
+            row["origin"],
+
+        "destination":
+            row["destination"],
+
+        "document_no":
+            row["document_no"],
+
+        "notes":
+            row["notes"],
+    }
+
+
+# ============================================================
 # WEIGH PAGE
 # ============================================================
 
@@ -1422,10 +1538,8 @@ async def weigh_page(
             "request": request,
             "state": state,
             "waiting": waiting,
-
             "vehicle_profiles":
                 vehicle_profiles,
-
             "user":
                 request.session["user"],
         },
@@ -1433,7 +1547,7 @@ async def weigh_page(
 
 
 # ============================================================
-# CREATE WEIGHMENT
+# CREATE WEIGHMENT / COMPLETE SECOND FROM MAIN FORM
 # ============================================================
 
 @app.post("/weigh")
@@ -1445,6 +1559,10 @@ async def create_weighment(
 
     weighing_mode: str = Form(
         "SINGLE"
+    ),
+
+    open_ticket: str = Form(
+        ""
     ),
 
     weight: float | None = Form(
@@ -1513,7 +1631,9 @@ async def create_weighment(
 ):
     require_login(request)
 
-    plate = str(plate).strip()
+    plate = str(
+        plate
+    ).strip()
 
     if not plate:
         return RedirectResponse(
@@ -1557,7 +1677,9 @@ async def create_weighment(
 
     if (
         weighing_fee
-        and str(weighing_fee).strip()
+        and str(
+            weighing_fee
+        ).strip()
         and fee is None
     ):
         return RedirectResponse(
@@ -1567,7 +1689,9 @@ async def create_weighment(
 
     if (
         vehicle_weight
-        and str(vehicle_weight).strip()
+        and str(
+            vehicle_weight
+        ).strip()
         and ref_vehicle_weight is None
     ):
         return RedirectResponse(
@@ -1577,7 +1701,9 @@ async def create_weighment(
 
     if (
         density
-        and str(density).strip()
+        and str(
+            density
+        ).strip()
         and density_value is None
     ):
         return RedirectResponse(
@@ -1587,7 +1713,9 @@ async def create_weighment(
 
     if (
         unit_price
-        and str(unit_price).strip()
+        and str(
+            unit_price
+        ).strip()
         and unit_price_value is None
     ):
         return RedirectResponse(
@@ -1631,39 +1759,8 @@ async def create_weighment(
             status_code=303,
         )
 
-    if weighing_mode == "DOUBLE":
-
-        conn = db()
-
-        existing = conn.execute(
-            """
-            SELECT ticket_number
-
-            FROM weighments
-
-            WHERE
-                plate=?
-                AND weighing_mode='DOUBLE'
-                AND status='WAITING_SECOND'
-                AND second_weight IS NULL
-
-            LIMIT 1
-            """,
-            (plate,),
-        ).fetchone()
-
-        conn.close()
-
-        if existing:
-            return RedirectResponse(
-                f"/weigh?error=open_double&ticket={existing['ticket_number']}",
-                status_code=303,
-            )
-
-    is_manual_weight = (
-        form_bool(
-            manual_weight
-        )
+    is_manual_weight = form_bool(
+        manual_weight
     )
 
     scale = get_scale_state()
@@ -1754,11 +1851,174 @@ async def create_weighment(
         notes
     )
 
+    # ========================================================
+    # COMPLETE EXISTING DOUBLE WEIGHMENT
+    # ========================================================
+
+    open_ticket_value = None
+
+    if str(open_ticket).strip():
+        try:
+            open_ticket_value = int(
+                str(open_ticket).strip()
+            )
+        except ValueError:
+            open_ticket_value = None
+
+    if open_ticket_value is not None:
+
+        conn = db()
+
+        row = conn.execute(
+            """
+            SELECT *
+            FROM weighments
+
+            WHERE
+                ticket_number=?
+                AND plate=?
+                AND weighing_mode='DOUBLE'
+                AND status='WAITING_SECOND'
+                AND second_weight IS NULL
+            """,
+            (
+                open_ticket_value,
+                plate,
+            ),
+        ).fetchone()
+
+        if not row:
+            conn.close()
+
+            return RedirectResponse(
+                "/weigh?error=open_double_not_found",
+                status_code=303,
+            )
+
+        net = calculate_net_weight(
+            row["first_weight"],
+            actual_weight,
+        )
+
+        cargo_value = (
+            calculate_cargo_value(
+                net,
+                unit_price_value,
+            )
+        )
+
+        conn.execute(
+            """
+            UPDATE weighments
+
+            SET
+                second_weight=?,
+                second_weighed_at=?,
+                second_operator=?,
+                second_weight_manual=?,
+
+                net_weight=?,
+                weight=?,
+                status='SAVED',
+
+                vehicle_type=?,
+                weighing_fee=?,
+                vehicle_weight=?,
+
+                driver_name=?,
+                driver_phone=?,
+
+                cargo_type=?,
+                cargo_owner=?,
+
+                density=?,
+                unit_price=?,
+                cargo_value=?,
+
+                origin=?,
+                destination=?,
+                document_no=?,
+                notes=?,
+
+                scale_id=?
+
+            WHERE id=?
+            """,
+            (
+                actual_weight,
+                now,
+                operator,
+                1 if is_manual_weight else 0,
+
+                net,
+                net,
+
+                vehicle_type,
+                fee,
+                ref_vehicle_weight,
+
+                driver_name,
+                driver_phone,
+
+                cargo_type,
+                cargo_owner,
+
+                density_value,
+                unit_price_value,
+                cargo_value,
+
+                origin,
+                destination,
+                document_no,
+                notes,
+
+                scale_id,
+
+                row["id"],
+            ),
+        )
+
+        conn.commit()
+        conn.close()
+
+        save_vehicle_profile(
+            vehicle_type,
+            fee,
+            ref_vehicle_weight,
+        )
+
+        return RedirectResponse(
+            f"/weighments/{open_ticket_value}?second_saved=1",
+            status_code=303,
+        )
+
+    # ========================================================
+    # PROTECT AGAINST DUPLICATE OPEN DOUBLE
+    # ========================================================
+
+    if weighing_mode == "DOUBLE":
+
+        existing = (
+            get_open_double_by_plate(
+                plate
+            )
+        )
+
+        if existing:
+            return RedirectResponse(
+                f"/weigh?error=open_double&ticket={existing['ticket_number']}",
+                status_code=303,
+            )
+
     save_vehicle_profile(
         vehicle_type,
         fee,
         ref_vehicle_weight,
     )
+
+    # ========================================================
+    # PHOTOS
+    # ========================================================
 
     filenames = []
 
@@ -1808,7 +2068,9 @@ async def create_weighment(
 
             (
                 UPLOAD_DIR / filename
-            ).write_bytes(content)
+            ).write_bytes(
+                content
+            )
 
             filenames.append(
                 filename
@@ -1826,8 +2088,6 @@ async def create_weighment(
         else "WAITING_SECOND"
     )
 
-    # تک توزین: وزن نهایی همان وزن ثبت شده است.
-    # دو توزین: ارزش بار بعد از وزن دوم محاسبه می‌شود.
     cargo_value = (
         calculate_cargo_value(
             actual_weight,
@@ -1839,7 +2099,9 @@ async def create_weighment(
 
     conn = db()
 
-    ticket = next_ticket(conn)
+    ticket = next_ticket(
+        conn
+    )
 
     cursor = conn.execute(
         """
@@ -1968,6 +2230,7 @@ async def create_weighment(
                 filename,
                 created_at
             )
+
             VALUES (?, ?, ?)
             """,
             (
@@ -1993,7 +2256,7 @@ async def create_weighment(
 
 
 # ============================================================
-# SECOND WEIGH
+# SECOND WEIGH - EXISTING BOTTOM BUTTON
 # ============================================================
 
 @app.post(
@@ -2013,10 +2276,8 @@ async def second_weigh(
 ):
     require_login(request)
 
-    is_manual_weight = (
-        form_bool(
-            manual_weight
-        )
+    is_manual_weight = form_bool(
+        manual_weight
     )
 
     if is_manual_weight:
@@ -2489,7 +2750,9 @@ async def device_save(
             port or ""
         ).strip(),
 
-        baud=int(baud),
+        baud=int(
+            baud
+        ),
 
         indicator=str(
             indicator
@@ -2527,10 +2790,16 @@ async def device_save(
             serial_mgr.auto_detect_port()
         )
 
-    save_device_config(cfg)
-    serial_mgr.set_config(cfg)
+    save_device_config(
+        cfg
+    )
+
+    serial_mgr.set_config(
+        cfg
+    )
 
     if SERIAL_MODE == "local":
+
         serial_mgr.stop()
 
         if cfg.enabled:
@@ -2713,22 +2982,36 @@ def require_device_token(
 async def agent_config(
     request: Request,
 ):
-    require_device_token(request)
+    require_device_token(
+        request
+    )
 
     cfg = load_device_config()
 
     return {
-        "enabled": cfg.enabled,
-        "port": cfg.port,
-        "baud": cfg.baud,
-        "indicator": cfg.indicator,
+        "enabled":
+            cfg.enabled,
+
+        "port":
+            cfg.port,
+
+        "baud":
+            cfg.baud,
+
+        "indicator":
+            cfg.indicator,
+
         "stable_tol":
             cfg.stable_tol,
+
         "stable_seconds":
             cfg.stable_seconds,
+
         "send_every_sec":
             cfg.send_every_sec,
-        "scale_id": cfg.scale_id,
+
+        "scale_id":
+            cfg.scale_id,
     }
 
 
@@ -2736,7 +3019,9 @@ async def agent_config(
 async def agent_status(
     request: Request,
 ):
-    require_device_token(request)
+    require_device_token(
+        request
+    )
 
     body = (
         await request.json()
@@ -2766,7 +3051,9 @@ async def agent_status(
     agent_state["last_raw"] = raw
 
     agent_state["last_weight"] = (
-        body.get("weight")
+        body.get(
+            "weight"
+        )
     )
 
     agent_state["last_stable"] = bool(
@@ -2781,6 +3068,7 @@ async def agent_status(
     )
 
     if raw:
+
         lines = agent_state[
             "raw_lines"
         ]
@@ -2847,15 +3135,20 @@ async def get_scale_weight(
 async def set_scale_weight(
     request: Request,
 ):
-    require_device_token(request)
+    require_device_token(
+        request
+    )
 
     body = (
         await request.json()
     )
 
     try:
+
         weight = float(
-            body["weight"]
+            body[
+                "weight"
+            ]
         )
 
         stable = bool(
@@ -2899,8 +3192,15 @@ async def set_scale_weight(
     )
 
     return {
-        "ok": True,
-        "weight": weight,
-        "stable": stable,
-        "scale_id": scale_id,
+        "ok":
+            True,
+
+        "weight":
+            weight,
+
+        "stable":
+            stable,
+
+        "scale_id":
+            scale_id,
     }

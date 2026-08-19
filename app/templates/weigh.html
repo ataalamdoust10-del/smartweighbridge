@@ -55,6 +55,74 @@ body{background:var(--bg)}
 }
 
 
+/* =========================================================
+   OPEN WEIGHMENT
+========================================================= */
+
+.open-weighment{
+  display:none;
+  margin:14px 0;
+  padding:15px;
+  border:2px solid #86efac;
+  background:#ecfdf3;
+  border-radius:15px;
+}
+
+.open-weighment.show{
+  display:block;
+}
+
+.open-title{
+  color:#027a48;
+  font-size:16px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.open-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:9px;
+}
+
+.open-item{
+  padding:9px 10px;
+  border-radius:10px;
+  background:#fff;
+  border:1px solid #abefc6;
+}
+
+.open-item span{
+  display:block;
+  color:#667085;
+  font-size:11px;
+  margin-bottom:3px;
+}
+
+.open-item strong{
+  color:#101828;
+  font-size:13px;
+}
+
+.open-help{
+  margin-top:10px;
+  color:#027a48;
+  font-size:12px;
+  font-weight:800;
+}
+
+.open-loading{
+  display:none;
+  color:#667085;
+  font-size:12px;
+  margin-top:7px;
+}
+
+.open-loading.show{
+  display:block;
+}
+
+
 /* MODE */
 
 .mode-box{
@@ -97,6 +165,14 @@ body{background:var(--bg)}
   font-weight:500;
   color:#667085;
   margin-top:5px;
+}
+
+.mode-box.locked{
+  opacity:.65;
+}
+
+.mode-box.locked label{
+  cursor:not-allowed;
 }
 
 
@@ -163,7 +239,7 @@ form textarea:focus{
 }
 
 
-/* PRODUCT COMMERCIAL DATA */
+/* CARGO */
 
 .cargo-commercial{
   margin-top:15px;
@@ -223,7 +299,7 @@ form textarea:focus{
 }
 
 
-/* MANUAL WEIGHT */
+/* MANUAL */
 
 .weight-head{
   display:flex;
@@ -286,46 +362,6 @@ form textarea:focus{
 
 .manual-warning.show{
   display:block;
-}
-
-.second-manual-box{
-  margin-top:10px;
-  padding:10px;
-  background:#fff;
-  border:1px solid #fedf89;
-  border-radius:12px;
-  min-width:230px;
-}
-
-.second-manual-toggle{
-  display:flex!important;
-  align-items:center;
-  gap:7px;
-  margin:0 0 8px!important;
-  cursor:pointer;
-  font-size:12px;
-}
-
-.second-manual-toggle input{
-  width:17px!important;
-  height:17px;
-  margin:0;
-  accent-color:#f59e0b;
-}
-
-.second-manual-input{
-  display:none;
-  margin-bottom:8px;
-}
-
-.second-manual-input.show{
-  display:block;
-}
-
-.second-manual-input input{
-  background:#fffaeb!important;
-  border-color:#f59e0b!important;
-  font-weight:900;
 }
 
 .manual-badge{
@@ -405,6 +441,10 @@ form textarea:focus{
   width:100%;
   margin-top:16px;
   padding:13px;
+}
+
+#submitButton.complete-second{
+  background:#16a34a;
 }
 
 .mini-actions{
@@ -507,7 +547,7 @@ form textarea:focus{
 }
 
 
-/* LIVE SCALE */
+/* LIVE */
 
 .scale-box{
   display:flex;
@@ -609,7 +649,7 @@ form textarea:focus{
 }
 
 
-/* WAITING SECOND */
+/* WAITING */
 
 .waiting-section{
   margin-top:22px;
@@ -669,12 +709,11 @@ form textarea:focus{
   font-size:12px;
 }
 
-.second-btn{
+.continue-btn{
   background:#16a34a!important;
   color:#fff!important;
   border-color:#16a34a!important;
   white-space:nowrap;
-  width:100%;
 }
 
 .empty-waiting{
@@ -698,6 +737,9 @@ form textarea:focus{
     grid-template-columns:1fr;
   }
 
+  .open-grid{
+    grid-template-columns:1fr 1fr;
+  }
 }
 
 @media(max-width:760px){
@@ -708,7 +750,8 @@ form textarea:focus{
   }
 
   .form-grid,
-  .mode-box{
+  .mode-box,
+  .open-grid{
     grid-template-columns:1fr;
   }
 
@@ -767,6 +810,13 @@ form textarea:focus{
   enctype="multipart/form-data"
 >
 
+<input
+  id="openTicket"
+  type="hidden"
+  name="open_ticket"
+  value=""
+>
+
 
 <!-- MODE -->
 
@@ -774,7 +824,10 @@ form textarea:focus{
   {{ _('weighing_mode') }}
 </label>
 
-<div class="mode-box">
+<div
+  class="mode-box"
+  id="modeBox"
+>
 
   <div class="mode-option">
 
@@ -945,13 +998,69 @@ form textarea:focus{
 </div>
 
 
+<div
+  id="openLoading"
+  class="open-loading"
+>
+  در حال بررسی پرونده باز این پلاک...
+</div>
+
+
+<!-- OPEN DOUBLE INFO -->
+
+<div
+  id="openWeighment"
+  class="open-weighment"
+>
+
+  <div class="open-title">
+    ✓ این خودرو دارای توزین باز است و برای وزن دوم بازگشته است.
+  </div>
+
+
+  <div class="open-grid">
+
+    <div class="open-item">
+      <span>شماره قبض</span>
+      <strong id="openTicketText">—</strong>
+    </div>
+
+    <div class="open-item">
+      <span>وزن اول</span>
+      <strong id="openFirstWeight">—</strong>
+    </div>
+
+    <div class="open-item">
+      <span>زمان وزن اول</span>
+      <strong id="openFirstTime">—</strong>
+    </div>
+
+    <div class="open-item">
+      <span>اپراتور وزن اول</span>
+      <strong id="openFirstOperator">—</strong>
+    </div>
+
+  </div>
+
+
+  <div class="open-help">
+    اطلاعات وزن اول بازیابی شد. اطلاعات زیر را بررسی کنید و سپس وزن دوم را ثبت کنید.
+  </div>
+
+</div>
+
+
 <!-- WEIGHT -->
 
 <div class="weight-head">
 
-  <label for="weightInput">
+  <label
+    id="weightLabel"
+    for="weightInput"
+  >
     {{ _('weight_kg') }}
   </label>
+
 
   <label
     id="manualToggleLabel"
@@ -965,7 +1074,9 @@ form textarea:focus{
       value="1"
     >
 
-    ورود دستی وزن
+    <span id="manualToggleText">
+      ورود دستی وزن
+    </span>
 
   </label>
 
@@ -1014,7 +1125,7 @@ form textarea:focus{
 </div>
 
 
-<!-- VEHICLE PROFILE -->
+<!-- VEHICLE -->
 
 <div class="vehicle-profile-grid">
 
@@ -1154,6 +1265,7 @@ form textarea:focus{
     </label>
 
     <input
+      id="driverName"
       type="text"
       name="driver_name"
       placeholder="{{ _('driver_name_placeholder') }}"
@@ -1169,6 +1281,7 @@ form textarea:focus{
     </label>
 
     <input
+      id="driverPhone"
       type="tel"
       name="driver_phone"
       dir="ltr"
@@ -1180,9 +1293,7 @@ form textarea:focus{
 </div>
 
 
-<!-- ======================================================
-     CARGO / PRODUCT
-====================================================== -->
+<!-- CARGO -->
 
 <div class="cargo-commercial">
 
@@ -1191,7 +1302,7 @@ form textarea:focus{
   </div>
 
   <div class="cargo-commercial-help">
-    نوع بار، چگالی و قیمت واحد برای همین قبض ذخیره می‌شوند.
+    اطلاعات ثبت‌شده در وزن اول هنگام بازگشت خودرو به صورت خودکار بازیابی می‌شوند.
   </div>
 
 
@@ -1204,6 +1315,7 @@ form textarea:focus{
       </label>
 
       <input
+        id="cargoType"
         type="text"
         name="cargo_type"
         placeholder="{{ _('cargo_type_placeholder') }}"
@@ -1219,6 +1331,7 @@ form textarea:focus{
       </label>
 
       <input
+        id="cargoOwner"
         type="text"
         name="cargo_owner"
         placeholder="{{ _('cargo_owner_placeholder') }}"
@@ -1290,7 +1403,7 @@ form textarea:focus{
   <div class="cargo-value-preview">
 
     <span>
-      ارزش تقریبی بار
+      ارزش بار
     </span>
 
     <strong id="cargoValuePreview">
@@ -1301,17 +1414,16 @@ form textarea:focus{
 
 
   <div
-    id="cargoValueNote"
     class="cargo-value-note"
+    id="cargoValueNote"
   >
-    در تک‌توزین: وزن ثبت‌شده × قیمت واحد.
-    در دو‌توزین: مبلغ نهایی پس از وزن دوم و براساس وزن خالص محاسبه می‌شود.
+    در تک‌توزین براساس وزن ثبت‌شده و در دو توزین پس از وزن دوم براساس وزن خالص محاسبه می‌شود.
   </div>
 
 </div>
 
 
-<!-- OTHER INFORMATION -->
+<!-- OTHER -->
 
 <div class="form-grid">
 
@@ -1322,6 +1434,7 @@ form textarea:focus{
     </label>
 
     <input
+      id="originInput"
       type="text"
       name="origin"
       placeholder="{{ _('origin_placeholder') }}"
@@ -1337,6 +1450,7 @@ form textarea:focus{
     </label>
 
     <input
+      id="destinationInput"
       type="text"
       name="destination"
       placeholder="{{ _('destination_placeholder') }}"
@@ -1352,6 +1466,7 @@ form textarea:focus{
     </label>
 
     <input
+      id="documentNo"
       type="text"
       name="document_no"
       placeholder="{{ _('document_no_placeholder') }}"
@@ -1367,6 +1482,7 @@ form textarea:focus{
 </label>
 
 <textarea
+  id="notesInput"
   name="notes"
   rows="3"
   placeholder="{{ _('notes_placeholder') }}"
@@ -1460,7 +1576,7 @@ form textarea:focus{
 </div>
 
 
-<!-- WAITING SECOND -->
+<!-- WAITING -->
 
 <section class="card waiting-section">
 
@@ -1471,7 +1587,7 @@ form textarea:focus{
   </h2>
 
   <div class="hint">
-    {{ _('waiting_second_help') }}
+    با وارد کردن پلاک هر یک از خودروهای زیر در فرم بالا، اطلاعات آن به صورت خودکار بازیابی می‌شود.
   </div>
 
 </div>
@@ -1532,7 +1648,7 @@ form textarea:focus{
       {% if r.first_weight_manual %}
 
       <span class="manual-badge">
-        دستی وارد شده
+        دستی
       </span>
 
       {% endif %}
@@ -1550,44 +1666,6 @@ form textarea:focus{
     {% endif %}
 
 
-    {% if r.density is not none %}
-
-    <span class="waiting-extra">
-      چگالی:
-      <b>{{ r.density }}</b>
-      kg/m³
-    </span>
-
-    {% endif %}
-
-
-    {% if r.unit_price is not none %}
-
-    <span class="waiting-extra">
-      قیمت واحد:
-      <b>
-        {% if r.unit_price == r.unit_price|int %}
-          {{ "{:,}".format(r.unit_price|int) }}
-        {% else %}
-          {{ r.unit_price }}
-        {% endif %}
-      </b>
-      ریال/kg
-    </span>
-
-    {% endif %}
-
-
-    {% if r.vehicle_type %}
-
-    <span>
-      {{ _('vehicle_type') }}:
-      <b>{{ r.vehicle_type }}</b>
-    </span>
-
-    {% endif %}
-
-
     {% if r.first_weighed_at %}
 
     <span class="waiting-time">
@@ -1599,56 +1677,20 @@ form textarea:focus{
   </div>
 
 
-  <form
-    method="post"
-    action="/weighments/{{ r.ticket_number }}/second-weigh"
-    class="second-weigh-form"
-    onsubmit="return confirm({{ _('confirm_second_weigh')|tojson }});"
+  {% if pp %}
+
+  <button
+    class="btn continue-btn"
+    type="button"
+    data-first="{{ pp.first }}"
+    data-letter="{{ pp.letter }}"
+    data-middle="{{ pp.middle }}"
+    data-city="{{ pp.city }}"
   >
+    تکمیل وزن دوم
+  </button>
 
-    <div class="second-manual-box">
-
-      <label class="second-manual-toggle">
-
-        <input
-          type="checkbox"
-          name="manual_weight"
-          value="1"
-          class="second-manual-checkbox"
-        >
-
-        ورود دستی وزن دوم
-
-      </label>
-
-
-      <div class="second-manual-input">
-
-        <input
-          type="number"
-          name="weight"
-          min="0"
-          max="1000000"
-          step="0.01"
-          inputmode="decimal"
-          placeholder="وزن دوم (kg)"
-          disabled
-          dir="ltr"
-        >
-
-      </div>
-
-
-      <button
-        class="btn second-btn"
-        type="submit"
-      >
-        {{ _('register_second_weight') }}
-      </button>
-
-    </div>
-
-  </form>
+  {% endif %}
 
 </div>
 
@@ -1673,8 +1715,32 @@ document.addEventListener(
   'DOMContentLoaded',
   () => {
 
+    /* ELEMENTS */
+
     const form =
       document.getElementById('weighForm');
+
+    const openTicket =
+      document.getElementById('openTicket');
+
+    const openWeighment =
+      document.getElementById('openWeighment');
+
+    const openLoading =
+      document.getElementById('openLoading');
+
+    const openTicketText =
+      document.getElementById('openTicketText');
+
+    const openFirstWeight =
+      document.getElementById('openFirstWeight');
+
+    const openFirstTime =
+      document.getElementById('openFirstTime');
+
+    const openFirstOperator =
+      document.getElementById('openFirstOperator');
+
 
     const plateInput =
       document.getElementById('plateInput');
@@ -1694,26 +1760,19 @@ document.addEventListener(
     const plateError =
       document.getElementById('plateError');
 
-    const vehicleType =
-      document.getElementById('vehicleType');
 
-    const weighingFee =
-      document.getElementById('weighingFee');
+    const modeBox =
+      document.getElementById('modeBox');
 
-    const vehicleWeight =
-      document.getElementById('vehicleWeight');
+    const modeSingle =
+      document.getElementById('modeSingle');
 
-    const profileSuggestion =
-      document.getElementById('profileSuggestion');
+    const modeDouble =
+      document.getElementById('modeDouble');
 
-    const suggestedFee =
-      document.getElementById('suggestedFee');
 
-    const suggestedWeight =
-      document.getElementById('suggestedWeight');
-
-    const useProfileButton =
-      document.getElementById('useProfileButton');
+    const weightLabel =
+      document.getElementById('weightLabel');
 
     const liveWeight =
       document.getElementById('liveWeight');
@@ -1727,8 +1786,75 @@ document.addEventListener(
     const manualToggleLabel =
       document.getElementById('manualToggleLabel');
 
+    const manualToggleText =
+      document.getElementById('manualToggleText');
+
     const manualWarning =
       document.getElementById('manualWarning');
+
+
+    const vehicleType =
+      document.getElementById('vehicleType');
+
+    const weighingFee =
+      document.getElementById('weighingFee');
+
+    const vehicleWeight =
+      document.getElementById('vehicleWeight');
+
+    const driverName =
+      document.getElementById('driverName');
+
+    const driverPhone =
+      document.getElementById('driverPhone');
+
+    const cargoType =
+      document.getElementById('cargoType');
+
+    const cargoOwner =
+      document.getElementById('cargoOwner');
+
+    const densityInput =
+      document.getElementById('densityInput');
+
+    const unitPriceInput =
+      document.getElementById('unitPriceInput');
+
+    const originInput =
+      document.getElementById('originInput');
+
+    const destinationInput =
+      document.getElementById('destinationInput');
+
+    const documentNo =
+      document.getElementById('documentNo');
+
+    const notesInput =
+      document.getElementById('notesInput');
+
+
+    const profileSuggestion =
+      document.getElementById('profileSuggestion');
+
+    const suggestedFee =
+      document.getElementById('suggestedFee');
+
+    const suggestedWeight =
+      document.getElementById('suggestedWeight');
+
+    const useProfileButton =
+      document.getElementById('useProfileButton');
+
+
+    const cargoValuePreview =
+      document.getElementById('cargoValuePreview');
+
+    const cargoValueNote =
+      document.getElementById('cargoValueNote');
+
+
+    const submitButton =
+      document.getElementById('submitButton');
 
     const stable =
       document.getElementById('stable');
@@ -1739,19 +1865,55 @@ document.addEventListener(
     const connStatus =
       document.getElementById('connStatus');
 
-    const densityInput =
-      document.getElementById('densityInput');
 
-    const unitPriceInput =
-      document.getElementById('unitPriceInput');
+    let currentSuggestion =
+      null;
 
-    const cargoValuePreview =
-      document.getElementById('cargoValuePreview');
+    let currentOpenData =
+      null;
 
-    let currentSuggestion = null;
+    let openLookupTimer =
+      null;
+
+    let openLookupSequence =
+      0;
 
 
-    /* NUMBER NORMALIZATION */
+    const SINGLE_BUTTON =
+      {{ _('submit_single_weigh')|tojson|safe }};
+
+    const FIRST_BUTTON =
+      {{ _('submit_first_weight')|tojson|safe }};
+
+    const STABLE_TEXT =
+      {{ _('stable')|tojson|safe }};
+
+    const WAITING_TEXT =
+      {{ _('waiting')|tojson|safe }};
+
+    const SCALE_TEXT =
+      {{ _('scale')|tojson|safe }};
+
+    const LIVE_ON =
+      {{ _('live_on')|tojson|safe }};
+
+    const LIVE_OFF =
+      {{ _('live_off')|tojson|safe }};
+
+
+    /* HELPERS */
+
+    function setValue(
+      element,
+      value
+    ){
+      element.value =
+        value === null
+        || value === undefined
+        ? ''
+        : String(value);
+    }
+
 
     function normalizeDigits(
       value,
@@ -1782,7 +1944,9 @@ document.addEventListener(
         const fi =
           fa.indexOf(ch);
 
-        if(fi !== -1){
+        if(
+          fi !== -1
+        ){
           result += String(fi);
           continue;
         }
@@ -1790,7 +1954,9 @@ document.addEventListener(
         const ai =
           ar.indexOf(ch);
 
-        if(ai !== -1){
+        if(
+          ai !== -1
+        ){
           result += String(ai);
         }
 
@@ -1800,6 +1966,56 @@ document.addEventListener(
         0,
         maxLength
       );
+    }
+
+
+    function displayNumber(
+      value
+    ){
+
+      if(
+        value === null
+        || value === undefined
+        || value === ''
+      ){
+        return '—';
+      }
+
+      const n =
+        Number(value);
+
+      if(
+        Number.isFinite(n)
+      ){
+        return n.toLocaleString(
+          'en-US'
+        );
+      }
+
+      return String(value);
+    }
+
+
+    function moneyFormat(
+      value
+    ){
+
+      const n =
+        Number(value);
+
+      if(
+        !Number.isFinite(n)
+      ){
+        return '—';
+      }
+
+      return new Intl.NumberFormat(
+        'en-US',
+        {
+          maximumFractionDigits:2
+        }
+      ).format(n)
+      + ' ریال';
     }
 
 
@@ -1813,7 +2029,6 @@ document.addEventListener(
         + plateThree.value
         + '-'
         + plateCity.value;
-
     }
 
 
@@ -1828,7 +2043,6 @@ document.addEventListener(
         &&
         plateCity.value.length === 2
       );
-
     }
 
 
@@ -1849,6 +2063,8 @@ document.addEventListener(
             );
 
           updatePlate();
+
+          scheduleOpenLookup();
 
           if(
             input.value.length === length
@@ -1888,6 +2104,8 @@ document.addEventListener(
 
         updatePlate();
 
+        scheduleOpenLookup();
+
         if(
           plateLetter.value
         ){
@@ -1900,32 +2118,65 @@ document.addEventListener(
 
     /* MODE */
 
-    const modeSingle =
-      document.getElementById('modeSingle');
-
-    const modeDouble =
-      document.getElementById('modeDouble');
-
-    const submitButton =
-      document.getElementById('submitButton');
-
-
-    const SINGLE_BUTTON =
-      {{ _('submit_single_weigh')|tojson|safe }};
-
-    const FIRST_BUTTON =
-      {{ _('submit_first_weight')|tojson|safe }};
-
-
     function updateMode(){
 
-      submitButton.textContent =
+      if(
+        currentOpenData
+      ){
+
+        modeDouble.checked =
+          true;
+
+        submitButton.textContent =
+          'ثبت وزن دوم و تکمیل قبض';
+
+        submitButton.classList.add(
+          'complete-second'
+        );
+
+        weightLabel.textContent =
+          'وزن دوم (کیلوگرم)';
+
+        manualToggleText.textContent =
+          'ورود دستی وزن دوم';
+
+        cargoValueNote.textContent =
+          'ارزش نهایی = اختلاف وزن اول و دوم × قیمت واحد';
+
+        return;
+      }
+
+
+      submitButton.classList.remove(
+        'complete-second'
+      );
+
+      weightLabel.textContent =
+        {{ _('weight_kg')|tojson|safe }};
+
+      manualToggleText.textContent =
+        'ورود دستی وزن';
+
+      if(
         modeDouble.checked
-        ? FIRST_BUTTON
-        : SINGLE_BUTTON;
+      ){
+
+        submitButton.textContent =
+          FIRST_BUTTON;
+
+        cargoValueNote.textContent =
+          'ارزش کل بار پس از ثبت وزن دوم و براساس وزن خالص محاسبه می‌شود.';
+
+      }else{
+
+        submitButton.textContent =
+          SINGLE_BUTTON;
+
+        cargoValueNote.textContent =
+          'ارزش کل بار = وزن ثبت‌شده × قیمت واحد.';
+      }
 
       updateCargoValuePreview();
-
     }
 
 
@@ -1940,7 +2191,310 @@ document.addEventListener(
     );
 
 
-    /* MANUAL FIRST WEIGHT */
+    /* OPEN WEIGHMENT */
+
+    function clearOpenState(){
+
+      currentOpenData =
+        null;
+
+      openTicket.value =
+        '';
+
+      openWeighment.classList.remove(
+        'show'
+      );
+
+      modeBox.classList.remove(
+        'locked'
+      );
+
+      modeSingle.disabled =
+        false;
+
+      modeDouble.disabled =
+        false;
+
+      updateMode();
+    }
+
+
+    function fillOpenData(
+      data
+    ){
+
+      currentOpenData =
+        data;
+
+      openTicket.value =
+        String(
+          data.ticket_number
+        );
+
+      modeDouble.checked =
+        true;
+
+      modeSingle.disabled =
+        true;
+
+      modeDouble.disabled =
+        false;
+
+      modeBox.classList.add(
+        'locked'
+      );
+
+
+      openTicketText.textContent =
+        '#'
+        + String(
+            data.ticket_number
+          ).padStart(
+            6,
+            '0'
+          );
+
+
+      openFirstWeight.textContent =
+        displayNumber(
+          data.first_weight
+        )
+        + ' kg'
+        + (
+            data.first_weight_manual
+            ? ' - دستی'
+            : ''
+          );
+
+
+      openFirstTime.textContent =
+        data.first_weighed_at
+        ? String(
+            data.first_weighed_at
+          )
+          .slice(
+            0,
+            19
+          )
+          .replace(
+            'T',
+            ' '
+          )
+        : '—';
+
+
+      openFirstOperator.textContent =
+        data.first_operator
+        || '—';
+
+
+      setValue(
+        vehicleType,
+        data.vehicle_type
+      );
+
+      setValue(
+        weighingFee,
+        data.weighing_fee
+      );
+
+      setValue(
+        vehicleWeight,
+        data.vehicle_weight
+      );
+
+      setValue(
+        driverName,
+        data.driver_name
+      );
+
+      setValue(
+        driverPhone,
+        data.driver_phone
+      );
+
+      setValue(
+        cargoType,
+        data.cargo_type
+      );
+
+      setValue(
+        cargoOwner,
+        data.cargo_owner
+      );
+
+      setValue(
+        densityInput,
+        data.density
+      );
+
+      setValue(
+        unitPriceInput,
+        data.unit_price
+      );
+
+      setValue(
+        originInput,
+        data.origin
+      );
+
+      setValue(
+        destinationInput,
+        data.destination
+      );
+
+      setValue(
+        documentNo,
+        data.document_no
+      );
+
+      setValue(
+        notesInput,
+        data.notes
+      );
+
+
+      profileSuggestion.style.display =
+        'none';
+
+      openWeighment.classList.add(
+        'show'
+      );
+
+      updateMode();
+
+      updateCargoValuePreview();
+
+      openWeighment.scrollIntoView({
+        behavior:'smooth',
+        block:'nearest'
+      });
+    }
+
+
+    async function lookupOpenWeighment(){
+
+      updatePlate();
+
+      if(
+        !plateValid()
+      ){
+
+        clearOpenState();
+
+        return;
+      }
+
+
+      const currentPlate =
+        plateInput.value;
+
+      const sequence =
+        ++openLookupSequence;
+
+      openLoading.classList.add(
+        'show'
+      );
+
+
+      try{
+
+        const response =
+          await fetch(
+            '/api/open-weighment?plate='
+            + encodeURIComponent(
+                currentPlate
+              ),
+            {
+              cache:'no-store'
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if(
+          sequence
+          !== openLookupSequence
+        ){
+          return;
+        }
+
+
+        if(
+          plateInput.value
+          !== currentPlate
+        ){
+          return;
+        }
+
+
+        if(
+          data.found
+        ){
+
+          fillOpenData(
+            data
+          );
+
+        }else{
+
+          clearOpenState();
+        }
+
+      }
+      catch(error){
+
+        if(
+          sequence
+          === openLookupSequence
+        ){
+          clearOpenState();
+        }
+
+      }
+      finally{
+
+        if(
+          sequence
+          === openLookupSequence
+        ){
+          openLoading.classList.remove(
+            'show'
+          );
+        }
+
+      }
+
+    }
+
+
+    function scheduleOpenLookup(){
+
+      clearTimeout(
+        openLookupTimer
+      );
+
+      if(
+        !plateValid()
+      ){
+
+        clearOpenState();
+
+        return;
+      }
+
+      openLookupTimer =
+        setTimeout(
+          lookupOpenWeighment,
+          200
+        );
+    }
+
+
+    /* MANUAL */
 
     function updateManualState(){
 
@@ -1990,11 +2544,9 @@ document.addEventListener(
 
         weightInput.value =
           liveWeight.textContent;
-
       }
 
       updateCargoValuePreview();
-
     }
 
 
@@ -2004,29 +2556,7 @@ document.addEventListener(
     );
 
 
-    /* CARGO VALUE PREVIEW */
-
-    function moneyFormat(value){
-
-      const n =
-        Number(value);
-
-      if(
-        !Number.isFinite(n)
-      ){
-        return '—';
-      }
-
-      return new Intl.NumberFormat(
-        'en-US',
-        {
-          maximumFractionDigits:2
-        }
-      ).format(n)
-      + ' ریال';
-
-    }
-
+    /* CARGO VALUE */
 
     function updateCargoValuePreview(){
 
@@ -2038,7 +2568,9 @@ document.addEventListener(
       if(
         unitPriceInput.value === ''
         ||
-        !Number.isFinite(price)
+        !Number.isFinite(
+          price
+        )
         ||
         price < 0
       ){
@@ -2050,10 +2582,72 @@ document.addEventListener(
       }
 
 
-      /*
-        برای دو توزین هنوز وزن خالص مشخص نیست.
-        محاسبه نهایی سمت سرور بعد از وزن دوم انجام می‌شود.
-      */
+      const currentWeight =
+        Number(
+          weightInput.value
+        );
+
+
+      if(
+        weightInput.value === ''
+        ||
+        !Number.isFinite(
+          currentWeight
+        )
+        ||
+        currentWeight < 0
+      ){
+
+        cargoValuePreview.textContent =
+          '—';
+
+        return;
+      }
+
+
+      if(
+        currentOpenData
+      ){
+
+        const first =
+          Number(
+            currentOpenData.first_weight
+          );
+
+        if(
+          !Number.isFinite(
+            first
+          )
+        ){
+
+          cargoValuePreview.textContent =
+            '—';
+
+          return;
+        }
+
+
+        const net =
+          Math.abs(
+            Math.abs(first)
+            -
+            Math.abs(currentWeight)
+          );
+
+
+        cargoValuePreview.textContent =
+          moneyFormat(
+            net * price
+          )
+          + ' (خالص '
+          + displayNumber(
+              net
+            )
+          + ' kg)';
+
+        return;
+      }
+
 
       if(
         modeDouble.checked
@@ -2066,32 +2660,11 @@ document.addEventListener(
       }
 
 
-      const weight =
-        Number(
-          weightInput.value
-        );
-
-
-      if(
-        weightInput.value === ''
-        ||
-        !Number.isFinite(weight)
-        ||
-        weight < 0
-      ){
-
-        cargoValuePreview.textContent =
-          '—';
-
-        return;
-      }
-
-
       cargoValuePreview.textContent =
         moneyFormat(
-          weight * price
+          currentWeight
+          * price
         );
-
     }
 
 
@@ -2106,9 +2679,11 @@ document.addEventListener(
     );
 
 
-    /* VEHICLE PROFILE MEMORY */
+    /* VEHICLE PROFILE */
 
-    function displayNumber(value){
+    function displayProfileNumber(
+      value
+    ){
 
       if(
         value === null
@@ -2119,10 +2694,14 @@ document.addEventListener(
       }
 
       const n =
-        Number(value);
+        Number(
+          value
+        );
 
       if(
-        Number.isFinite(n)
+        Number.isFinite(
+          n
+        )
       ){
         return n.toLocaleString(
           'en-US'
@@ -2134,6 +2713,13 @@ document.addEventListener(
 
 
     async function loadVehicleProfile(){
+
+      if(
+        currentOpenData
+      ){
+        return;
+      }
+
 
       const type =
         vehicleType.value.trim();
@@ -2157,7 +2743,9 @@ document.addEventListener(
         const response =
           await fetch(
             '/api/vehicle-profile?vehicle_type='
-            + encodeURIComponent(type),
+            + encodeURIComponent(
+                type
+              ),
             {
               cache:'no-store'
             }
@@ -2186,39 +2774,15 @@ document.addEventListener(
 
 
         suggestedFee.textContent =
-          displayNumber(
+          displayProfileNumber(
             data.weighing_fee
           );
 
 
         suggestedWeight.textContent =
-          displayNumber(
+          displayProfileNumber(
             data.vehicle_weight
           );
-
-
-        if(
-          data.weighing_fee !== null
-          &&
-          data.weighing_fee !== undefined
-        ){
-          weighingFee.placeholder =
-            String(
-              data.weighing_fee
-            );
-        }
-
-
-        if(
-          data.vehicle_weight !== null
-          &&
-          data.vehicle_weight !== undefined
-        ){
-          vehicleWeight.placeholder =
-            String(
-              data.vehicle_weight
-            );
-        }
 
 
         profileSuggestion.style.display =
@@ -2232,7 +2796,6 @@ document.addEventListener(
 
         profileSuggestion.style.display =
           'none';
-
       }
 
     }
@@ -2276,21 +2839,23 @@ document.addEventListener(
           return;
         }
 
-
         if(
-          currentSuggestion.weighing_fee !== null
+          currentSuggestion.weighing_fee
+          !== null
           &&
-          currentSuggestion.weighing_fee !== undefined
+          currentSuggestion.weighing_fee
+          !== undefined
         ){
           weighingFee.value =
             currentSuggestion.weighing_fee;
         }
 
-
         if(
-          currentSuggestion.vehicle_weight !== null
+          currentSuggestion.vehicle_weight
+          !== null
           &&
-          currentSuggestion.vehicle_weight !== undefined
+          currentSuggestion.vehicle_weight
+          !== undefined
         ){
           vehicleWeight.value =
             currentSuggestion.vehicle_weight;
@@ -2319,7 +2884,6 @@ document.addEventListener(
             'block';
 
           return;
-
         }
 
 
@@ -2337,9 +2901,12 @@ document.addEventListener(
             );
 
           if(
-            weightInput.value.trim() === ''
+            weightInput.value.trim()
+            === ''
             ||
-            !Number.isFinite(value)
+            !Number.isFinite(
+              value
+            )
             ||
             value < 0
             ||
@@ -2355,7 +2922,6 @@ document.addEventListener(
             weightInput.focus();
 
             return;
-
           }
 
         }
@@ -2371,7 +2937,9 @@ document.addEventListener(
             );
 
           if(
-            !Number.isFinite(density)
+            !Number.isFinite(
+              density
+            )
             ||
             density < 0
           ){
@@ -2385,7 +2953,6 @@ document.addEventListener(
             densityInput.focus();
 
             return;
-
           }
 
         }
@@ -2401,7 +2968,9 @@ document.addEventListener(
             );
 
           if(
-            !Number.isFinite(price)
+            !Number.isFinite(
+              price
+            )
             ||
             price < 0
           ){
@@ -2415,7 +2984,32 @@ document.addEventListener(
             unitPriceInput.focus();
 
             return;
+          }
 
+        }
+
+
+        if(
+          currentOpenData
+        ){
+
+          const ok =
+            confirm(
+              'وزن دوم برای قبض #'
+              + String(
+                  currentOpenData.ticket_number
+                ).padStart(
+                  6,
+                  '0'
+                )
+              + ' ثبت و قبض تکمیل شود؟'
+            );
+
+
+          if(
+            !ok
+          ){
+            event.preventDefault();
           }
 
         }
@@ -2425,22 +3019,6 @@ document.addEventListener(
 
 
     /* LIVE SCALE */
-
-    const STABLE_TEXT =
-      {{ _('stable')|tojson|safe }};
-
-    const WAITING_TEXT =
-      {{ _('waiting')|tojson|safe }};
-
-    const SCALE_TEXT =
-      {{ _('scale')|tojson|safe }};
-
-    const LIVE_ON =
-      {{ _('live_on')|tojson|safe }};
-
-    const LIVE_OFF =
-      {{ _('live_off')|tojson|safe }};
-
 
     async function refreshWeight(){
 
@@ -2473,7 +3051,6 @@ document.addEventListener(
             String(w);
 
           updateCargoValuePreview();
-
         }
 
 
@@ -2505,7 +3082,6 @@ document.addEventListener(
           stable.textContent =
             '🟡 '
             + WAITING_TEXT;
-
         }
 
 
@@ -2519,7 +3095,6 @@ document.addEventListener(
         connStatus.innerHTML =
           '<span class="dot bad"></span>'
           + LIVE_OFF;
-
       }
 
     }
@@ -2533,49 +3108,71 @@ document.addEventListener(
     );
 
 
-    /* CLEAR FORM */
+    /* CLEAR */
 
-    const clearButton =
-      document.getElementById(
+    document
+      .getElementById(
         'clearFormBtn'
+      )
+      .addEventListener(
+        'click',
+        () => {
+
+          openLookupSequence++;
+
+          clearTimeout(
+            openLookupTimer
+          );
+
+          form.reset();
+
+          plateInput.value =
+            '';
+
+          currentOpenData =
+            null;
+
+          currentSuggestion =
+            null;
+
+          openTicket.value =
+            '';
+
+          openWeighment.classList.remove(
+            'show'
+          );
+
+          openLoading.classList.remove(
+            'show'
+          );
+
+          modeBox.classList.remove(
+            'locked'
+          );
+
+          modeSingle.disabled =
+            false;
+
+          modeDouble.disabled =
+            false;
+
+          profileSuggestion.style.display =
+            'none';
+
+          plateError.style.display =
+            'none';
+
+          updateManualState();
+
+          updateMode();
+
+          plateTwo.focus();
+
+        }
       );
 
 
-    clearButton.addEventListener(
-      'click',
-      () => {
-
-        form.reset();
-
-        plateInput.value =
-          '';
-
-        plateError.style.display =
-          'none';
-
-        currentSuggestion =
-          null;
-
-        profileSuggestion.style.display =
-          'none';
-
-        weighingFee.placeholder =
-          {{ _('weighing_fee_placeholder')|tojson|safe }};
-
-        vehicleWeight.placeholder =
-          {{ _('vehicle_weight_placeholder')|tojson|safe }};
-
-        updateMode();
-
-        updateManualState();
-
-        updateCargoValuePreview();
-
-      }
-    );
-
-
-    /* COPY SCALE */
+    /* COPY */
 
     document
       .getElementById(
@@ -2594,112 +3191,43 @@ document.addEventListener(
       );
 
 
-    /* SECOND WEIGHT MANUAL */
+    /* WAITING CONTINUE BUTTON */
 
     document
       .querySelectorAll(
-        '.second-weigh-form'
+        '.continue-btn'
       )
       .forEach(
-        secondForm => {
+        button => {
 
-          const checkbox =
-            secondForm.querySelector(
-              '.second-manual-checkbox'
-            );
-
-          const wrapper =
-            secondForm.querySelector(
-              '.second-manual-input'
-            );
-
-          const input =
-            wrapper.querySelector(
-              'input'
-            );
-
-
-          checkbox.addEventListener(
-            'change',
+          button.addEventListener(
+            'click',
             () => {
 
-              if(
-                checkbox.checked
-              ){
+              plateTwo.value =
+                button.dataset.first
+                || '';
 
-                wrapper.classList.add(
-                  'show'
-                );
+              plateLetter.value =
+                button.dataset.letter
+                || '';
 
-                input.disabled =
-                  false;
+              plateThree.value =
+                button.dataset.middle
+                || '';
 
-                input.required =
-                  true;
+              plateCity.value =
+                button.dataset.city
+                || '';
 
-                input.value =
-                  '';
+              updatePlate();
 
-                setTimeout(
-                  () => input.focus(),
-                  0
-                );
+              lookupOpenWeighment();
 
-              }else{
-
-                wrapper.classList.remove(
-                  'show'
-                );
-
-                input.disabled =
-                  true;
-
-                input.required =
-                  false;
-
-                input.value =
-                  '';
-
-              }
-
-            }
-          );
-
-
-          secondForm.addEventListener(
-            'submit',
-            event => {
-
-              if(
-                !checkbox.checked
-              ){
-                return;
-              }
-
-              const value =
-                Number(
-                  input.value
-                );
-
-              if(
-                input.value.trim() === ''
-                ||
-                !Number.isFinite(value)
-                ||
-                value < 0
-                ||
-                value > 1000000
-              ){
-
-                event.preventDefault();
-
-                alert(
-                  'لطفاً وزن دوم دستی معتبر وارد کنید.'
-                );
-
-                input.focus();
-
-              }
+              window.scrollTo({
+                top:0,
+                behavior:'smooth'
+              });
 
             }
           );
@@ -2829,7 +3357,6 @@ document.addEventListener(
 
 
     updateMode();
-    updateCargoValuePreview();
 
   }
 );
