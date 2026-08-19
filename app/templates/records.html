@@ -14,7 +14,7 @@
 
 .records-table{
   width:100%;
-  min-width:1350px;
+  min-width:1500px;
   border-collapse:collapse;
 }
 
@@ -37,9 +37,7 @@
 }
 
 
-/* =========================================================
-   PLATE
-========================================================= */
+/* PLATE */
 
 .mini-plate{
   direction:ltr;
@@ -65,6 +63,7 @@
 .mini-flag{
   width:20px;
   height:10px;
+
   background:
     linear-gradient(
       to bottom,
@@ -97,12 +96,10 @@
 }
 
 
-/* =========================================================
-   DATA
-========================================================= */
+/* DATA */
 
 .details{
-  min-width:300px;
+  min-width:280px;
   font-size:13px;
   line-height:1.8;
 }
@@ -132,7 +129,7 @@
 }
 
 .weight-lines{
-  min-width:185px;
+  min-width:190px;
   line-height:2;
   white-space:nowrap;
 }
@@ -168,9 +165,41 @@
 }
 
 
-/* =========================================================
-   STATUS
-========================================================= */
+/* CARGO */
+
+.cargo-info{
+  min-width:240px;
+  font-size:12.5px;
+  line-height:2;
+}
+
+.cargo-info b{
+  color:#101828;
+}
+
+.cargo-info .numeric{
+  direction:ltr;
+  unicode-bidi:embed;
+  display:inline-block;
+}
+
+.cargo-total{
+  margin-top:4px;
+  padding:5px 8px;
+  border-radius:8px;
+  background:#ecfdf3;
+  color:#027a48;
+  font-weight:900;
+  display:inline-block;
+}
+
+.cargo-pending{
+  color:#b54708;
+  background:#fffaeb;
+}
+
+
+/* STATUS */
 
 .status{
   display:inline-block;
@@ -194,9 +223,7 @@
 }
 
 
-/* =========================================================
-   ACTIONS
-========================================================= */
+/* ACTIONS */
 
 .actions{
   display:flex;
@@ -274,23 +301,45 @@
 
 <tr>
 
-  <th>{{ _('ticket') }}</th>
+  <th>
+    {{ _('ticket') }}
+  </th>
 
-  <th>{{ _('plate') }}</th>
+  <th>
+    {{ _('plate') }}
+  </th>
 
-  <th>{{ _('weighing_mode') }}</th>
+  <th>
+    {{ _('weighing_mode') }}
+  </th>
 
-  <th>{{ _('weight') }}</th>
+  <th>
+    {{ _('weight') }}
+  </th>
 
-  <th>{{ _('vehicle_information') }}</th>
+  <th>
+    اطلاعات بار و ارزش کالا
+  </th>
 
-  <th>{{ _('date') }}</th>
+  <th>
+    {{ _('vehicle_information') }}
+  </th>
 
-  <th>{{ _('weighment_details') }}</th>
+  <th>
+    {{ _('date') }}
+  </th>
 
-  <th>{{ _('status') }}</th>
+  <th>
+    {{ _('weighment_details') }}
+  </th>
 
-  <th>{{ _('actions') }}</th>
+  <th>
+    {{ _('status') }}
+  </th>
+
+  <th>
+    {{ _('actions') }}
+  </th>
 
 </tr>
 
@@ -306,9 +355,7 @@
 <tr>
 
 
-<!-- ======================================================
-     TICKET
-====================================================== -->
+<!-- TICKET -->
 
 <td>
 
@@ -322,9 +369,7 @@
 </td>
 
 
-<!-- ======================================================
-     PLATE
-====================================================== -->
+<!-- PLATE -->
 
 <td>
 
@@ -382,9 +427,7 @@
 </td>
 
 
-<!-- ======================================================
-     MODE
-====================================================== -->
+<!-- MODE -->
 
 <td>
 
@@ -405,19 +448,14 @@
 </td>
 
 
-<!-- ======================================================
-     WEIGHTS
-====================================================== -->
+<!-- WEIGHTS -->
 
 <td>
 
 <div class="weight-lines">
 
-
 {% if r.weighing_mode == 'DOUBLE' %}
 
-
-  <!-- FIRST WEIGHT -->
 
   <div class="weight-row">
 
@@ -430,7 +468,7 @@
       {% if r.first_weight is not none %}
 
         {% if r.first_weight == r.first_weight|int %}
-          {{ r.first_weight|int }}
+          {{ "{:,}".format(r.first_weight|int) }}
         {% else %}
           {{ r.first_weight }}
         {% endif %}
@@ -457,8 +495,6 @@
   </div>
 
 
-  <!-- SECOND WEIGHT -->
-
   <div class="weight-row">
 
     <span>
@@ -470,7 +506,7 @@
       {% if r.second_weight is not none %}
 
         {% if r.second_weight == r.second_weight|int %}
-          {{ r.second_weight|int }}
+          {{ "{:,}".format(r.second_weight|int) }}
         {% else %}
           {{ r.second_weight }}
         {% endif %}
@@ -500,8 +536,6 @@
   </div>
 
 
-  <!-- NET -->
-
   <div class="weight-row net">
 
     <span>
@@ -513,7 +547,7 @@
       {% if r.net_weight is not none %}
 
         {% if r.net_weight == r.net_weight|int %}
-          {{ r.net_weight|int }}
+          {{ "{:,}".format(r.net_weight|int) }}
         {% else %}
           {{ r.net_weight }}
         {% endif %}
@@ -534,14 +568,12 @@
 {% else %}
 
 
-  <!-- SINGLE WEIGHT -->
-
   <div class="weight-row">
 
     <span class="weight-value">
 
       {% if r.weight == r.weight|int %}
-        {{ r.weight|int }}
+        {{ "{:,}".format(r.weight|int) }}
       {% else %}
         {{ r.weight }}
       {% endif %}
@@ -569,9 +601,132 @@
 </td>
 
 
-<!-- ======================================================
-     VEHICLE / FEE
-====================================================== -->
+<!-- CARGO / DENSITY / PRICE / VALUE -->
+
+<td>
+
+<div class="cargo-info">
+
+
+  <div>
+
+    <b>
+      {{ _('cargo_type') }}:
+    </b>
+
+    {{ r.cargo_type or '—' }}
+
+  </div>
+
+
+  <div>
+
+    <b>
+      چگالی:
+    </b>
+
+    {% if r.density is not none %}
+
+      <span class="numeric">
+
+        {% if r.density == r.density|int %}
+          {{ "{:,}".format(r.density|int) }}
+        {% else %}
+          {{ r.density }}
+        {% endif %}
+
+        kg/m³
+
+      </span>
+
+    {% else %}
+
+      —
+
+    {% endif %}
+
+  </div>
+
+
+  <div>
+
+    <b>
+      قیمت واحد:
+    </b>
+
+    {% if r.unit_price is not none %}
+
+      <span class="numeric">
+
+        {% if r.unit_price == r.unit_price|int %}
+          {{ "{:,}".format(r.unit_price|int) }}
+        {% else %}
+          {{ r.unit_price }}
+        {% endif %}
+
+        ریال/kg
+
+      </span>
+
+    {% else %}
+
+      —
+
+    {% endif %}
+
+  </div>
+
+
+  <div>
+
+    <b>
+      ارزش کل بار:
+    </b>
+
+    {% if r.cargo_value is not none %}
+
+      <span class="cargo-total">
+
+        {% if r.cargo_value == r.cargo_value|int %}
+
+          {{ "{:,}".format(r.cargo_value|int) }}
+
+        {% else %}
+
+          {{ "{:,.2f}".format(r.cargo_value) }}
+
+        {% endif %}
+
+        ریال
+
+      </span>
+
+
+    {% elif
+      r.weighing_mode == 'DOUBLE'
+      and r.status == 'WAITING_SECOND'
+      and r.unit_price is not none
+    %}
+
+      <span class="cargo-total cargo-pending">
+        در انتظار وزن دوم
+      </span>
+
+    {% else %}
+
+      —
+
+    {% endif %}
+
+  </div>
+
+
+</div>
+
+</td>
+
+
+<!-- VEHICLE / FEE -->
 
 <td>
 
@@ -632,13 +787,9 @@
       <span class="weight-value">
 
         {% if r.vehicle_weight == r.vehicle_weight|int %}
-
-          {{ r.vehicle_weight|int }}
-
+          {{ "{:,}".format(r.vehicle_weight|int) }}
         {% else %}
-
           {{ r.vehicle_weight }}
-
         {% endif %}
 
         kg
@@ -658,9 +809,7 @@
 </td>
 
 
-<!-- ======================================================
-     DATE
-====================================================== -->
+<!-- DATE -->
 
 <td style="white-space:nowrap;">
 
@@ -669,9 +818,7 @@
 </td>
 
 
-<!-- ======================================================
-     DETAILS
-====================================================== -->
+<!-- DETAILS -->
 
 <td>
 
@@ -681,10 +828,7 @@
 {% if r.driver_name %}
 
   <div>
-    <b>
-      {{ _('driver_name') }}:
-    </b>
-
+    <b>{{ _('driver_name') }}:</b>
     {{ r.driver_name }}
   </div>
 
@@ -708,31 +852,11 @@
 {% endif %}
 
 
-{% if r.cargo_type %}
-
-  <div>
-
-    <b>
-      {{ _('cargo_type') }}:
-    </b>
-
-    {{ r.cargo_type }}
-
-  </div>
-
-{% endif %}
-
-
 {% if r.cargo_owner %}
 
   <div>
-
-    <b>
-      {{ _('cargo_owner') }}:
-    </b>
-
+    <b>{{ _('cargo_owner') }}:</b>
     {{ r.cargo_owner }}
-
   </div>
 
 {% endif %}
@@ -754,9 +878,7 @@
 
 
     {% if r.origin and r.destination %}
-
       →
-
     {% endif %}
 
 
@@ -778,13 +900,8 @@
 {% if r.document_no %}
 
   <div>
-
-    <b>
-      {{ _('document_no') }}:
-    </b>
-
+    <b>{{ _('document_no') }}:</b>
     {{ r.document_no }}
-
   </div>
 
 {% endif %}
@@ -793,13 +910,8 @@
 {% if r.notes %}
 
   <div>
-
-    <b>
-      {{ _('notes') }}:
-    </b>
-
+    <b>{{ _('notes') }}:</b>
     {{ r.notes }}
-
   </div>
 
 {% endif %}
@@ -807,10 +919,14 @@
 
 {% if r.weighing_mode == 'DOUBLE' %}
 
+
   {% if r.first_operator %}
 
   <div>
-    <b>اپراتور وزن اول:</b>
+    <b>
+      اپراتور وزن اول:
+    </b>
+
     {{ r.first_operator }}
   </div>
 
@@ -820,11 +936,15 @@
   {% if r.second_operator %}
 
   <div>
-    <b>اپراتور وزن دوم:</b>
+    <b>
+      اپراتور وزن دوم:
+    </b>
+
     {{ r.second_operator }}
   </div>
 
   {% endif %}
+
 
 {% endif %}
 
@@ -834,9 +954,7 @@
 </td>
 
 
-<!-- ======================================================
-     STATUS
-====================================================== -->
+<!-- STATUS -->
 
 <td>
 
@@ -857,9 +975,7 @@
 </td>
 
 
-<!-- ======================================================
-     ACTIONS
-====================================================== -->
+<!-- ACTIONS -->
 
 <td>
 
@@ -906,7 +1022,7 @@
 
 <tr>
 
-<td colspan="9">
+<td colspan="10">
   {{ _('no_results') }}
 </td>
 

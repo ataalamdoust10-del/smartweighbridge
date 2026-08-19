@@ -67,9 +67,7 @@
 }
 
 
-/* =========================================================
-   PLATE
-========================================================= */
+/* PLATE */
 
 .plate-info{
   grid-column:1/-1;
@@ -135,9 +133,7 @@
 }
 
 
-/* =========================================================
-   WEIGHTS
-========================================================= */
+/* WEIGHTS */
 
 .weight-panel{
   grid-column:1/-1;
@@ -181,10 +177,6 @@
   direction:rtl;
 }
 
-.single-weight-box{
-  position:relative;
-}
-
 .single-weight-value{
   display:flex;
   flex-wrap:wrap;
@@ -193,9 +185,69 @@
 }
 
 
-/* =========================================================
-   VEHICLE PROFILE
-========================================================= */
+/* CARGO COMMERCIAL */
+
+.cargo-commercial-panel{
+  grid-column:1/-1;
+  border:1px solid #bfdbfe!important;
+  background:#f8fbff!important;
+  padding:16px!important;
+}
+
+.cargo-commercial-title{
+  font-size:17px;
+  font-weight:900;
+  color:#1e3a8a;
+  margin-bottom:13px;
+}
+
+.cargo-data-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
+
+.cargo-data-item{
+  border:1px solid #dbeafe;
+  background:#fff;
+  border-radius:12px;
+  padding:12px;
+}
+
+.cargo-data-item span{
+  margin-bottom:5px;
+}
+
+.cargo-value-box{
+  margin-top:12px;
+  border:1px solid #86efac;
+  background:#ecfdf3;
+  border-radius:13px;
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+}
+
+.cargo-value-box span{
+  color:#027a48!important;
+  margin:0!important;
+}
+
+.cargo-value-box strong{
+  color:#027a48!important;
+  font-size:20px!important;
+  direction:ltr;
+  unicode-bidi:embed;
+}
+
+.cargo-waiting{
+  color:#b54708!important;
+}
+
+
+/* VEHICLE PROFILE */
 
 .vehicle-commercial{
   grid-column:1/-1;
@@ -218,9 +270,7 @@
 }
 
 
-/* =========================================================
-   STATUS
-========================================================= */
+/* STATUS */
 
 .wait-badge,
 .done-badge{
@@ -251,9 +301,7 @@
 }
 
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
+/* RESPONSIVE */
 
 @media(max-width:760px){
 
@@ -262,7 +310,8 @@
   }
 
   .weight-panel,
-  .vehicle-commercial{
+  .vehicle-commercial,
+  .cargo-data-grid{
     grid-template-columns:1fr!important;
   }
 
@@ -280,12 +329,14 @@
     font-size:23px;
   }
 
+  .cargo-value-box{
+    flex-direction:column;
+    align-items:flex-start;
+  }
 }
 
 
-/* =========================================================
-   PRINT
-========================================================= */
+/* PRINT */
 
 @media print{
 
@@ -298,6 +349,21 @@
     color:#000!important;
     background:#fff!important;
     border:2px solid #000!important;
+  }
+
+  .cargo-commercial-panel{
+    border:1px solid #999!important;
+    background:#fff!important;
+  }
+
+  .cargo-value-box{
+    background:#fff!important;
+    border:2px solid #000!important;
+  }
+
+  .cargo-value-box span,
+  .cargo-value-box strong{
+    color:#000!important;
   }
 
 }
@@ -335,9 +401,7 @@
 <div class="card">
 
 
-<!-- ======================================================
-     PHOTOS
-====================================================== -->
+<!-- PHOTOS -->
 
 {% if photos %}
 
@@ -373,9 +437,7 @@
 <div class="ticket-info">
 
 
-<!-- ======================================================
-     PLATE
-====================================================== -->
+<!-- PLATE -->
 
 <div class="plate-info">
 
@@ -432,9 +494,7 @@
 </div>
 
 
-<!-- ======================================================
-     MODE
-====================================================== -->
+<!-- MODE -->
 
 <div>
 
@@ -459,9 +519,7 @@
 </div>
 
 
-<!-- ======================================================
-     STATUS
-====================================================== -->
+<!-- STATUS -->
 
 <div>
 
@@ -490,16 +548,12 @@
 </div>
 
 
-<!-- ======================================================
-     WEIGHT
-====================================================== -->
+<!-- WEIGHTS -->
 
 {% if row.weighing_mode == 'DOUBLE' %}
 
 <div class="weight-panel">
 
-
-  <!-- FIRST WEIGHT -->
 
   <div class="weight-card">
 
@@ -512,7 +566,7 @@
       {% if row.first_weight is not none %}
 
         {% if row.first_weight == row.first_weight|int %}
-          {{ row.first_weight|int }}
+          {{ "{:,}".format(row.first_weight|int) }}
         {% else %}
           {{ row.first_weight }}
         {% endif %}
@@ -548,8 +602,6 @@
   </div>
 
 
-  <!-- SECOND WEIGHT -->
-
   <div class="weight-card">
 
     <span>
@@ -561,7 +613,7 @@
     {% if row.second_weight is not none %}
 
       {% if row.second_weight == row.second_weight|int %}
-        {{ row.second_weight|int }}
+        {{ "{:,}".format(row.second_weight|int) }}
       {% else %}
         {{ row.second_weight }}
       {% endif %}
@@ -600,8 +652,6 @@
   </div>
 
 
-  <!-- NET WEIGHT -->
-
   <div class="weight-card net">
 
     <span>
@@ -613,7 +663,7 @@
     {% if row.net_weight is not none %}
 
       {% if row.net_weight == row.net_weight|int %}
-        {{ row.net_weight|int }}
+        {{ "{:,}".format(row.net_weight|int) }}
       {% else %}
         {{ row.net_weight }}
       {% endif %}
@@ -636,9 +686,7 @@
 {% else %}
 
 
-<!-- SINGLE WEIGHT -->
-
-<div class="single-weight-box">
+<div>
 
 <span>
   {{ _('weight') }}
@@ -649,9 +697,13 @@
   <strong class="number-ltr">
 
   {% if row.weight == row.weight|int %}
-    {{ row.weight|int }}
+
+    {{ "{:,}".format(row.weight|int) }}
+
   {% else %}
+
     {{ row.weight }}
+
   {% endif %}
 
   kg
@@ -675,8 +727,149 @@
 
 
 <!-- ======================================================
-     VEHICLE / FEE / REFERENCE WEIGHT
+     CARGO / PRODUCT / COMMERCIAL
 ====================================================== -->
+
+<div class="cargo-commercial-panel">
+
+  <div class="cargo-commercial-title">
+    اطلاعات بار و ارزش کالا
+  </div>
+
+
+  <div class="cargo-data-grid">
+
+
+    <!-- CARGO TYPE -->
+
+    <div class="cargo-data-item">
+
+      <span>
+        {{ _('cargo_type') }}
+      </span>
+
+      <strong>
+        {{ row.cargo_type or '—' }}
+      </strong>
+
+    </div>
+
+
+    <!-- DENSITY -->
+
+    <div class="cargo-data-item">
+
+      <span>
+        چگالی
+      </span>
+
+      <strong class="number-ltr">
+
+      {% if row.density is not none %}
+
+        {% if row.density == row.density|int %}
+          {{ "{:,}".format(row.density|int) }}
+        {% else %}
+          {{ row.density }}
+        {% endif %}
+
+        kg/m³
+
+      {% else %}
+
+        —
+
+      {% endif %}
+
+      </strong>
+
+    </div>
+
+
+    <!-- UNIT PRICE -->
+
+    <div class="cargo-data-item">
+
+      <span>
+        قیمت واحد
+      </span>
+
+      <strong class="number-ltr">
+
+      {% if row.unit_price is not none %}
+
+        {% if row.unit_price == row.unit_price|int %}
+          {{ "{:,}".format(row.unit_price|int) }}
+        {% else %}
+          {{ row.unit_price }}
+        {% endif %}
+
+        ریال/kg
+
+      {% else %}
+
+        —
+
+      {% endif %}
+
+      </strong>
+
+    </div>
+
+
+  </div>
+
+
+  <!-- TOTAL CARGO VALUE -->
+
+  <div class="cargo-value-box">
+
+    <span>
+      ارزش کل بار
+    </span>
+
+
+    {% if row.cargo_value is not none %}
+
+    <strong>
+
+      {% if row.cargo_value == row.cargo_value|int %}
+
+        {{ "{:,}".format(row.cargo_value|int) }}
+
+      {% else %}
+
+        {{ "{:,.2f}".format(row.cargo_value) }}
+
+      {% endif %}
+
+      ریال
+
+    </strong>
+
+
+    {% elif row.weighing_mode == 'DOUBLE'
+        and row.status == 'WAITING_SECOND' %}
+
+    <strong class="cargo-waiting">
+      پس از ثبت وزن دوم محاسبه می‌شود
+    </strong>
+
+
+    {% else %}
+
+    <strong>
+      —
+    </strong>
+
+    {% endif %}
+
+  </div>
+
+</div>
+
+
+<!-- VEHICLE / FEE / REFERENCE WEIGHT -->
 
 <div class="vehicle-commercial">
 
@@ -734,7 +927,7 @@
     {% if row.vehicle_weight is not none %}
 
       {% if row.vehicle_weight == row.vehicle_weight|int %}
-        {{ row.vehicle_weight|int }}
+        {{ "{:,}".format(row.vehicle_weight|int) }}
       {% else %}
         {{ row.vehicle_weight }}
       {% endif %}
@@ -755,20 +948,13 @@
 </div>
 
 
-<!-- ======================================================
-     OTHER DATA
-====================================================== -->
+<!-- OTHER DATA -->
 
 {% if row.driver_name %}
 
 <div>
-  <span>
-    {{ _('driver_name') }}
-  </span>
-
-  <strong>
-    {{ row.driver_name }}
-  </strong>
+  <span>{{ _('driver_name') }}</span>
+  <strong>{{ row.driver_name }}</strong>
 </div>
 
 {% endif %}
@@ -777,27 +963,9 @@
 {% if row.driver_phone %}
 
 <div>
-  <span>
-    {{ _('driver_phone') }}
-  </span>
-
+  <span>{{ _('driver_phone') }}</span>
   <strong class="number-ltr">
     {{ row.driver_phone }}
-  </strong>
-</div>
-
-{% endif %}
-
-
-{% if row.cargo_type %}
-
-<div>
-  <span>
-    {{ _('cargo_type') }}
-  </span>
-
-  <strong>
-    {{ row.cargo_type }}
   </strong>
 </div>
 
@@ -807,13 +975,8 @@
 {% if row.cargo_owner %}
 
 <div>
-  <span>
-    {{ _('cargo_owner') }}
-  </span>
-
-  <strong>
-    {{ row.cargo_owner }}
-  </strong>
+  <span>{{ _('cargo_owner') }}</span>
+  <strong>{{ row.cargo_owner }}</strong>
 </div>
 
 {% endif %}
@@ -822,13 +985,8 @@
 {% if row.origin %}
 
 <div>
-  <span>
-    {{ _('origin') }}
-  </span>
-
-  <strong>
-    {{ row.origin }}
-  </strong>
+  <span>{{ _('origin') }}</span>
+  <strong>{{ row.origin }}</strong>
 </div>
 
 {% endif %}
@@ -837,13 +995,8 @@
 {% if row.destination %}
 
 <div>
-  <span>
-    {{ _('destination') }}
-  </span>
-
-  <strong>
-    {{ row.destination }}
-  </strong>
+  <span>{{ _('destination') }}</span>
+  <strong>{{ row.destination }}</strong>
 </div>
 
 {% endif %}
@@ -852,41 +1005,22 @@
 {% if row.document_no %}
 
 <div>
-  <span>
-    {{ _('document_no') }}
-  </span>
-
-  <strong>
-    {{ row.document_no }}
-  </strong>
+  <span>{{ _('document_no') }}</span>
+  <strong>{{ row.document_no }}</strong>
 </div>
 
 {% endif %}
 
 
 <div>
-
-  <span>
-    {{ _('scale') }}
-  </span>
-
-  <strong>
-    {{ row.scale_id }}
-  </strong>
-
+  <span>{{ _('scale') }}</span>
+  <strong>{{ row.scale_id }}</strong>
 </div>
 
 
 <div>
-
-  <span>
-    {{ _('operator') }}
-  </span>
-
-  <strong>
-    {{ row.operator }}
-  </strong>
-
+  <span>{{ _('operator') }}</span>
+  <strong>{{ row.operator }}</strong>
 </div>
 
 
@@ -905,10 +1039,10 @@
 
 {% if row.weighing_mode == 'DOUBLE' %}
 
+
 {% if row.first_operator %}
 
 <div>
-
   <span>
     اپراتور وزن اول
   </span>
@@ -916,7 +1050,6 @@
   <strong>
     {{ row.first_operator }}
   </strong>
-
 </div>
 
 {% endif %}
@@ -925,7 +1058,6 @@
 {% if row.second_operator %}
 
 <div>
-
   <span>
     اپراتور وزن دوم
   </span>
@@ -933,10 +1065,10 @@
   <strong>
     {{ row.second_operator }}
   </strong>
-
 </div>
 
 {% endif %}
+
 
 {% endif %}
 
