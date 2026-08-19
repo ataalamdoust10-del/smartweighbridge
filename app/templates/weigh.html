@@ -22,9 +22,7 @@
   --shadow:0 10px 30px rgba(16,24,40,.08);
 }
 
-body{
-  background:var(--bg);
-}
+body{background:var(--bg)}
 
 .container{
   padding-top:28px;
@@ -168,6 +166,134 @@ form textarea:focus{
   pointer-events:none;
 }
 
+
+/* =========================================================
+   MANUAL WEIGHT
+========================================================= */
+
+.weight-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:15px;
+  margin-top:12px;
+  margin-bottom:8px;
+}
+
+.weight-head>label{
+  margin:0;
+}
+
+.manual-toggle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  user-select:none;
+  padding:7px 11px;
+  border:1px solid #d0d5dd;
+  border-radius:12px;
+  background:#f9fafb;
+  font-size:13px;
+  font-weight:900;
+}
+
+.manual-toggle input{
+  width:18px!important;
+  height:18px;
+  margin:0;
+  accent-color:#f59e0b;
+  cursor:pointer;
+}
+
+.manual-toggle.active{
+  background:#fffaeb;
+  border-color:#fdb022;
+  color:#b54708;
+}
+
+#weightInput.manual-active{
+  background:#fffaeb;
+  border:2px solid #f59e0b;
+  font-weight:900;
+}
+
+.manual-warning{
+  display:none;
+  margin-top:8px;
+  padding:9px 12px;
+  color:#b54708;
+  background:#fffaeb;
+  border:1px solid #fedf89;
+  border-radius:11px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.manual-warning.show{
+  display:block;
+}
+
+
+/* SECOND MANUAL */
+
+.second-manual-box{
+  margin-top:10px;
+  padding:10px;
+  background:#fff;
+  border:1px solid #fedf89;
+  border-radius:12px;
+  min-width:230px;
+}
+
+.second-manual-toggle{
+  display:flex!important;
+  align-items:center;
+  gap:7px;
+  margin:0 0 8px!important;
+  cursor:pointer;
+  font-size:12px;
+}
+
+.second-manual-toggle input{
+  width:17px!important;
+  height:17px;
+  margin:0;
+  accent-color:#f59e0b;
+}
+
+.second-manual-input{
+  display:none;
+  margin-bottom:8px;
+}
+
+.second-manual-input.show{
+  display:block;
+}
+
+.second-manual-input input{
+  background:#fffaeb!important;
+  border-color:#f59e0b!important;
+  font-weight:900;
+}
+
+.manual-badge{
+  display:inline-block;
+  margin-inline-start:6px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#fffaeb;
+  border:1px solid #fedf89;
+  color:#b54708;
+  font-size:10px;
+  font-weight:900;
+}
+
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
 .profile-suggestion{
   display:none;
   margin-top:9px;
@@ -272,22 +398,16 @@ form textarea:focus{
   height:19px;
   margin-bottom:5px;
   border:1px solid #fff;
-  background:
-    linear-gradient(
-      to bottom,
-      #239f40 0 33.333%,
-      #fff 33.333% 66.666%,
-      #da0000 66.666% 100%
-    );
+  background:linear-gradient(
+    to bottom,
+    #239f40 0 33.333%,
+    #fff 33.333% 66.666%,
+    #da0000 66.666% 100%
+  );
 }
 
-.plate-ir{
-  font:900 12px Arial;
-}
-
-.plate-country{
-  font:900 11px Arial;
-}
+.plate-ir{font:900 12px Arial}
+.plate-country{font:900 11px Arial}
 
 .plate-cell{
   position:relative;
@@ -403,13 +523,8 @@ form textarea:focus{
   margin-inline-end:6px;
 }
 
-.dot.ok{
-  background:#16a34a;
-}
-
-.dot.bad{
-  background:#f59e0b;
-}
+.dot.ok{background:#16a34a}
+.dot.bad{background:#f59e0b}
 
 
 /* =========================================================
@@ -515,6 +630,7 @@ form textarea:focus{
   color:#fff!important;
   border-color:#16a34a!important;
   white-space:nowrap;
+  width:100%;
 }
 
 .empty-waiting{
@@ -569,6 +685,11 @@ form textarea:focus{
   .photo-preview{
     grid-template-columns:1fr;
   }
+
+  .weight-head{
+    align-items:flex-start;
+    flex-direction:column;
+  }
 }
 </style>
 
@@ -592,11 +713,6 @@ form textarea:focus{
   enctype="multipart/form-data"
 >
 
-
-<!-- ======================================================
-     MODE
-====================================================== -->
-
 <label>
   {{ _('weighing_mode') }}
 </label>
@@ -604,7 +720,6 @@ form textarea:focus{
 <div class="mode-box">
 
   <div class="mode-option">
-
     <input
       id="modeSingle"
       type="radio"
@@ -614,20 +729,14 @@ form textarea:focus{
     >
 
     <label for="modeSingle">
-
       {{ _('single_weigh') }}
-
       <span class="mode-desc">
         {{ _('single_weigh_help') }}
       </span>
-
     </label>
-
   </div>
 
-
   <div class="mode-option">
-
     <input
       id="modeDouble"
       type="radio"
@@ -636,23 +745,15 @@ form textarea:focus{
     >
 
     <label for="modeDouble">
-
       {{ _('double_weigh') }}
-
       <span class="mode-desc">
         {{ _('double_weigh_help') }}
       </span>
-
     </label>
-
   </div>
 
 </div>
 
-
-<!-- ======================================================
-     PLATE
-====================================================== -->
 
 <label>
   {{ _('truck_plate') }}
@@ -664,26 +765,15 @@ form textarea:focus{
   name="plate"
 >
 
-
 <div class="iran-plate">
 
   <div class="plate-iran">
-
     <div class="plate-flag"></div>
-
-    <div class="plate-ir">
-      I.R.
-    </div>
-
-    <div class="plate-country">
-      IRAN
-    </div>
-
+    <div class="plate-ir">I.R.</div>
+    <div class="plate-country">IRAN</div>
   </div>
 
-
   <div class="plate-cell">
-
     <input
       id="plateTwo"
       type="text"
@@ -692,14 +782,11 @@ form textarea:focus{
       placeholder="12"
       autocomplete="off"
     >
-
   </div>
-
 
   <div class="plate-cell">
 
     <select id="plateLetter">
-
       <option value="">
         {{ _('plate_letter') }}
       </option>
@@ -726,14 +813,11 @@ form textarea:focus{
       <option value="ف">ف</option>
       <option value="ک">ک</option>
       <option value="گ">گ</option>
-
     </select>
 
   </div>
 
-
   <div class="plate-cell">
-
     <input
       id="plateThree"
       type="text"
@@ -742,9 +826,7 @@ form textarea:focus{
       placeholder="365"
       autocomplete="off"
     >
-
   </div>
-
 
   <div class="plate-cell plate-city">
 
@@ -765,7 +847,6 @@ form textarea:focus{
 
 </div>
 
-
 <div
   id="plateError"
   class="plate-error"
@@ -774,23 +855,47 @@ form textarea:focus{
 </div>
 
 
-<!-- ======================================================
-     SCALE WEIGHT
-====================================================== -->
+<!-- WEIGHT + MANUAL -->
 
-<label>
-  {{ _('weight_kg') }}
-</label>
+<div class="weight-head">
+
+  <label for="weightInput">
+    {{ _('weight_kg') }}
+  </label>
+
+  <label
+    id="manualToggleLabel"
+    class="manual-toggle"
+  >
+    <input
+      id="manualWeight"
+      type="checkbox"
+      name="manual_weight"
+      value="1"
+    >
+    ورود دستی وزن
+  </label>
+
+</div>
 
 <input
   id="weightInput"
   name="weight"
   type="number"
+  min="0"
+  max="1000000"
   step="0.01"
   value="{{ state.weight }}"
   readonly
   dir="ltr"
 >
+
+<div
+  id="manualWarning"
+  class="manual-warning"
+>
+  ⚠ این وزن به صورت دستی ثبت خواهد شد.
+</div>
 
 
 <div class="mini-actions">
@@ -814,12 +919,7 @@ form textarea:focus{
 </div>
 
 
-<!-- ======================================================
-     VEHICLE PROFILE
-====================================================== -->
-
 <div class="vehicle-profile-grid">
-
 
   <div>
 
@@ -837,13 +937,9 @@ form textarea:focus{
     >
 
     <datalist id="vehicleTypesList">
-
       {% for p in vehicle_profiles %}
-
       <option value="{{ p.vehicle_type }}"></option>
-
       {% endfor %}
-
     </datalist>
 
   </div>
@@ -902,7 +998,6 @@ form textarea:focus{
 
   </div>
 
-
 </div>
 
 
@@ -941,124 +1036,76 @@ form textarea:focus{
 
 </div>
 
-
 <div class="profile-memory-note">
   {{ _('vehicle_profile_auto_save_note') }}
 </div>
 
 
-<!-- ======================================================
-     OTHER INFORMATION
-====================================================== -->
-
 <div class="form-grid">
 
-
   <div>
-
-    <label>
-      {{ _('driver_name') }}
-    </label>
-
+    <label>{{ _('driver_name') }}</label>
     <input
       type="text"
       name="driver_name"
       placeholder="{{ _('driver_name_placeholder') }}"
     >
-
   </div>
 
-
   <div>
-
-    <label>
-      {{ _('driver_phone') }}
-    </label>
-
+    <label>{{ _('driver_phone') }}</label>
     <input
       type="tel"
       name="driver_phone"
       dir="ltr"
       placeholder="{{ _('driver_phone_placeholder') }}"
     >
-
   </div>
 
-
   <div>
-
-    <label>
-      {{ _('cargo_type') }}
-    </label>
-
+    <label>{{ _('cargo_type') }}</label>
     <input
       type="text"
       name="cargo_type"
       placeholder="{{ _('cargo_type_placeholder') }}"
     >
-
   </div>
 
-
   <div>
-
-    <label>
-      {{ _('cargo_owner') }}
-    </label>
-
+    <label>{{ _('cargo_owner') }}</label>
     <input
       type="text"
       name="cargo_owner"
       placeholder="{{ _('cargo_owner_placeholder') }}"
     >
-
   </div>
 
-
   <div>
-
-    <label>
-      {{ _('origin') }}
-    </label>
-
+    <label>{{ _('origin') }}</label>
     <input
       type="text"
       name="origin"
       placeholder="{{ _('origin_placeholder') }}"
     >
-
   </div>
 
-
   <div>
-
-    <label>
-      {{ _('destination') }}
-    </label>
-
+    <label>{{ _('destination') }}</label>
     <input
       type="text"
       name="destination"
       placeholder="{{ _('destination_placeholder') }}"
     >
-
   </div>
 
-
   <div>
-
-    <label>
-      {{ _('document_no') }}
-    </label>
-
+    <label>{{ _('document_no') }}</label>
     <input
       type="text"
       name="document_no"
       placeholder="{{ _('document_no_placeholder') }}"
     >
-
   </div>
-
 
 </div>
 
@@ -1073,10 +1120,6 @@ form textarea:focus{
   placeholder="{{ _('notes_placeholder') }}"
 ></textarea>
 
-
-<!-- ======================================================
-     PHOTOS
-====================================================== -->
 
 <label>
   {{ _('truck_photo') }}
@@ -1112,15 +1155,10 @@ form textarea:focus{
   {{ _('submit_single_weigh') }}
 </button>
 
-
 </form>
 
 </section>
 
-
-<!-- ======================================================
-     LIVE SCALE
-====================================================== -->
 
 <section class="card">
 
@@ -1136,7 +1174,6 @@ form textarea:focus{
 
   <b>kg</b>
 
-
   <div
     id="stable"
     class="{{ 'stable' if state.stable else 'unstable' }}"
@@ -1144,12 +1181,10 @@ form textarea:focus{
     {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
   </div>
 
-
   <small id="scaleStatus">
     {{ _('scale') }}:
     {{ state.scale_id or '' }}
   </small>
-
 
   <div
     id="connStatus"
@@ -1163,13 +1198,10 @@ form textarea:focus{
 
 </section>
 
-
 </div>
 
 
-<!-- ======================================================
-     WAITING FOR SECOND WEIGHT
-====================================================== -->
+<!-- WAITING SECOND -->
 
 <section class="card waiting-section">
 
@@ -1206,21 +1238,16 @@ form textarea:focus{
       #{{ "%06d"|format(r.ticket_number) }}
     </a>
 
-
     <span class="waiting-plate">
 
     {% if pp %}
-
       {{ pp.first }}
       {{ pp.letter }}
       {{ pp.middle }}
       -
       {{ pp.city }}
-
     {% else %}
-
       {{ r.plate }}
-
     {% endif %}
 
     </span>
@@ -1238,25 +1265,27 @@ form textarea:focus{
 
       kg
 
+      {% if r.first_weight_manual %}
+      <span class="manual-badge">
+        دستی وارد شده
+      </span>
+      {% endif %}
+
     </span>
 
 
     {% if r.vehicle_type %}
-
     <span>
       {{ _('vehicle_type') }}:
       <b>{{ r.vehicle_type }}</b>
     </span>
-
     {% endif %}
 
 
     {% if r.first_weighed_at %}
-
     <span class="waiting-time">
       {{ (r.first_weighed_at|string)[:19].replace('T',' ') }}
     </span>
-
     {% endif %}
 
   </div>
@@ -1265,15 +1294,49 @@ form textarea:focus{
   <form
     method="post"
     action="/weighments/{{ r.ticket_number }}/second-weigh"
+    class="second-weigh-form"
     onsubmit="return confirm({{ _('confirm_second_weigh')|tojson }});"
   >
 
-    <button
-      class="btn second-btn"
-      type="submit"
-    >
-      {{ _('register_second_weight') }}
-    </button>
+    <div class="second-manual-box">
+
+      <label class="second-manual-toggle">
+
+        <input
+          type="checkbox"
+          name="manual_weight"
+          value="1"
+          class="second-manual-checkbox"
+        >
+
+        ورود دستی وزن دوم
+
+      </label>
+
+      <div class="second-manual-input">
+
+        <input
+          type="number"
+          name="weight"
+          min="0"
+          max="1000000"
+          step="0.01"
+          inputmode="decimal"
+          placeholder="وزن دوم (kg)"
+          disabled
+          dir="ltr"
+        >
+
+      </div>
+
+      <button
+        class="btn second-btn"
+        type="submit"
+      >
+        {{ _('register_second_weight') }}
+      </button>
+
+    </div>
 
   </form>
 
@@ -1300,10 +1363,6 @@ document.addEventListener(
   'DOMContentLoaded',
   () => {
 
-    /* =====================================================
-       ELEMENTS
-    ===================================================== */
-
     const form =
       document.getElementById('weighForm');
 
@@ -1324,7 +1383,6 @@ document.addEventListener(
 
     const plateError =
       document.getElementById('plateError');
-
 
     const vehicleType =
       document.getElementById('vehicleType');
@@ -1347,13 +1405,34 @@ document.addEventListener(
     const useProfileButton =
       document.getElementById('useProfileButton');
 
+    const liveWeight =
+      document.getElementById('liveWeight');
+
+    const weightInput =
+      document.getElementById('weightInput');
+
+    const manualWeight =
+      document.getElementById('manualWeight');
+
+    const manualToggleLabel =
+      document.getElementById('manualToggleLabel');
+
+    const manualWarning =
+      document.getElementById('manualWarning');
+
+    const stable =
+      document.getElementById('stable');
+
+    const scaleStatus =
+      document.getElementById('scaleStatus');
+
+    const connStatus =
+      document.getElementById('connStatus');
 
     let currentSuggestion = null;
 
 
-    /* =====================================================
-       NUMBER NORMALIZATION
-    ===================================================== */
+    /* NUMBER NORMALIZATION */
 
     function normalizeDigits(
       value,
@@ -1405,9 +1484,7 @@ document.addEventListener(
     }
 
 
-    /* =====================================================
-       PLATE
-    ===================================================== */
+    /* PLATE */
 
     function updatePlate(){
 
@@ -1492,9 +1569,7 @@ document.addEventListener(
 
         updatePlate();
 
-        if(
-          plateLetter.value
-        ){
+        if(plateLetter.value){
           plateThree.focus();
         }
 
@@ -1502,9 +1577,7 @@ document.addEventListener(
     );
 
 
-    /* =====================================================
-       MODE
-    ===================================================== */
+    /* MODE */
 
     const modeSingle =
       document.getElementById('modeSingle');
@@ -1514,7 +1587,6 @@ document.addEventListener(
 
     const submitButton =
       document.getElementById('submitButton');
-
 
     const SINGLE_BUTTON =
       {{ _('submit_single_weigh')|tojson|safe }};
@@ -1546,9 +1618,64 @@ document.addEventListener(
     updateMode();
 
 
-    /* =====================================================
-       VEHICLE PROFILE MEMORY
-    ===================================================== */
+    /* MANUAL FIRST WEIGHT */
+
+    function updateManualState(){
+
+      if(manualWeight.checked){
+
+        weightInput.readOnly = false;
+
+        weightInput.classList.add(
+          'manual-active'
+        );
+
+        manualToggleLabel.classList.add(
+          'active'
+        );
+
+        manualWarning.classList.add(
+          'show'
+        );
+
+        weightInput.value = '';
+
+        setTimeout(
+          () => weightInput.focus(),
+          0
+        );
+
+      }else{
+
+        weightInput.readOnly = true;
+
+        weightInput.classList.remove(
+          'manual-active'
+        );
+
+        manualToggleLabel.classList.remove(
+          'active'
+        );
+
+        manualWarning.classList.remove(
+          'show'
+        );
+
+        weightInput.value =
+          liveWeight.textContent;
+
+      }
+
+    }
+
+
+    manualWeight.addEventListener(
+      'change',
+      updateManualState
+    );
+
+
+    /* VEHICLE PROFILE */
 
     function displayNumber(value){
 
@@ -1562,9 +1689,7 @@ document.addEventListener(
 
       const n = Number(value);
 
-      if(
-        Number.isFinite(n)
-      ){
+      if(Number.isFinite(n)){
         return n.toLocaleString('en-US');
       }
 
@@ -1587,7 +1712,6 @@ document.addEventListener(
         return;
       }
 
-
       try{
 
         const response =
@@ -1602,7 +1726,6 @@ document.addEventListener(
         const data =
           await response.json();
 
-
         if(!data.found){
 
           currentSuggestion = null;
@@ -1613,27 +1736,17 @@ document.addEventListener(
           return;
         }
 
-
         currentSuggestion = data;
-
 
         suggestedFee.textContent =
           displayNumber(
             data.weighing_fee
           );
 
-
         suggestedWeight.textContent =
           displayNumber(
             data.vehicle_weight
           );
-
-
-        /*
-          علاوه بر کادر پیشنهاد، مقدار قبلی را به صورت
-          placeholder کم‌رنگ روی خود input نشان می‌دهیم.
-          اگر کاربر چیزی تایپ کرده باشد، آن را تغییر نمی‌دهیم.
-        */
 
         if(
           data.weighing_fee !== null
@@ -1643,7 +1756,6 @@ document.addEventListener(
             String(data.weighing_fee);
         }
 
-
         if(
           data.vehicle_weight !== null
           && data.vehicle_weight !== undefined
@@ -1651,7 +1763,6 @@ document.addEventListener(
           vehicleWeight.placeholder =
             String(data.vehicle_weight);
         }
-
 
         profileSuggestion.style.display =
           'block';
@@ -1700,12 +1811,9 @@ document.addEventListener(
       'click',
       () => {
 
-        if(
-          !currentSuggestion
-        ){
+        if(!currentSuggestion){
           return;
         }
-
 
         if(
           currentSuggestion.weighing_fee !== null
@@ -1714,7 +1822,6 @@ document.addEventListener(
           weighingFee.value =
             currentSuggestion.weighing_fee;
         }
-
 
         if(
           currentSuggestion.vehicle_weight !== null
@@ -1728,9 +1835,7 @@ document.addEventListener(
     );
 
 
-    /* =====================================================
-       SUBMIT
-    ===================================================== */
+    /* SUBMIT */
 
     form.addEventListener(
       'submit',
@@ -1738,9 +1843,7 @@ document.addEventListener(
 
         updatePlate();
 
-        if(
-          !plateValid()
-        ){
+        if(!plateValid()){
 
           event.preventDefault();
 
@@ -1748,35 +1851,42 @@ document.addEventListener(
             'block';
 
           return;
-
         }
 
         plateError.style.display =
           'none';
 
+
+        if(manualWeight.checked){
+
+          const value =
+            Number(weightInput.value);
+
+          if(
+            weightInput.value.trim() === ''
+            || !Number.isFinite(value)
+            || value < 0
+            || value > 1000000
+          ){
+
+            event.preventDefault();
+
+            alert(
+              'لطفاً وزن دستی معتبر وارد کنید.'
+            );
+
+            weightInput.focus();
+
+            return;
+          }
+
+        }
+
       }
     );
 
 
-    /* =====================================================
-       LIVE SCALE
-    ===================================================== */
-
-    const liveWeight =
-      document.getElementById('liveWeight');
-
-    const weightInput =
-      document.getElementById('weightInput');
-
-    const stable =
-      document.getElementById('stable');
-
-    const scaleStatus =
-      document.getElementById('scaleStatus');
-
-    const connStatus =
-      document.getElementById('connStatus');
-
+    /* LIVE SCALE */
 
     const STABLE_TEXT =
       {{ _('stable')|tojson|safe }};
@@ -1815,8 +1925,14 @@ document.addEventListener(
         liveWeight.textContent =
           String(w);
 
-        weightInput.value =
-          String(w);
+        /*
+          در حالت دستی فقط نمایش Live به‌روز می‌شود.
+          مقدار واردشده توسط اپراتور دست‌نخورده می‌ماند.
+        */
+        if(!manualWeight.checked){
+          weightInput.value =
+            String(w);
+        }
 
         scaleStatus.textContent =
           SCALE_TEXT
@@ -1825,7 +1941,6 @@ document.addEventListener(
               data.scale_id
               ?? ''
             );
-
 
         if(data.stable){
 
@@ -1846,7 +1961,6 @@ document.addEventListener(
             + WAITING_TEXT;
 
         }
-
 
         connStatus.innerHTML =
           '<span class="dot ok"></span>'
@@ -1872,12 +1986,12 @@ document.addEventListener(
     );
 
 
-    /* =====================================================
-       CLEAR FORM
-    ===================================================== */
+    /* CLEAR FORM */
 
     const clearButton =
-      document.getElementById('clearFormBtn');
+      document.getElementById(
+        'clearFormBtn'
+      );
 
     clearButton.addEventListener(
       'click',
@@ -1902,14 +2016,13 @@ document.addEventListener(
           {{ _('vehicle_weight_placeholder')|tojson|safe }};
 
         updateMode();
+        updateManualState();
 
       }
     );
 
 
-    /* =====================================================
-       COPY SCALE
-    ===================================================== */
+    /* COPY SCALE */
 
     document
       .getElementById('copyScaleBtn')
@@ -1924,20 +2037,117 @@ document.addEventListener(
       );
 
 
-    /* =====================================================
-       PHOTOS
-    ===================================================== */
+    /* SECOND WEIGHT MANUAL */
+
+    document
+      .querySelectorAll(
+        '.second-weigh-form'
+      )
+      .forEach(
+        secondForm => {
+
+          const checkbox =
+            secondForm.querySelector(
+              '.second-manual-checkbox'
+            );
+
+          const wrapper =
+            secondForm.querySelector(
+              '.second-manual-input'
+            );
+
+          const input =
+            wrapper.querySelector(
+              'input'
+            );
+
+
+          checkbox.addEventListener(
+            'change',
+            () => {
+
+              if(checkbox.checked){
+
+                wrapper.classList.add(
+                  'show'
+                );
+
+                input.disabled = false;
+                input.required = true;
+                input.value = '';
+
+                setTimeout(
+                  () => input.focus(),
+                  0
+                );
+
+              }else{
+
+                wrapper.classList.remove(
+                  'show'
+                );
+
+                input.disabled = true;
+                input.required = false;
+                input.value = '';
+
+              }
+
+            }
+          );
+
+
+          secondForm.addEventListener(
+            'submit',
+            event => {
+
+              if(!checkbox.checked){
+                return;
+              }
+
+              const value =
+                Number(input.value);
+
+              if(
+                input.value.trim() === ''
+                || !Number.isFinite(value)
+                || value < 0
+                || value > 1000000
+              ){
+
+                event.preventDefault();
+
+                alert(
+                  'لطفاً وزن دوم دستی معتبر وارد کنید.'
+                );
+
+                input.focus();
+
+              }
+
+            }
+          );
+
+        }
+      );
+
+
+    /* PHOTOS */
 
     const photosWrap =
-      document.getElementById('photosWrap');
+      document.getElementById(
+        'photosWrap'
+      );
 
     const photoPreview =
-      document.getElementById('photoPreview');
+      document.getElementById(
+        'photoPreview'
+      );
 
 
     photosWrap.addEventListener(
       'change',
-      (event) => {
+      event => {
 
         if(
           !event.target
@@ -1947,26 +2157,24 @@ document.addEventListener(
           return;
         }
 
-
         const file =
           event.target.files
           && event.target.files[0];
-
 
         if(!file){
           return;
         }
 
-
         const reader =
           new FileReader();
 
-
         reader.onload =
-          (result) => {
+          result => {
 
             const item =
-              document.createElement('div');
+              document.createElement(
+                'div'
+              );
 
             item.className =
               'photo-item';
@@ -1977,18 +2185,15 @@ document.addEventListener(
               <button type="button">×</button>
               `;
 
-
             item
               .querySelector('button')
               .onclick =
               () => {
 
                 item.remove();
-
                 event.target.remove();
 
               };
-
 
             photoPreview.appendChild(
               item
@@ -1996,14 +2201,14 @@ document.addEventListener(
 
           };
 
-
         reader.readAsDataURL(
           file
         );
 
-
         const nextInput =
-          document.createElement('input');
+          document.createElement(
+            'input'
+          );
 
         nextInput.className =
           'photo-input';

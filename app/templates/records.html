@@ -37,7 +37,9 @@
 }
 
 
-/* plate */
+/* =========================================================
+   PLATE
+========================================================= */
 
 .mini-plate{
   direction:ltr;
@@ -95,7 +97,9 @@
 }
 
 
-/* data */
+/* =========================================================
+   DATA
+========================================================= */
 
 .details{
   min-width:300px;
@@ -128,10 +132,22 @@
 }
 
 .weight-lines{
-  direction:ltr;
-  text-align:left;
-  line-height:1.8;
+  min-width:185px;
+  line-height:2;
   white-space:nowrap;
+}
+
+.weight-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+
+.weight-value{
+  direction:ltr;
+  unicode-bidi:embed;
+  display:inline-block;
 }
 
 .net{
@@ -139,8 +155,22 @@
   font-weight:900;
 }
 
+.manual-badge{
+  display:inline-block;
+  padding:2px 7px;
+  border-radius:999px;
+  background:#fffaeb;
+  border:1px solid #fedf89;
+  color:#b54708;
+  font-size:10px;
+  font-weight:900;
+  white-space:nowrap;
+}
 
-/* status */
+
+/* =========================================================
+   STATUS
+========================================================= */
 
 .status{
   display:inline-block;
@@ -162,6 +192,11 @@
   background:#fffaeb;
   border:1px solid #fedf89;
 }
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
 
 .actions{
   display:flex;
@@ -213,6 +248,7 @@
 >
   {{ _('search') }}
 </button>
+
 
 {% if q %}
 
@@ -270,7 +306,9 @@
 <tr>
 
 
-<!-- ticket -->
+<!-- ======================================================
+     TICKET
+====================================================== -->
 
 <td>
 
@@ -284,7 +322,9 @@
 </td>
 
 
-<!-- plate -->
+<!-- ======================================================
+     PLATE
+====================================================== -->
 
 <td>
 
@@ -302,17 +342,21 @@
 
   </div>
 
+
   <div class="mini-cell">
     {{ pp.first }}
   </div>
+
 
   <div class="mini-cell">
     {{ pp.letter }}
   </div>
 
+
   <div class="mini-cell">
     {{ pp.middle }}
   </div>
+
 
   <div class="mini-cell mini-city">
 
@@ -326,6 +370,7 @@
 
 </div>
 
+
 {% else %}
 
 <span dir="ltr">
@@ -337,7 +382,9 @@
 </td>
 
 
-<!-- mode -->
+<!-- ======================================================
+     MODE
+====================================================== -->
 
 <td>
 
@@ -358,32 +405,162 @@
 </td>
 
 
-<!-- weights -->
+<!-- ======================================================
+     WEIGHTS
+====================================================== -->
 
 <td>
 
 <div class="weight-lines">
 
+
 {% if r.weighing_mode == 'DOUBLE' %}
 
-  <div>
-    {{ _('first_weight') }}:
-    {{ r.first_weight }}
+
+  <!-- FIRST WEIGHT -->
+
+  <div class="weight-row">
+
+    <span>
+      {{ _('first_weight') }}:
+    </span>
+
+    <span class="weight-value">
+
+      {% if r.first_weight is not none %}
+
+        {% if r.first_weight == r.first_weight|int %}
+          {{ r.first_weight|int }}
+        {% else %}
+          {{ r.first_weight }}
+        {% endif %}
+
+        kg
+
+      {% else %}
+
+        —
+
+      {% endif %}
+
+    </span>
+
+
+    {% if r.first_weight_manual %}
+
+    <span class="manual-badge">
+      ✍ دستی وارد شده
+    </span>
+
+    {% endif %}
+
   </div>
 
-  <div>
-    {{ _('second_weight') }}:
-    {{ r.second_weight if r.second_weight is not none else '—' }}
+
+  <!-- SECOND WEIGHT -->
+
+  <div class="weight-row">
+
+    <span>
+      {{ _('second_weight') }}:
+    </span>
+
+    <span class="weight-value">
+
+      {% if r.second_weight is not none %}
+
+        {% if r.second_weight == r.second_weight|int %}
+          {{ r.second_weight|int }}
+        {% else %}
+          {{ r.second_weight }}
+        {% endif %}
+
+        kg
+
+      {% else %}
+
+        —
+
+      {% endif %}
+
+    </span>
+
+
+    {% if
+      r.second_weight is not none
+      and r.second_weight_manual
+    %}
+
+    <span class="manual-badge">
+      ✍ دستی وارد شده
+    </span>
+
+    {% endif %}
+
   </div>
 
-  <div class="net">
-    {{ _('net_weight') }}:
-    {{ r.net_weight if r.net_weight is not none else '—' }}
+
+  <!-- NET -->
+
+  <div class="weight-row net">
+
+    <span>
+      {{ _('net_weight') }}:
+    </span>
+
+    <span class="weight-value">
+
+      {% if r.net_weight is not none %}
+
+        {% if r.net_weight == r.net_weight|int %}
+          {{ r.net_weight|int }}
+        {% else %}
+          {{ r.net_weight }}
+        {% endif %}
+
+        kg
+
+      {% else %}
+
+        —
+
+      {% endif %}
+
+    </span>
+
   </div>
+
 
 {% else %}
 
-  {{ r.weight }} kg
+
+  <!-- SINGLE WEIGHT -->
+
+  <div class="weight-row">
+
+    <span class="weight-value">
+
+      {% if r.weight == r.weight|int %}
+        {{ r.weight|int }}
+      {% else %}
+        {{ r.weight }}
+      {% endif %}
+
+      kg
+
+    </span>
+
+
+    {% if r.first_weight_manual %}
+
+    <span class="manual-badge">
+      ✍ دستی وارد شده
+    </span>
+
+    {% endif %}
+
+  </div>
+
 
 {% endif %}
 
@@ -392,7 +569,9 @@
 </td>
 
 
-<!-- vehicle fee/profile -->
+<!-- ======================================================
+     VEHICLE / FEE
+====================================================== -->
 
 <td>
 
@@ -420,9 +599,13 @@
       <span class="money">
 
         {% if r.weighing_fee == r.weighing_fee|int %}
+
           {{ "{:,}".format(r.weighing_fee|int) }}
+
         {% else %}
+
           {{ r.weighing_fee }}
+
         {% endif %}
 
         {{ _('rial') }}
@@ -446,7 +629,21 @@
 
     {% if r.vehicle_weight is not none %}
 
-      {{ r.vehicle_weight }} kg
+      <span class="weight-value">
+
+        {% if r.vehicle_weight == r.vehicle_weight|int %}
+
+          {{ r.vehicle_weight|int }}
+
+        {% else %}
+
+          {{ r.vehicle_weight }}
+
+        {% endif %}
+
+        kg
+
+      </span>
 
     {% else %}
 
@@ -461,7 +658,9 @@
 </td>
 
 
-<!-- date -->
+<!-- ======================================================
+     DATE
+====================================================== -->
 
 <td style="white-space:nowrap;">
 
@@ -470,80 +669,174 @@
 </td>
 
 
-<!-- details -->
+<!-- ======================================================
+     DETAILS
+====================================================== -->
 
 <td>
 
 <div class="details">
 
+
 {% if r.driver_name %}
+
   <div>
-    <b>{{ _('driver_name') }}:</b>
+    <b>
+      {{ _('driver_name') }}:
+    </b>
+
     {{ r.driver_name }}
   </div>
+
 {% endif %}
+
 
 {% if r.driver_phone %}
+
   <div>
-    <b>{{ _('driver_phone') }}:</b>
-    {{ r.driver_phone }}
+
+    <b>
+      {{ _('driver_phone') }}:
+    </b>
+
+    <span dir="ltr">
+      {{ r.driver_phone }}
+    </span>
+
   </div>
+
 {% endif %}
+
 
 {% if r.cargo_type %}
+
   <div>
-    <b>{{ _('cargo_type') }}:</b>
+
+    <b>
+      {{ _('cargo_type') }}:
+    </b>
+
     {{ r.cargo_type }}
+
   </div>
+
 {% endif %}
+
 
 {% if r.cargo_owner %}
+
   <div>
-    <b>{{ _('cargo_owner') }}:</b>
+
+    <b>
+      {{ _('cargo_owner') }}:
+    </b>
+
     {{ r.cargo_owner }}
+
   </div>
+
 {% endif %}
 
+
 {% if r.origin or r.destination %}
+
   <div>
 
     {% if r.origin %}
-      <b>{{ _('origin') }}:</b>
+
+      <b>
+        {{ _('origin') }}:
+      </b>
+
       {{ r.origin }}
+
     {% endif %}
+
 
     {% if r.origin and r.destination %}
+
       →
+
     {% endif %}
+
 
     {% if r.destination %}
-      <b>{{ _('destination') }}:</b>
+
+      <b>
+        {{ _('destination') }}:
+      </b>
+
       {{ r.destination }}
+
     {% endif %}
 
   </div>
+
 {% endif %}
+
 
 {% if r.document_no %}
+
   <div>
-    <b>{{ _('document_no') }}:</b>
+
+    <b>
+      {{ _('document_no') }}:
+    </b>
+
     {{ r.document_no }}
+
   </div>
+
 {% endif %}
 
+
 {% if r.notes %}
+
   <div>
-    <b>{{ _('notes') }}:</b>
+
+    <b>
+      {{ _('notes') }}:
+    </b>
+
     {{ r.notes }}
+
   </div>
+
 {% endif %}
+
+
+{% if r.weighing_mode == 'DOUBLE' %}
+
+  {% if r.first_operator %}
+
+  <div>
+    <b>اپراتور وزن اول:</b>
+    {{ r.first_operator }}
+  </div>
+
+  {% endif %}
+
+
+  {% if r.second_operator %}
+
+  <div>
+    <b>اپراتور وزن دوم:</b>
+    {{ r.second_operator }}
+  </div>
+
+  {% endif %}
+
+{% endif %}
+
 
 </div>
 
 </td>
 
 
-<!-- status -->
+<!-- ======================================================
+     STATUS
+====================================================== -->
 
 <td>
 
@@ -564,7 +857,9 @@
 </td>
 
 
-<!-- actions -->
+<!-- ======================================================
+     ACTIONS
+====================================================== -->
 
 <td>
 

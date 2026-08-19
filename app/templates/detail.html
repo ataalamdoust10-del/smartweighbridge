@@ -67,7 +67,9 @@
 }
 
 
-/* plate */
+/* =========================================================
+   PLATE
+========================================================= */
 
 .plate-info{
   grid-column:1/-1;
@@ -133,7 +135,9 @@
 }
 
 
-/* weights */
+/* =========================================================
+   WEIGHTS
+========================================================= */
 
 .weight-panel{
   grid-column:1/-1;
@@ -163,8 +167,35 @@
   direction:ltr;
 }
 
+.manual-badge{
+  display:inline-block!important;
+  margin-top:8px;
+  margin-bottom:0!important;
+  padding:5px 9px;
+  border-radius:999px;
+  color:#b54708!important;
+  background:#fffaeb;
+  border:1px solid #fedf89;
+  font-size:11px!important;
+  font-weight:900!important;
+  direction:rtl;
+}
 
-/* vehicle profile */
+.single-weight-box{
+  position:relative;
+}
+
+.single-weight-value{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+}
+
+
+/* =========================================================
+   VEHICLE PROFILE
+========================================================= */
 
 .vehicle-commercial{
   grid-column:1/-1;
@@ -187,7 +218,9 @@
 }
 
 
-/* status */
+/* =========================================================
+   STATUS
+========================================================= */
 
 .wait-badge,
 .done-badge{
@@ -218,6 +251,10 @@
 }
 
 
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
 @media(max-width:760px){
 
   .ticket-info{
@@ -246,11 +283,21 @@
 }
 
 
+/* =========================================================
+   PRINT
+========================================================= */
+
 @media print{
 
   .page-head button,
   nav{
     display:none!important;
+  }
+
+  .manual-badge{
+    color:#000!important;
+    background:#fff!important;
+    border:2px solid #000!important;
   }
 
 }
@@ -412,6 +459,10 @@
 </div>
 
 
+<!-- ======================================================
+     STATUS
+====================================================== -->
+
 <div>
 
 <span>
@@ -447,6 +498,9 @@
 
 <div class="weight-panel">
 
+
+  <!-- FIRST WEIGHT -->
+
   <div class="weight-card">
 
     <span>
@@ -455,15 +509,33 @@
 
     <div class="big">
 
-      {% if row.first_weight == row.first_weight|int %}
-        {{ row.first_weight|int }}
+      {% if row.first_weight is not none %}
+
+        {% if row.first_weight == row.first_weight|int %}
+          {{ row.first_weight|int }}
+        {% else %}
+          {{ row.first_weight }}
+        {% endif %}
+
+        kg
+
       {% else %}
-        {{ row.first_weight }}
+
+        —
+
       {% endif %}
 
-      kg
-
     </div>
+
+
+    {% if row.first_weight_manual %}
+
+    <span class="manual-badge">
+      ✍ دستی وارد شده
+    </span>
+
+    {% endif %}
+
 
     {% if row.first_weighed_at %}
 
@@ -475,6 +547,8 @@
 
   </div>
 
+
+  <!-- SECOND WEIGHT -->
 
   <div class="weight-card">
 
@@ -502,6 +576,19 @@
 
     </div>
 
+
+    {% if
+      row.second_weight is not none
+      and row.second_weight_manual
+    %}
+
+    <span class="manual-badge">
+      ✍ دستی وارد شده
+    </span>
+
+    {% endif %}
+
+
     {% if row.second_weighed_at %}
 
     <small>
@@ -512,6 +599,8 @@
 
   </div>
 
+
+  <!-- NET WEIGHT -->
 
   <div class="weight-card net">
 
@@ -543,26 +632,42 @@
 
 </div>
 
+
 {% else %}
 
 
-<div>
+<!-- SINGLE WEIGHT -->
+
+<div class="single-weight-box">
 
 <span>
   {{ _('weight') }}
 </span>
 
-<strong class="number-ltr">
+<div class="single-weight-value">
 
-{% if row.weight == row.weight|int %}
-  {{ row.weight|int }}
-{% else %}
-  {{ row.weight }}
-{% endif %}
+  <strong class="number-ltr">
 
-kg
+  {% if row.weight == row.weight|int %}
+    {{ row.weight|int }}
+  {% else %}
+    {{ row.weight }}
+  {% endif %}
 
-</strong>
+  kg
+
+  </strong>
+
+
+  {% if row.first_weight_manual %}
+
+  <span class="manual-badge">
+    ✍ دستی وارد شده
+  </span>
+
+  {% endif %}
+
+</div>
 
 </div>
 
@@ -655,80 +760,185 @@ kg
 ====================================================== -->
 
 {% if row.driver_name %}
+
 <div>
-  <span>{{ _('driver_name') }}</span>
-  <strong>{{ row.driver_name }}</strong>
+  <span>
+    {{ _('driver_name') }}
+  </span>
+
+  <strong>
+    {{ row.driver_name }}
+  </strong>
 </div>
+
 {% endif %}
 
 
 {% if row.driver_phone %}
+
 <div>
-  <span>{{ _('driver_phone') }}</span>
-  <strong class="number-ltr">{{ row.driver_phone }}</strong>
+  <span>
+    {{ _('driver_phone') }}
+  </span>
+
+  <strong class="number-ltr">
+    {{ row.driver_phone }}
+  </strong>
 </div>
+
 {% endif %}
 
 
 {% if row.cargo_type %}
+
 <div>
-  <span>{{ _('cargo_type') }}</span>
-  <strong>{{ row.cargo_type }}</strong>
+  <span>
+    {{ _('cargo_type') }}
+  </span>
+
+  <strong>
+    {{ row.cargo_type }}
+  </strong>
 </div>
+
 {% endif %}
 
 
 {% if row.cargo_owner %}
+
 <div>
-  <span>{{ _('cargo_owner') }}</span>
-  <strong>{{ row.cargo_owner }}</strong>
+  <span>
+    {{ _('cargo_owner') }}
+  </span>
+
+  <strong>
+    {{ row.cargo_owner }}
+  </strong>
 </div>
+
 {% endif %}
 
 
 {% if row.origin %}
+
 <div>
-  <span>{{ _('origin') }}</span>
-  <strong>{{ row.origin }}</strong>
+  <span>
+    {{ _('origin') }}
+  </span>
+
+  <strong>
+    {{ row.origin }}
+  </strong>
 </div>
+
 {% endif %}
 
 
 {% if row.destination %}
+
 <div>
-  <span>{{ _('destination') }}</span>
-  <strong>{{ row.destination }}</strong>
+  <span>
+    {{ _('destination') }}
+  </span>
+
+  <strong>
+    {{ row.destination }}
+  </strong>
 </div>
+
 {% endif %}
 
 
 {% if row.document_no %}
+
 <div>
-  <span>{{ _('document_no') }}</span>
-  <strong>{{ row.document_no }}</strong>
+  <span>
+    {{ _('document_no') }}
+  </span>
+
+  <strong>
+    {{ row.document_no }}
+  </strong>
 </div>
+
 {% endif %}
 
 
 <div>
-  <span>{{ _('scale') }}</span>
-  <strong>{{ row.scale_id }}</strong>
+
+  <span>
+    {{ _('scale') }}
+  </span>
+
+  <strong>
+    {{ row.scale_id }}
+  </strong>
+
 </div>
 
 
 <div>
-  <span>{{ _('operator') }}</span>
-  <strong>{{ row.operator }}</strong>
+
+  <span>
+    {{ _('operator') }}
+  </span>
+
+  <strong>
+    {{ row.operator }}
+  </strong>
+
 </div>
 
 
 <div>
-  <span>{{ _('datetime') }}</span>
+
+  <span>
+    {{ _('datetime') }}
+  </span>
 
   <strong class="number-ltr">
     {{ (row.created_at|string)[:19].replace('T',' ') }}
   </strong>
+
 </div>
+
+
+{% if row.weighing_mode == 'DOUBLE' %}
+
+{% if row.first_operator %}
+
+<div>
+
+  <span>
+    اپراتور وزن اول
+  </span>
+
+  <strong>
+    {{ row.first_operator }}
+  </strong>
+
+</div>
+
+{% endif %}
+
+
+{% if row.second_operator %}
+
+<div>
+
+  <span>
+    اپراتور وزن دوم
+  </span>
+
+  <strong>
+    {{ row.second_operator }}
+  </strong>
+
+</div>
+
+{% endif %}
+
+{% endif %}
 
 
 {% if row.notes %}
