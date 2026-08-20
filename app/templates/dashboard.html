@@ -1,75 +1,550 @@
 {% extends "base.html" %}
-{% block title %}{{ _('dashboard') }}{% endblock %}
+
+{% block title %}
+{{ _('dashboard') }}
+{% endblock %}
+
 
 {% block content %}
+
+<style>
+
+.dashboard-cloud-note{
+  margin-bottom:18px;
+  padding:12px 15px;
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  color:#1e40af;
+  border-radius:14px;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.8;
+}
+
+.dashboard-cloud-note strong{
+  color:#1d4ed8;
+}
+
+.dashboard-cloud-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-inline-end:7px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#dbeafe;
+  color:#1d4ed8;
+  font-size:11px;
+  font-weight:900;
+}
+
+.dashboard-cloud-badge .dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#2563eb;
+}
+
+
+.dashboard-local-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-inline-end:7px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#ecfdf3;
+  color:#027a48;
+  font-size:11px;
+  font-weight:900;
+}
+
+.dashboard-local-badge .dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#16a34a;
+}
+
+
+.cloud-readonly{
+  display:inline-block;
+  margin-top:5px;
+  color:#667085;
+  font-size:11px;
+  font-weight:600;
+}
+
+
+.dashboard-weight{
+  direction:ltr;
+  unicode-bidi:embed;
+}
+
+
+.dashboard-table{
+  width:100%;
+  min-width:800px;
+}
+
+
+.dashboard-table td,
+.dashboard-table th{
+  vertical-align:middle;
+}
+
+
+.ticket-link{
+  color:#2563eb;
+  text-decoration:none;
+  font-weight:900;
+}
+
+
+.status-pill{
+  display:inline-block;
+  padding:5px 8px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+
+
+.status-pill.saved{
+  color:#027a48;
+  background:#ecfdf3;
+  border:1px solid #abefc6;
+}
+
+
+.status-pill.waiting{
+  color:#b54708;
+  background:#fffaeb;
+  border:1px solid #fedf89;
+}
+
+
+.empty-dashboard{
+  padding:22px;
+  color:#667085;
+  text-align:center;
+}
+
+
+.cloud-scale-card{
+  background:#f8fafc;
+}
+
+
+.cloud-scale-value{
+  color:#475467!important;
+  font-size:22px!important;
+}
+
+
+@media(max-width:760px){
+
+  .dashboard-cloud-note{
+    font-size:12px;
+  }
+
+}
+
+</style>
+
+
 <div class="page-head">
+
   <div>
-    <h1>{{ _('dashboard') }}</h1>
-    <p>{{ _('welcome') }}، {{ user }}</p>
+
+    <h1>
+      {{ _('dashboard') }}
+    </h1>
+
+    <p>
+
+      {{ _('welcome') }}، {{ user }}
+
+      {% if app_mode == 'cloud' %}
+
+      <span class="dashboard-cloud-badge">
+        <span class="dot"></span>
+        نسخه ابری
+      </span>
+
+      {% else %}
+
+      <span class="dashboard-local-badge">
+        <span class="dot"></span>
+        سرور محلی
+      </span>
+
+      {% endif %}
+
+    </p>
+
   </div>
 
-  <a class="btn primary" href="/weigh">+ {{ _('new_weighment') }}</a>
+
+  {% if app_mode != 'cloud' %}
+
+  <a
+    class="btn primary"
+    href="/weigh"
+  >
+    + {{ _('new_weighment') }}
+  </a>
+
+  {% endif %}
+
 </div>
+
+
+{% if app_mode == 'cloud' %}
+
+<div class="dashboard-cloud-note">
+
+  <strong>
+    ☁ داشبورد ابری Smart Weighbridge
+  </strong>
+
+  <br>
+
+  اطلاعات این صفحه از PostgreSQL Cloud خوانده می‌شود.
+  ثبت وزن و تنظیمات باسکول فقط از سرور محلی شرکت انجام می‌شوند.
+
+</div>
+
+{% endif %}
+
 
 <div class="cards">
-  <div class="card">
-    <span>{{ _('records_count') }}</span>
-    <strong>{{ total }}</strong>
-  </div>
+
+
+  <!-- RECORD COUNT -->
 
   <div class="card">
-    <span>{{ _('total_weight') }}</span>
-    <strong>{{ total_weight }} kg</strong>
+
+    <span>
+      {{ _('records_count') }}
+    </span>
+
+    <strong>
+      {{ total }}
+    </strong>
+
+    {% if app_mode == 'cloud' %}
+
+    <small class="cloud-readonly">
+      رکوردهای همگام‌شده
+    </small>
+
+    {% endif %}
+
   </div>
 
+
+  <!-- TOTAL WEIGHT -->
+
   <div class="card">
-    <span>{{ _('scale') }}</span>
-    <strong>{{ state.scale_id }}</strong>
-    <div class="{{ 'stable' if state.stable else 'unstable' }}">
-      {{ '🟢 ' + _('stable') if state.stable else '🟡 ' + _('waiting') }}
+
+    <span>
+      {{ _('total_weight') }}
+    </span>
+
+    <strong class="dashboard-weight">
+
+      {% if total_weight == total_weight|int %}
+
+        {{ "{:,}".format(total_weight|int) }}
+
+      {% else %}
+
+        {{ total_weight }}
+
+      {% endif %}
+
+      kg
+
+    </strong>
+
+  </div>
+
+
+  <!-- SCALE / CLOUD -->
+
+  {% if app_mode == 'cloud' %}
+
+  <div class="card cloud-scale-card">
+
+    <span>
+      منبع اطلاعات
+    </span>
+
+    <strong class="cloud-scale-value">
+      PostgreSQL Cloud
+    </strong>
+
+    <div class="stable">
+      🟢 آنلاین
     </div>
+
   </div>
+
+  {% else %}
+
+  <div class="card">
+
+    <span>
+      {{ _('scale') }}
+    </span>
+
+    <strong>
+      {{ state.scale_id }}
+    </strong>
+
+    <div class="{{ 'stable' if state.stable else 'unstable' }}">
+
+      {{
+        '🟢 ' + _('stable')
+        if state.stable
+        else
+        '🟡 ' + _('waiting')
+      }}
+
+    </div>
+
+  </div>
+
+  {% endif %}
+
+
 </div>
+
 
 <div class="card">
-  <div class="section-title">{{ _('latest_weighments') }}</div>
+
+
+  <div class="section-title">
+
+    {{ _('latest_weighments') }}
+
+    {% if app_mode == 'cloud' %}
+
+    <span class="dashboard-cloud-badge">
+      PostgreSQL
+    </span>
+
+    {% endif %}
+
+  </div>
+
 
   <div class="table-wrap">
-    <table>
+
+    <table class="dashboard-table">
+
       <thead>
+
         <tr>
-          <th>{{ _('ticket') }}</th>
-          <th>{{ _('plate') }}</th>
-          <th>{{ _('weight') }}</th>
-          <th>{{ _('date') }}</th>
-          <th>{{ _('status') }}</th>
+
+          <th>
+            {{ _('ticket') }}
+          </th>
+
+          <th>
+            {{ _('plate') }}
+          </th>
+
+          <th>
+            {{ _('weight') }}
+          </th>
+
+          <th>
+            {{ _('date') }}
+          </th>
+
+          <th>
+            {{ _('status') }}
+          </th>
+
         </tr>
+
       </thead>
+
+
       <tbody>
+
         {% for r in rows %}
+
         <tr>
+
+
+          <!-- TICKET -->
+
           <td>
-            <a href="/weighments/{{ r.ticket_number }}">#{{ "%06d"|format(r.ticket_number) }}</a>
+
+            <a
+              class="ticket-link"
+              href="/weighments/{{ r.ticket_number }}"
+            >
+              #{{ "%06d"|format(r.ticket_number) }}
+            </a>
+
           </td>
-          <td>{{ r.plate }}</td>
-          <td>{{ r.weight }} {{ r.unit }}</td>
+
+
+          <!-- PLATE -->
+
           <td>
-            {# اگر created_at ایزو باشد #}
-            {{ (r.created_at|string)[:19].replace('T',' ') }}
-          </td>
-          <td>
-            <span class="badge">
-              {% if r.status == 'SAVED' %}
-                {{ _('saved') }}
-              {% else %}
-                {{ r.status }}
-              {% endif %}
+
+            <span dir="ltr">
+              {{ r.plate }}
             </span>
+
           </td>
+
+
+          <!-- WEIGHT -->
+
+          <td>
+
+            <span class="dashboard-weight">
+
+            {% if
+              r.weighing_mode == 'DOUBLE'
+              and r.net_weight is not none
+            %}
+
+              {% if r.net_weight == r.net_weight|int %}
+
+                {{ "{:,}".format(r.net_weight|int) }}
+
+              {% else %}
+
+                {{ r.net_weight }}
+
+              {% endif %}
+
+              kg
+
+            {% else %}
+
+              {% if r.weight is not none %}
+
+                {% if r.weight == r.weight|int %}
+
+                  {{ "{:,}".format(r.weight|int) }}
+
+                {% else %}
+
+                  {{ r.weight }}
+
+                {% endif %}
+
+                {{ r.unit or 'kg' }}
+
+              {% else %}
+
+                —
+
+              {% endif %}
+
+            {% endif %}
+
+            </span>
+
+          </td>
+
+
+          <!-- DATE -->
+
+          <td>
+
+            {% if r.created_at %}
+
+              {{
+                (r.created_at|string)
+                [:19]
+                .replace(
+                  'T',
+                  ' '
+                )
+              }}
+
+            {% else %}
+
+              —
+
+            {% endif %}
+
+          </td>
+
+
+          <!-- STATUS -->
+
+          <td>
+
+            {% if r.status == 'WAITING_SECOND' %}
+
+            <span class="status-pill waiting">
+              {{ _('waiting_second') }}
+            </span>
+
+            {% elif r.status == 'SAVED' %}
+
+            <span class="status-pill saved">
+              {{ _('saved') }}
+            </span>
+
+            {% else %}
+
+            <span class="status-pill">
+              {{ r.status or '—' }}
+            </span>
+
+            {% endif %}
+
+          </td>
+
+
         </tr>
+
+
+        {% else %}
+
+
+        <tr>
+
+          <td
+            colspan="5"
+            class="empty-dashboard"
+          >
+
+            {% if app_mode == 'cloud' %}
+
+              هنوز رکوردی از سرور محلی به Cloud همگام نشده است.
+
+            {% else %}
+
+              {{ _('no_results') }}
+
+            {% endif %}
+
+          </td>
+
+        </tr>
+
+
         {% endfor %}
+
       </tbody>
+
     </table>
+
   </div>
+
 </div>
+
 {% endblock %}

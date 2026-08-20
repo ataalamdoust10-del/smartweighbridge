@@ -51,6 +51,9 @@ try:
         init_cloud_db,
         upsert_weighment,
         count_weighments,
+        dashboard_data as cloud_dashboard_data,
+        list_weighments as cloud_list_weighments,
+        get_by_ticket as cloud_get_by_ticket,
     )
 except ImportError:
     from cloud_store import (
@@ -58,6 +61,9 @@ except ImportError:
         init_cloud_db,
         upsert_weighment,
         count_weighments,
+        dashboard_data as cloud_dashboard_data,
+        list_weighments as cloud_list_weighments,
+        get_by_ticket as cloud_get_by_ticket,
     )
 
 
@@ -251,6 +257,7 @@ def _(ctx, key: str) -> str:
 
 
 templates.env.globals["_"] = _
+templates.env.globals["APP_MODE"] = APP_MODE
 
 
 # ============================================================
@@ -367,7 +374,6 @@ def ensure_weighment_columns(conn):
         "cargo_value":
             "cargo_value REAL",
 
-        # Sync
         "record_uuid":
             "record_uuid TEXT",
 
@@ -466,13 +472,8 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS vehicle_profiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-
             vehicle_type TEXT NOT NULL,
-
-            vehicle_key TEXT
-                NOT NULL
-                UNIQUE,
-
+            vehicle_key TEXT NOT NULL UNIQUE,
             weighing_fee REAL,
             vehicle_weight REAL,
             updated_at TEXT NOT NULL
@@ -483,10 +484,6 @@ def init_db():
     ensure_weighment_columns(
         conn
     )
-
-    # --------------------------------------------------------
-    # OLD RECORD MIGRATION
-    # --------------------------------------------------------
 
     conn.execute(
         """
@@ -538,13 +535,6 @@ def init_db():
         """
     )
 
-    # --------------------------------------------------------
-    # UUID MIGRATION
-    #
-    # رکوردهای قدیمی را LOCAL_ONLY می‌کنیم تا به طور
-    # ناخواسته همه سوابق آزمایشی قدیمی Sync نشوند.
-    # --------------------------------------------------------
-
     rows_without_uuid = conn.execute(
         """
         SELECT id
@@ -557,14 +547,12 @@ def init_db():
     ).fetchall()
 
     for row in rows_without_uuid:
-
         conn.execute(
             """
             UPDATE weighments
 
             SET
                 record_uuid=?,
-
                 sync_status='LOCAL_ONLY',
 
                 record_updated_at=
@@ -639,6 +627,14 @@ def require_login(request):
         )
 
 
+def require_local_operation():
+    if APP_MODE == "cloud":
+        raise HTTPException(
+            status_code=403,
+            detail="This operation is available only on the local server.",
+        )
+
+
 # ============================================================
 # HELPERS
 # ============================================================
@@ -651,7 +647,6 @@ def next_ticket(conn):
                 MAX(ticket_number),
                 0
             ) + 1 AS n
-
         FROM weighments
         """
     ).fetchone()
@@ -693,7 +688,6 @@ def clean_optional_float(value):
         return float(
             value
         )
-
     except ValueError:
         return None
 
@@ -769,7 +763,6 @@ def validate_manual_weight(value):
         number = float(
             value
         )
-
     except (
         TypeError,
         ValueError,
@@ -1056,7 +1049,6 @@ def validate_live_scale(state):
         return "unstable"
 
     try:
-
         age = (
             datetime.now(
                 timezone.utc
@@ -1222,7 +1214,8 @@ def startup():
     )
 
     if (
-        SERIAL_MODE == "local"
+        APP_MODE == "local"
+        and SERIAL_MODE == "local"
         and cfg.enabled
     ):
         serial_mgr.start(
@@ -1242,7 +1235,10 @@ def startup():
 @app.on_event("shutdown")
 def shutdown():
 
-    if SERIAL_MODE == "local":
+    if (
+        APP_MODE == "local"
+        and SERIAL_MODE == "local"
+    ):
         serial_mgr.stop()
 
     if APP_MODE == "local":
@@ -1250,7 +1246,7 @@ def shutdown():
 
 
 # ============================================================
-# AUTH PAGES
+# AUTH
 # ============================================================
 
 @app.get("/")
@@ -1352,6 +1348,72 @@ async def dashboard(
         request
     )
 
+    if (
+        APP_MODE == "cloud"
+        and cloud_db_available()
+    ):
+        try:
+
+            data = cloud_dashboard_data(
+                limit=20
+            )
+
+            state = {
+                "scale_id":
+                    "CLOUD",
+
+                "weight":
+                    0,
+
+                "stable":
+                    0,
+
+                "updated_at":
+                    now_iso(),
+            }
+
+            return templates.TemplateResponse(
+                "dashboard.html",
+                {
+                    "request":
+                        request,
+
+                    "rows":
+                        data["rows"],
+
+                    "state":
+                        state,
+
+                    "total":
+                        data["total"],
+
+                    "total_weight":
+                        round(
+                            float(
+                                data[
+                                    "total_weight"
+                                ]
+                                or 0
+                            ),
+                            2,
+                        ),
+
+                    "user":
+                        request.session[
+                            "user"
+                        ],
+
+                    "app_mode":
+                        APP_MODE,
+                },
+            )
+
+        except Exception as exc:
+            print(
+                "Cloud dashboard error:",
+                repr(exc),
+            )
+
     conn = db()
 
     rows = conn.execute(
@@ -1428,7 +1490,10 @@ async def dashboard(
 
             "total_weight":
                 round(
-                    total_weight,
+                    float(
+                        total_weight
+                        or 0
+                    ),
                     2,
                 ),
 
@@ -1436,6 +1501,9 @@ async def dashboard(
                 request.session[
                     "user"
                 ],
+
+            "app_mode":
+                APP_MODE,
         },
     )
 
@@ -1454,6 +1522,12 @@ async def vehicle_profiles_page(
     require_login(
         request
     )
+
+    if APP_MODE == "cloud":
+        return RedirectResponse(
+            "/dashboard",
+            status_code=303,
+        )
 
     conn = db()
 
@@ -1503,6 +1577,8 @@ async def vehicle_profile_save(
     require_login(
         request
     )
+
+    require_local_operation()
 
     vehicle_type = clean_text(
         vehicle_type
@@ -1581,6 +1657,8 @@ async def vehicle_profile_delete(
         request
     )
 
+    require_local_operation()
+
     conn = db()
 
     conn.execute(
@@ -1589,7 +1667,9 @@ async def vehicle_profile_delete(
         FROM vehicle_profiles
         WHERE id=?
         """,
-        (profile_id,),
+        (
+            profile_id,
+        ),
     )
 
     conn.commit()
@@ -1611,6 +1691,12 @@ async def vehicle_profile_api(
     require_login(
         request
     )
+
+    if APP_MODE == "cloud":
+        return {
+            "found":
+                False,
+        }
 
     row = get_vehicle_profile(
         vehicle_type
@@ -1638,7 +1724,7 @@ async def vehicle_profile_api(
 
 
 # ============================================================
-# OPEN DOUBLE WEIGHMENT API
+# OPEN DOUBLE API
 # ============================================================
 
 @app.get(
@@ -1651,6 +1737,12 @@ async def open_weighment_api(
     require_login(
         request
     )
+
+    if APP_MODE == "cloud":
+        return {
+            "found":
+                False,
+        }
 
     plate = str(
         plate
@@ -1753,6 +1845,12 @@ async def weigh_page(
     require_login(
         request
     )
+
+    if APP_MODE == "cloud":
+        return RedirectResponse(
+            "/dashboard",
+            status_code=303,
+        )
 
     conn = db()
 
@@ -1931,6 +2029,8 @@ async def create_weighment(
         request
     )
 
+    require_local_operation()
+
     plate = str(
         plate
     ).strip()
@@ -1942,7 +2042,9 @@ async def create_weighment(
         )
 
     weighing_mode = (
-        str(weighing_mode)
+        str(
+            weighing_mode
+        )
         .strip()
         .upper()
     )
@@ -2132,10 +2234,6 @@ async def create_weighment(
         notes
     )
 
-    # --------------------------------------------------------
-    # COMPLETE EXISTING DOUBLE WEIGHMENT
-    # --------------------------------------------------------
-
     open_ticket_value = None
 
     if str(
@@ -2226,7 +2324,7 @@ async def create_weighment(
                 notes=?,
 
                 record_updated_at=?,
-                sync_status=?,
+                sync_status='PENDING',
                 synced_at=NULL,
 
                 scale_id=?
@@ -2265,7 +2363,6 @@ async def create_weighment(
                 notes,
 
                 now,
-                local_sync_status(),
 
                 scale_id,
                 row["id"],
@@ -2286,10 +2383,6 @@ async def create_weighment(
             status_code=303,
         )
 
-    # --------------------------------------------------------
-    # DUPLICATE OPEN DOUBLE PROTECTION
-    # --------------------------------------------------------
-
     if weighing_mode == "DOUBLE":
 
         existing = get_open_double_by_plate(
@@ -2307,10 +2400,6 @@ async def create_weighment(
         fee,
         ref_vehicle_weight,
     )
-
-    # --------------------------------------------------------
-    # PHOTOS
-    # --------------------------------------------------------
 
     filenames = []
 
@@ -2529,7 +2618,7 @@ async def create_weighment(
             cargo_value,
 
             record_uuid,
-            local_sync_status(),
+            "PENDING",
             None,
             now,
         ),
@@ -2573,7 +2662,7 @@ async def create_weighment(
 
 
 # ============================================================
-# SECOND WEIGH - BOTTOM LIST
+# SECOND WEIGH
 # ============================================================
 
 @app.post(
@@ -2594,6 +2683,8 @@ async def second_weigh(
     require_login(
         request
     )
+
+    require_local_operation()
 
     is_manual_weight = form_bool(
         manual_weight
@@ -2648,7 +2739,9 @@ async def second_weigh(
             AND status='WAITING_SECOND'
             AND second_weight IS NULL
         """,
-        (ticket,),
+        (
+            ticket,
+        ),
     ).fetchone()
 
     if not row:
@@ -2686,7 +2779,7 @@ async def second_weigh(
             status='SAVED',
 
             record_updated_at=?,
-            sync_status=?,
+            sync_status='PENDING',
             synced_at=NULL
 
         WHERE id=?
@@ -2705,7 +2798,6 @@ async def second_weigh(
             net,
 
             second_at,
-            local_sync_status(),
 
             row["id"],
         ),
@@ -2736,6 +2828,58 @@ async def detail(
         request
     )
 
+    if (
+        APP_MODE == "cloud"
+        and cloud_db_available()
+    ):
+        try:
+
+            row = cloud_get_by_ticket(
+                ticket
+            )
+
+            if row:
+
+                return templates.TemplateResponse(
+                    "detail.html",
+                    {
+                        "request":
+                            request,
+
+                        "row":
+                            row,
+
+                        "photos":
+                            [],
+
+                        "plate_parts":
+                            parse_iran_plate(
+                                row[
+                                    "plate"
+                                ]
+                            ),
+
+                        "user":
+                            request.session[
+                                "user"
+                            ],
+
+                        "app_mode":
+                            APP_MODE,
+                    },
+                )
+
+        except Exception as exc:
+            print(
+                "Cloud detail error:",
+                repr(exc),
+            )
+
+        raise HTTPException(
+            status_code=404,
+            detail="Cloud ticket not found",
+        )
+
     conn = db()
 
     row = conn.execute(
@@ -2744,7 +2888,9 @@ async def detail(
         FROM weighments
         WHERE ticket_number=?
         """,
-        (ticket,),
+        (
+            ticket,
+        ),
     ).fetchone()
 
     if not row:
@@ -2808,6 +2954,9 @@ async def detail(
                 request.session[
                     "user"
                 ],
+
+            "app_mode":
+                APP_MODE,
         },
     )
 
@@ -2828,9 +2977,109 @@ async def records(
         request
     )
 
-    conn = db()
-
     q = q.strip()
+
+    if (
+        APP_MODE == "cloud"
+        and cloud_db_available()
+    ):
+        try:
+
+            rows = cloud_list_weighments(
+                q
+            )
+
+            cloud_rows = []
+
+            for index, row in enumerate(
+                rows,
+                start=1,
+            ):
+                item = dict(
+                    row
+                )
+
+                item["id"] = (
+                    item.get(
+                        "record_uuid"
+                    )
+                    or f"cloud-{index}"
+                )
+
+                cloud_rows.append(
+                    item
+                )
+
+            plate_parts_map = {
+                row["id"]:
+                    parse_iran_plate(
+                        row[
+                            "plate"
+                        ]
+                    )
+
+                for row in cloud_rows
+            }
+
+            return templates.TemplateResponse(
+                "records.html",
+                {
+                    "request":
+                        request,
+
+                    "rows":
+                        cloud_rows,
+
+                    "q":
+                        q,
+
+                    "plate_parts_map":
+                        plate_parts_map,
+
+                    "user":
+                        request.session[
+                            "user"
+                        ],
+
+                    "app_mode":
+                        APP_MODE,
+                },
+            )
+
+        except Exception as exc:
+            print(
+                "Cloud records error:",
+                repr(exc),
+            )
+
+            rows = []
+
+            return templates.TemplateResponse(
+                "records.html",
+                {
+                    "request":
+                        request,
+
+                    "rows":
+                        rows,
+
+                    "q":
+                        q,
+
+                    "plate_parts_map":
+                        {},
+
+                    "user":
+                        request.session[
+                            "user"
+                        ],
+
+                    "app_mode":
+                        APP_MODE,
+                },
+            )
+
+    conn = db()
 
     if q:
 
@@ -2943,12 +3192,15 @@ async def records(
                 request.session[
                     "user"
                 ],
+
+            "app_mode":
+                APP_MODE,
         },
     )
 
 
 # ============================================================
-# DELETE WEIGHMENT
+# DELETE
 # ============================================================
 
 @app.post(
@@ -2966,6 +3218,8 @@ async def delete_weighment(
         request
     )
 
+    require_local_operation()
+
     if not next.startswith(
         "/"
     ):
@@ -2979,7 +3233,9 @@ async def delete_weighment(
         FROM weighments
         WHERE ticket_number=?
         """,
-        (ticket,),
+        (
+            ticket,
+        ),
     ).fetchone()
 
     if not row:
@@ -3053,7 +3309,7 @@ async def delete_weighment(
 
 
 # ============================================================
-# DEVICE PAGE
+# DEVICE
 # ============================================================
 
 @app.get(
@@ -3066,6 +3322,12 @@ async def device_page(
     require_login(
         request
     )
+
+    if APP_MODE == "cloud":
+        return RedirectResponse(
+            "/dashboard",
+            status_code=303,
+        )
 
     if SERIAL_MODE == "agent":
 
@@ -3143,6 +3405,8 @@ async def device_save(
     require_login(
         request
     )
+
+    require_local_operation()
 
     cfg = DeviceConfig(
         enabled=(
@@ -3226,6 +3490,38 @@ async def device_status(
     require_login(
         request
     )
+
+    if APP_MODE == "cloud":
+        return JSONResponse(
+            {
+                "mode":
+                    "cloud",
+
+                "running":
+                    False,
+
+                "agent_online":
+                    False,
+
+                "last_error":
+                    "",
+
+                "last_raw":
+                    "",
+
+                "last_weight":
+                    None,
+
+                "last_stable":
+                    False,
+
+                "last_seen_ts":
+                    0,
+
+                "raw_lines":
+                    [],
+            }
+        )
 
     if SERIAL_MODE == "agent":
 
@@ -3521,7 +3817,7 @@ async def agent_status(
 
 
 # ============================================================
-# LOCAL / CLOUD SYNC
+# SYNC API
 # ============================================================
 
 def require_sync_token(
@@ -3754,6 +4050,12 @@ async def set_scale_weight(
     require_device_token(
         request
     )
+
+    if APP_MODE == "cloud":
+        raise HTTPException(
+            status_code=403,
+            detail="Scale writes are disabled on cloud.",
+        )
 
     body = await request.json()
 

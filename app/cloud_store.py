@@ -11,6 +11,10 @@ DATABASE_URL = os.getenv(
 ).strip()
 
 
+# ============================================================
+# CONNECTION
+# ============================================================
+
 def available():
     return bool(
         DATABASE_URL
@@ -30,6 +34,10 @@ def connect():
     )
 
 
+# ============================================================
+# INIT
+# ============================================================
+
 def init_cloud_db():
     if not available():
         return
@@ -37,6 +45,7 @@ def init_cloud_db():
     conn = connect()
 
     try:
+
         with conn.cursor() as cur:
 
             cur.execute(
@@ -118,6 +127,7 @@ def init_cloud_db():
                 """
             )
 
+
             cur.execute(
                 """
                 CREATE INDEX IF NOT EXISTS
@@ -128,6 +138,7 @@ def init_cloud_db():
                 )
                 """
             )
+
 
             cur.execute(
                 """
@@ -140,6 +151,7 @@ def init_cloud_db():
                 """
             )
 
+
             cur.execute(
                 """
                 CREATE INDEX IF NOT EXISTS
@@ -151,11 +163,27 @@ def init_cloud_db():
                 """
             )
 
+
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS
+                    idx_cloud_weighments_status
+
+                ON cloud_weighments(
+                    status
+                )
+                """
+            )
+
         conn.commit()
 
     finally:
         conn.close()
 
+
+# ============================================================
+# UPSERT
+# ============================================================
 
 def upsert_weighment(
     data,
@@ -187,6 +215,7 @@ def upsert_weighment(
     now = datetime.now(
         timezone.utc
     ).isoformat()
+
 
     values = {
         "record_uuid":
@@ -363,9 +392,11 @@ def upsert_weighment(
             now,
     }
 
+
     conn = connect()
 
     try:
+
         with conn.cursor() as cur:
 
             cur.execute(
@@ -587,6 +618,10 @@ def upsert_weighment(
         conn.close()
 
 
+# ============================================================
+# COUNT
+# ============================================================
+
 def count_weighments():
     if not available():
         return 0
@@ -594,6 +629,7 @@ def count_weighments():
     conn = connect()
 
     try:
+
         with conn.cursor() as cur:
 
             cur.execute(
@@ -608,6 +644,285 @@ def count_weighments():
             return int(
                 row["c"]
             )
+
+    finally:
+        conn.close()
+
+
+# ============================================================
+# DASHBOARD
+# ============================================================
+
+def dashboard_data(
+    limit=20,
+):
+    conn = connect()
+
+    try:
+
+        with conn.cursor() as cur:
+
+            cur.execute(
+                """
+                SELECT *
+                FROM cloud_weighments
+
+                ORDER BY
+                    created_at DESC NULLS LAST,
+                    received_at DESC
+
+                LIMIT %s
+                """,
+                (
+                    int(limit),
+                ),
+            )
+
+            rows = cur.fetchall()
+
+
+            cur.execute(
+                """
+                SELECT
+                    COUNT(*) AS total,
+
+                    COALESCE(
+                        SUM(
+                            CASE
+
+                                WHEN weighing_mode='DOUBLE'
+                                THEN COALESCE(
+                                    net_weight,
+                                    0
+                                )
+
+                                ELSE COALESCE(
+                                    weight,
+                                    0
+                                )
+
+                            END
+                        ),
+                        0
+                    ) AS total_weight
+
+                FROM cloud_weighments
+
+                WHERE
+                    status != 'WAITING_SECOND'
+                    OR status IS NULL
+                """
+            )
+
+            summary = cur.fetchone()
+
+
+            return {
+                "rows":
+                    rows,
+
+                "total":
+                    int(
+                        summary[
+                            "total"
+                        ]
+                    ),
+
+                "total_weight":
+                    float(
+                        summary[
+                            "total_weight"
+                        ]
+                        or 0
+                    ),
+            }
+
+    finally:
+        conn.close()
+
+
+# ============================================================
+# LIST / SEARCH
+# ============================================================
+
+def list_weighments(
+    query="",
+):
+    query = str(
+        query
+        or ""
+    ).strip()
+
+    conn = connect()
+
+    try:
+
+        with conn.cursor() as cur:
+
+            if query:
+
+                like = (
+                    "%"
+                    + query
+                    + "%"
+                )
+
+                cur.execute(
+                    """
+                    SELECT *
+                    FROM cloud_weighments
+
+                    WHERE
+                        plate ILIKE %(q)s
+
+                        OR CAST(
+                            ticket_number
+                            AS TEXT
+                        ) ILIKE %(q)s
+
+                        OR COALESCE(
+                            vehicle_type,
+                            ''
+                        ) ILIKE %(q)s
+
+                        OR COALESCE(
+                            driver_name,
+                            ''
+                        ) ILIKE %(q)s
+
+                        OR COALESCE(
+                            driver_phone,
+                            ''
+                        ) ILIKE %(q)s
+
+                        OR COALESCE(
+                            cargo_type,
+                            ''
+                        ) ILIKE %(q)s
+
+                        OR COALESCE(
+                            cargo_owner,
+                            ''
+                        ) ILIKE %(q)s
+
+                        OR COALESCE(
+                            origin,
+                            ''
+                        ) ILIKE %(q)s
+
+                        OR COALESCE(
+                            destination,
+                            ''
+                        ) ILIKE %(q)s
+
+                        OR COALESCE(
+                            document_no,
+                            ''
+                        ) ILIKE %(q)s
+
+                        OR COALESCE(
+                            notes,
+                            ''
+                        ) ILIKE %(q)s
+
+                    ORDER BY
+                        created_at DESC NULLS LAST,
+                        received_at DESC
+                    """,
+                    {
+                        "q":
+                            like
+                    },
+                )
+
+            else:
+
+                cur.execute(
+                    """
+                    SELECT *
+                    FROM cloud_weighments
+
+                    ORDER BY
+                        created_at DESC NULLS LAST,
+                        received_at DESC
+                    """
+                )
+
+
+            return cur.fetchall()
+
+    finally:
+        conn.close()
+
+
+# ============================================================
+# DETAIL
+# ============================================================
+
+def get_by_ticket(
+    ticket_number,
+):
+    conn = connect()
+
+    try:
+
+        with conn.cursor() as cur:
+
+            cur.execute(
+                """
+                SELECT *
+                FROM cloud_weighments
+
+                WHERE ticket_number=%s
+
+                ORDER BY
+                    received_at DESC
+
+                LIMIT 1
+                """,
+                (
+                    int(
+                        ticket_number
+                    ),
+                ),
+            )
+
+            return cur.fetchone()
+
+    finally:
+        conn.close()
+
+
+# ============================================================
+# GET BY UUID
+# ============================================================
+
+def get_by_uuid(
+    record_uuid,
+):
+    conn = connect()
+
+    try:
+
+        with conn.cursor() as cur:
+
+            cur.execute(
+                """
+                SELECT *
+                FROM cloud_weighments
+
+                WHERE record_uuid=%s
+
+                LIMIT 1
+                """,
+                (
+                    str(
+                        record_uuid
+                    ),
+                ),
+            )
+
+            return cur.fetchone()
 
     finally:
         conn.close()

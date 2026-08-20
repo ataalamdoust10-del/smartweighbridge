@@ -8,6 +8,28 @@
 
 <style>
 
+.cloud-notice{
+  margin-bottom:16px;
+  padding:12px 14px;
+  border:1px solid #bfdbfe;
+  background:#eff6ff;
+  color:#1e40af;
+  border-radius:13px;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.8;
+}
+
+.cloud-badge{
+  display:inline-block;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#dbeafe;
+  color:#1d4ed8;
+  font-size:10px;
+  font-weight:900;
+}
+
 .table-wrap{
   overflow-x:auto;
 }
@@ -236,6 +258,16 @@
   color:#b42318!important;
 }
 
+.readonly-label{
+  color:#667085;
+  font-size:11px;
+  font-weight:800;
+  padding:6px 8px;
+  background:#f2f4f7;
+  border-radius:8px;
+  text-align:center;
+}
+
 </style>
 
 
@@ -249,11 +281,32 @@
 
   <p>
     {{ _('records_subtitle') }}
+
+    {% if app_mode == 'cloud' %}
+
+    <span class="cloud-badge">
+      PostgreSQL Cloud
+    </span>
+
+    {% endif %}
+
   </p>
 
 </div>
 
 </div>
+
+
+{% if app_mode == 'cloud' %}
+
+<div class="cloud-notice">
+
+  ☁ این صفحه اطلاعات همگام‌شده از سرور محلی شرکت را نمایش می‌دهد.
+  نسخه ابری فقط برای مشاهده و گزارش است؛ ثبت، ویرایش و حذف توزین از سرور محلی انجام می‌شود.
+
+</div>
+
+{% endif %}
 
 
 <form
@@ -601,7 +654,7 @@
 </td>
 
 
-<!-- CARGO / DENSITY / PRICE / VALUE -->
+<!-- CARGO -->
 
 <td>
 
@@ -726,7 +779,7 @@
 </td>
 
 
-<!-- VEHICLE / FEE -->
+<!-- VEHICLE -->
 
 <td>
 
@@ -813,7 +866,15 @@
 
 <td style="white-space:nowrap;">
 
-  {{ (r.created_at|string)[:19].replace('T',' ') }}
+  {% if r.created_at %}
+
+    {{ (r.created_at|string)[:19].replace('T',' ') }}
+
+  {% else %}
+
+    —
+
+  {% endif %}
 
 </td>
 
@@ -989,6 +1050,8 @@
 </a>
 
 
+{% if app_mode != 'cloud' %}
+
 <form
   method="post"
   action="/weighments/{{ r.ticket_number }}/delete"
@@ -1010,6 +1073,14 @@
 
 </form>
 
+{% else %}
+
+<div class="readonly-label">
+  فقط مشاهده
+</div>
+
+{% endif %}
+
 </div>
 
 </td>
@@ -1023,7 +1094,17 @@
 <tr>
 
 <td colspan="10">
-  {{ _('no_results') }}
+
+  {% if app_mode == 'cloud' %}
+
+    هنوز رکوردی از سرور محلی به Cloud همگام نشده است.
+
+  {% else %}
+
+    {{ _('no_results') }}
+
+  {% endif %}
+
 </td>
 
 </tr>
