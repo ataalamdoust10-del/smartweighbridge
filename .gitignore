@@ -1,0 +1,31 @@
+# Secrets / local configuration
+local_env.bat
+.env
+.env.*
+!.env.example
+
+# Local databases and backups
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Python virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Logs
+*.log
+
+# Uploads generated locally
+uploads/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
