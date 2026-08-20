@@ -66,6 +66,11 @@ except ImportError:
         get_by_ticket as cloud_get_by_ticket,
     )
 
+try:
+    from .backup_manager import BackupManager
+except ImportError:
+    from backup_manager import BackupManager
+
 
 # ============================================================
 # CONFIG
@@ -205,7 +210,9 @@ async def set_language(
     request.state.lang = lang
     request.state.dir = get_dir(lang)
 
-    return await call_next(request)
+    return await call_next(
+        request
+    )
 
 
 @app.get("/lang/{lang_code}")
@@ -217,7 +224,9 @@ def change_lang(
         lang_code = DEFAULT_LANG
 
     back = (
-        request.headers.get("referer")
+        request.headers.get(
+            "referer"
+        )
         or "/"
     )
 
@@ -238,7 +247,9 @@ def change_lang(
 
 @pass_context
 def _(ctx, key: str) -> str:
-    req = ctx.get("request")
+    req = ctx.get(
+        "request"
+    )
 
     lang = (
         getattr(
@@ -257,7 +268,9 @@ def _(ctx, key: str) -> str:
 
 
 templates.env.globals["_"] = _
-templates.env.globals["APP_MODE"] = APP_MODE
+templates.env.globals[
+    "APP_MODE"
+] = APP_MODE
 
 
 # ============================================================
@@ -295,7 +308,9 @@ def table_columns(
     }
 
 
-def ensure_weighment_columns(conn):
+def ensure_weighment_columns(
+    conn
+):
     existing = table_columns(
         conn,
         "weighments",
@@ -385,6 +400,16 @@ def ensure_weighment_columns(conn):
 
         "record_updated_at":
             "record_updated_at TEXT",
+
+        # Cancellation
+        "cancelled_at":
+            "cancelled_at TEXT",
+
+        "cancelled_by":
+            "cancelled_by TEXT",
+
+        "cancel_reason":
+            "cancel_reason TEXT",
     }
 
     for name, ddl in additions.items():
@@ -472,8 +497,13 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS vehicle_profiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+
             vehicle_type TEXT NOT NULL,
-            vehicle_key TEXT NOT NULL UNIQUE,
+
+            vehicle_key TEXT
+                NOT NULL
+                UNIQUE,
+
             weighing_fee REAL,
             vehicle_weight REAL,
             updated_at TEXT NOT NULL
@@ -492,7 +522,10 @@ def init_db():
         SET
             weighing_mode =
                 COALESCE(
-                    NULLIF(weighing_mode, ''),
+                    NULLIF(
+                        weighing_mode,
+                        ''
+                    ),
                     'SINGLE'
                 ),
 
@@ -535,16 +568,18 @@ def init_db():
         """
     )
 
-    rows_without_uuid = conn.execute(
-        """
-        SELECT id
-        FROM weighments
+    rows_without_uuid = (
+        conn.execute(
+            """
+            SELECT id
+            FROM weighments
 
-        WHERE
-            record_uuid IS NULL
-            OR record_uuid=''
-        """
-    ).fetchall()
+            WHERE
+                record_uuid IS NULL
+                OR record_uuid=''
+            """
+        ).fetchall()
+    )
 
     for row in rows_without_uuid:
         conn.execute(
@@ -593,6 +628,17 @@ def init_db():
         """
     )
 
+    conn.execute(
+        """
+        CREATE INDEX IF NOT EXISTS
+            idx_weighments_status
+
+        ON weighments(
+            status
+        )
+        """
+    )
+
     conn.commit()
     conn.close()
 
@@ -601,11 +647,15 @@ init_db()
 
 
 # ============================================================
-# SYNC MANAGER
+# MANAGERS
 # ============================================================
 
 sync_mgr = SyncManager(
     db
+)
+
+backup_mgr = BackupManager(
+    DB_PATH
 )
 
 
@@ -613,14 +663,22 @@ sync_mgr = SyncManager(
 # AUTH
 # ============================================================
 
-def logged_in(request):
+def logged_in(
+    request
+):
     return bool(
-        request.session.get("user")
+        request.session.get(
+            "user"
+        )
     )
 
 
-def require_login(request):
-    if not logged_in(request):
+def require_login(
+    request
+):
+    if not logged_in(
+        request
+    ):
         raise HTTPException(
             status_code=401,
             detail="Login required",
@@ -631,7 +689,11 @@ def require_local_operation():
     if APP_MODE == "cloud":
         raise HTTPException(
             status_code=403,
-            detail="This operation is available only on the local server.",
+            detail=(
+                "This operation is "
+                "available only on "
+                "the local server."
+            ),
         )
 
 
@@ -639,7 +701,9 @@ def require_local_operation():
 # HELPERS
 # ============================================================
 
-def next_ticket(conn):
+def next_ticket(
+    conn
+):
     row = conn.execute(
         """
         SELECT
@@ -647,6 +711,7 @@ def next_ticket(conn):
                 MAX(ticket_number),
                 0
             ) + 1 AS n
+
         FROM weighments
         """
     ).fetchone()
@@ -656,7 +721,9 @@ def next_ticket(conn):
     )
 
 
-def clean_text(value):
+def clean_text(
+    value
+):
     if value is None:
         return None
 
@@ -671,14 +738,19 @@ def clean_text(value):
     )
 
 
-def clean_optional_float(value):
+def clean_optional_float(
+    value
+):
     if value is None:
         return None
 
     value = (
         str(value)
         .strip()
-        .replace(",", "")
+        .replace(
+            ",",
+            "",
+        )
     )
 
     if not value:
@@ -688,13 +760,19 @@ def clean_optional_float(value):
         return float(
             value
         )
+
     except ValueError:
         return None
 
 
-def form_bool(value):
+def form_bool(
+    value
+):
     return (
-        str(value or "")
+        str(
+            value
+            or ""
+        )
         .strip()
         .lower()
         in {
@@ -706,7 +784,9 @@ def form_bool(value):
     )
 
 
-def parse_datetime(value):
+def parse_datetime(
+    value
+):
     dt = datetime.fromisoformat(
         value.replace(
             "Z",
@@ -733,9 +813,17 @@ def calculate_net_weight(
     second_weight,
 ):
     return abs(
-        abs(float(first_weight))
+        abs(
+            float(
+                first_weight
+            )
+        )
         -
-        abs(float(second_weight))
+        abs(
+            float(
+                second_weight
+            )
+        )
     )
 
 
@@ -750,12 +838,21 @@ def calculate_cargo_value(
         return None
 
     return (
-        abs(float(weight))
-        * float(unit_price)
+        abs(
+            float(
+                weight
+            )
+        )
+        *
+        float(
+            unit_price
+        )
     )
 
 
-def validate_manual_weight(value):
+def validate_manual_weight(
+    value
+):
     if value is None:
         return None
 
@@ -763,6 +860,7 @@ def validate_manual_weight(value):
         number = float(
             value
         )
+
     except (
         TypeError,
         ValueError,
@@ -770,18 +868,13 @@ def validate_manual_weight(value):
         return None
 
     if not (
-        0 <= number <= 1000000
+        0
+        <= number
+        <= 1000000
     ):
         return None
 
     return number
-
-
-def local_sync_status():
-    if APP_MODE == "local":
-        return "PENDING"
-
-    return "LOCAL_ONLY"
 
 
 def get_open_double_by_plate(
@@ -819,20 +912,30 @@ def get_open_double_by_plate(
 # VEHICLE PROFILES
 # ============================================================
 
-def normalize_vehicle_type(value):
+def normalize_vehicle_type(
+    value
+):
     if not value:
         return ""
 
     value = " ".join(
-        str(value)
+        str(
+            value
+        )
         .strip()
         .split()
     )
 
     value = (
         value
-        .replace("ي", "ی")
-        .replace("ك", "ک")
+        .replace(
+            "ي",
+            "ی",
+        )
+        .replace(
+            "ك",
+            "ک",
+        )
     )
 
     return value.casefold()
@@ -856,7 +959,9 @@ def get_vehicle_profile(
         FROM vehicle_profiles
         WHERE vehicle_key=?
         """,
-        (key,),
+        (
+            key,
+        ),
     ).fetchone()
 
     conn.close()
@@ -893,7 +998,9 @@ def save_vehicle_profile(
         FROM vehicle_profiles
         WHERE vehicle_key=?
         """,
-        (key,),
+        (
+            key,
+        ),
     ).fetchone()
 
     if existing:
@@ -967,7 +1074,9 @@ def save_vehicle_profile(
 # PLATE
 # ============================================================
 
-def parse_iran_plate(plate):
+def parse_iran_plate(
+    plate
+):
     if not plate:
         return None
 
@@ -983,25 +1092,43 @@ def parse_iran_plate(plate):
 
     return {
         "first":
-            match.group(1),
+            match.group(
+                1
+            ),
 
         "letter":
-            match.group(2),
+            match.group(
+                2
+            ),
 
         "middle":
-            match.group(3),
+            match.group(
+                3
+            ),
 
         "city":
-            match.group(4),
+            match.group(
+                4
+            ),
     }
 
 
-def normalize_plate_search(value):
+def normalize_plate_search(
+    value
+):
     return (
-        str(value)
+        str(
+            value
+        )
         .strip()
-        .replace(" ", "")
-        .replace("ـ", "")
+        .replace(
+            " ",
+            "",
+        )
+        .replace(
+            "ـ",
+            "",
+        )
     )
 
 
@@ -1025,12 +1152,16 @@ def get_scale_state():
     return row
 
 
-def validate_live_scale(state):
+def validate_live_scale(
+    state
+):
     if not state:
         return "scale"
 
     weight = float(
-        state["weight"]
+        state[
+            "weight"
+        ]
     )
 
     if not (
@@ -1044,11 +1175,14 @@ def validate_live_scale(state):
         return None
 
     if not bool(
-        state["stable"]
+        state[
+            "stable"
+        ]
     ):
         return "unstable"
 
     try:
+
         age = (
             datetime.now(
                 timezone.utc
@@ -1063,7 +1197,10 @@ def validate_live_scale(state):
             )
         ).total_seconds()
 
-        if age > MAX_SCALE_AGE_SEC:
+        if (
+            age
+            > MAX_SCALE_AGE_SEC
+        ):
             return "stale"
 
     except Exception:
@@ -1091,42 +1228,60 @@ def load_device_config():
 
     return DeviceConfig(
         enabled=bool(
-            row["enabled"]
+            row[
+                "enabled"
+            ]
         ),
 
         port=str(
-            row["port"]
+            row[
+                "port"
+            ]
             or ""
         ),
 
         baud=int(
-            row["baud"]
+            row[
+                "baud"
+            ]
         ),
 
         indicator=str(
-            row["indicator"]
+            row[
+                "indicator"
+            ]
         ),
 
         stable_tol=float(
-            row["stable_tol"]
+            row[
+                "stable_tol"
+            ]
         ),
 
         stable_seconds=float(
-            row["stable_seconds"]
+            row[
+                "stable_seconds"
+            ]
         ),
 
         send_every_sec=float(
-            row["send_every_sec"]
+            row[
+                "send_every_sec"
+            ]
         ),
 
         scale_id=str(
-            row["scale_id"]
+            row[
+                "scale_id"
+            ]
             or "SCALE-01"
         ),
     )
 
 
-def save_device_config(cfg):
+def save_device_config(
+    cfg
+):
     conn = db()
 
     conn.execute(
@@ -1187,7 +1342,10 @@ def update_scale_state(
         """,
         (
             scale_id,
-            float(weight),
+
+            float(
+                weight
+            ),
 
             1
             if stable
@@ -1205,8 +1363,11 @@ def update_scale_state(
 # STARTUP / SHUTDOWN
 # ============================================================
 
-@app.on_event("startup")
+@app.on_event(
+    "startup"
+)
 def startup():
+
     cfg = load_device_config()
 
     serial_mgr.set_config(
@@ -1231,8 +1392,12 @@ def startup():
 
         sync_mgr.start()
 
+        backup_mgr.start()
 
-@app.on_event("shutdown")
+
+@app.on_event(
+    "shutdown"
+)
 def shutdown():
 
     if (
@@ -1242,7 +1407,10 @@ def shutdown():
         serial_mgr.stop()
 
     if APP_MODE == "local":
+
         sync_mgr.stop()
+
+        backup_mgr.stop()
 
 
 # ============================================================
@@ -1286,7 +1454,9 @@ async def login_page(
     )
 
 
-@app.post("/login")
+@app.post(
+    "/login"
+)
 async def login(
     request: Request,
     username: str = Form(...),
@@ -1321,7 +1491,9 @@ async def login(
     )
 
 
-@app.get("/logout")
+@app.get(
+    "/logout"
+)
 async def logout(
     request: Request,
 ):
@@ -1352,10 +1524,13 @@ async def dashboard(
         APP_MODE == "cloud"
         and cloud_db_available()
     ):
+
         try:
 
-            data = cloud_dashboard_data(
-                limit=20
+            data = (
+                cloud_dashboard_data(
+                    limit=20
+                )
             )
 
             state = {
@@ -1379,13 +1554,17 @@ async def dashboard(
                         request,
 
                     "rows":
-                        data["rows"],
+                        data[
+                            "rows"
+                        ],
 
                     "state":
                         state,
 
                     "total":
-                        data["total"],
+                        data[
+                            "total"
+                        ],
 
                     "total_weight":
                         round(
@@ -1409,9 +1588,12 @@ async def dashboard(
             )
 
         except Exception as exc:
+
             print(
                 "Cloud dashboard error:",
-                repr(exc),
+                repr(
+                    exc
+                ),
             )
 
     conn = db()
@@ -1440,9 +1622,14 @@ async def dashboard(
         FROM weighments
 
         WHERE
-            status != 'WAITING_SECOND'
+            status NOT IN (
+                'WAITING_SECOND',
+                'CANCELLED'
+            )
         """
-    ).fetchone()["c"]
+    ).fetchone()[
+        "c"
+    ]
 
     total_weight = conn.execute(
         """
@@ -1467,9 +1654,14 @@ async def dashboard(
         FROM weighments
 
         WHERE
-            status != 'WAITING_SECOND'
+            status NOT IN (
+                'WAITING_SECOND',
+                'CANCELLED'
+            )
         """
-    ).fetchone()["total"]
+    ).fetchone()[
+        "total"
+    ]
 
     conn.close()
 
@@ -1523,11 +1715,7 @@ async def vehicle_profiles_page(
         request
     )
 
-    if APP_MODE == "cloud":
-        return RedirectResponse(
-            "/dashboard",
-            status_code=303,
-        )
+    require_local_operation()
 
     conn = db()
 
@@ -1594,8 +1782,10 @@ async def vehicle_profile_save(
         weighing_fee
     )
 
-    ref_weight = clean_optional_float(
-        vehicle_weight
+    ref_weight = (
+        clean_optional_float(
+            vehicle_weight
+        )
     )
 
     if (
@@ -1695,7 +1885,7 @@ async def vehicle_profile_api(
     if APP_MODE == "cloud":
         return {
             "found":
-                False,
+                False
         }
 
     row = get_vehicle_profile(
@@ -1705,7 +1895,7 @@ async def vehicle_profile_api(
     if not row:
         return {
             "found":
-                False,
+                False
         }
 
     return {
@@ -1713,18 +1903,24 @@ async def vehicle_profile_api(
             True,
 
         "vehicle_type":
-            row["vehicle_type"],
+            row[
+                "vehicle_type"
+            ],
 
         "weighing_fee":
-            row["weighing_fee"],
+            row[
+                "weighing_fee"
+            ],
 
         "vehicle_weight":
-            row["vehicle_weight"],
+            row[
+                "vehicle_weight"
+            ],
     }
 
 
 # ============================================================
-# OPEN DOUBLE API
+# OPEN DOUBLE
 # ============================================================
 
 @app.get(
@@ -1741,7 +1937,7 @@ async def open_weighment_api(
     if APP_MODE == "cloud":
         return {
             "found":
-                False,
+                False
         }
 
     plate = str(
@@ -1751,17 +1947,19 @@ async def open_weighment_api(
     if not plate:
         return {
             "found":
-                False,
+                False
         }
 
-    row = get_open_double_by_plate(
-        plate
+    row = (
+        get_open_double_by_plate(
+            plate
+        )
     )
 
     if not row:
         return {
             "found":
-                False,
+                False
         }
 
     return {
@@ -1769,13 +1967,19 @@ async def open_weighment_api(
             True,
 
         "ticket_number":
-            row["ticket_number"],
+            row[
+                "ticket_number"
+            ],
 
         "plate":
-            row["plate"],
+            row[
+                "plate"
+            ],
 
         "first_weight":
-            row["first_weight"],
+            row[
+                "first_weight"
+            ],
 
         "first_weight_manual":
             bool(
@@ -1785,49 +1989,79 @@ async def open_weighment_api(
             ),
 
         "first_weighed_at":
-            row["first_weighed_at"],
+            row[
+                "first_weighed_at"
+            ],
 
         "first_operator":
-            row["first_operator"],
+            row[
+                "first_operator"
+            ],
 
         "vehicle_type":
-            row["vehicle_type"],
+            row[
+                "vehicle_type"
+            ],
 
         "weighing_fee":
-            row["weighing_fee"],
+            row[
+                "weighing_fee"
+            ],
 
         "vehicle_weight":
-            row["vehicle_weight"],
+            row[
+                "vehicle_weight"
+            ],
 
         "driver_name":
-            row["driver_name"],
+            row[
+                "driver_name"
+            ],
 
         "driver_phone":
-            row["driver_phone"],
+            row[
+                "driver_phone"
+            ],
 
         "cargo_type":
-            row["cargo_type"],
+            row[
+                "cargo_type"
+            ],
 
         "cargo_owner":
-            row["cargo_owner"],
+            row[
+                "cargo_owner"
+            ],
 
         "density":
-            row["density"],
+            row[
+                "density"
+            ],
 
         "unit_price":
-            row["unit_price"],
+            row[
+                "unit_price"
+            ],
 
         "origin":
-            row["origin"],
+            row[
+                "origin"
+            ],
 
         "destination":
-            row["destination"],
+            row[
+                "destination"
+            ],
 
         "document_no":
-            row["document_no"],
+            row[
+                "document_no"
+            ],
 
         "notes":
-            row["notes"],
+            row[
+                "notes"
+            ],
     }
 
 
@@ -1862,19 +2096,21 @@ async def weigh_page(
         """
     ).fetchone()
 
-    waiting_rows = conn.execute(
-        """
-        SELECT *
-        FROM weighments
+    waiting_rows = (
+        conn.execute(
+            """
+            SELECT *
+            FROM weighments
 
-        WHERE
-            weighing_mode='DOUBLE'
-            AND status='WAITING_SECOND'
-            AND second_weight IS NULL
+            WHERE
+                weighing_mode='DOUBLE'
+                AND status='WAITING_SECOND'
+                AND second_weight IS NULL
 
-        ORDER BY id DESC
-        """
-    ).fetchall()
+            ORDER BY id DESC
+            """
+        ).fetchall()
+    )
 
     profiles = conn.execute(
         """
@@ -1886,7 +2122,8 @@ async def weigh_page(
         FROM vehicle_profiles
 
         ORDER BY
-            vehicle_type COLLATE NOCASE
+            vehicle_type
+            COLLATE NOCASE
         """
     ).fetchall()
 
@@ -1899,24 +2136,36 @@ async def weigh_page(
 
             "plate_parts":
                 parse_iran_plate(
-                    row["plate"]
+                    row[
+                        "plate"
+                    ]
                 ),
         }
-        for row in waiting_rows
+
+        for row
+        in waiting_rows
     ]
 
     vehicle_profiles = [
         {
             "vehicle_type":
-                p["vehicle_type"],
+                p[
+                    "vehicle_type"
+                ],
 
             "weighing_fee":
-                p["weighing_fee"],
+                p[
+                    "weighing_fee"
+                ],
 
             "vehicle_weight":
-                p["vehicle_weight"],
+                p[
+                    "vehicle_weight"
+                ],
         }
-        for p in profiles
+
+        for p
+        in profiles
     ]
 
     return templates.TemplateResponse(
@@ -1946,7 +2195,9 @@ async def weigh_page(
 # CREATE / COMPLETE WEIGHMENT
 # ============================================================
 
-@app.post("/weigh")
+@app.post(
+    "/weigh"
+)
 async def create_weighment(
 
     request: Request,
@@ -2059,16 +2310,22 @@ async def create_weighment(
         weighing_fee
     )
 
-    ref_vehicle_weight = clean_optional_float(
-        vehicle_weight
+    ref_vehicle_weight = (
+        clean_optional_float(
+            vehicle_weight
+        )
     )
 
-    density_value = clean_optional_float(
-        density
+    density_value = (
+        clean_optional_float(
+            density
+        )
     )
 
-    unit_price_value = clean_optional_float(
-        unit_price
+    unit_price_value = (
+        clean_optional_float(
+            unit_price
+        )
     )
 
     if (
@@ -2146,16 +2403,20 @@ async def create_weighment(
                 status_code=303,
             )
 
-    is_manual_weight = form_bool(
-        manual_weight
+    is_manual_weight = (
+        form_bool(
+            manual_weight
+        )
     )
 
     scale = get_scale_state()
 
     if is_manual_weight:
 
-        actual_weight = validate_manual_weight(
-            weight
+        actual_weight = (
+            validate_manual_weight(
+                weight
+            )
         )
 
         if actual_weight is None:
@@ -2166,7 +2427,9 @@ async def create_weighment(
 
         scale_id = (
             str(
-                scale["scale_id"]
+                scale[
+                    "scale_id"
+                ]
             )
             if scale
             else "SCALE-01"
@@ -2174,8 +2437,10 @@ async def create_weighment(
 
     else:
 
-        scale_error = validate_live_scale(
-            scale
+        scale_error = (
+            validate_live_scale(
+                scale
+            )
         )
 
         if scale_error:
@@ -2185,49 +2450,69 @@ async def create_weighment(
             )
 
         actual_weight = float(
-            scale["weight"]
+            scale[
+                "weight"
+            ]
         )
 
         scale_id = str(
-            scale["scale_id"]
+            scale[
+                "scale_id"
+            ]
         )
 
     now = now_iso()
 
-    operator = request.session[
-        "user"
-    ]
-
-    vehicle_type = clean_text(
-        vehicle_type
+    operator = (
+        request.session[
+            "user"
+        ]
     )
 
-    driver_name = clean_text(
-        driver_name
+    vehicle_type = (
+        clean_text(
+            vehicle_type
+        )
     )
 
-    driver_phone = clean_text(
-        driver_phone
+    driver_name = (
+        clean_text(
+            driver_name
+        )
     )
 
-    cargo_type = clean_text(
-        cargo_type
+    driver_phone = (
+        clean_text(
+            driver_phone
+        )
     )
 
-    cargo_owner = clean_text(
-        cargo_owner
+    cargo_type = (
+        clean_text(
+            cargo_type
+        )
+    )
+
+    cargo_owner = (
+        clean_text(
+            cargo_owner
+        )
     )
 
     origin = clean_text(
         origin
     )
 
-    destination = clean_text(
-        destination
+    destination = (
+        clean_text(
+            destination
+        )
     )
 
-    document_no = clean_text(
-        document_no
+    document_no = (
+        clean_text(
+            document_no
+        )
     )
 
     notes = clean_text(
@@ -2241,6 +2526,7 @@ async def create_weighment(
     ).strip():
 
         try:
+
             open_ticket_value = int(
                 str(
                     open_ticket
@@ -2248,9 +2534,18 @@ async def create_weighment(
             )
 
         except ValueError:
+
             open_ticket_value = None
 
-    if open_ticket_value is not None:
+
+    # ========================================================
+    # COMPLETE OPEN DOUBLE
+    # ========================================================
+
+    if (
+        open_ticket_value
+        is not None
+    ):
 
         conn = db()
 
@@ -2273,6 +2568,7 @@ async def create_weighment(
         ).fetchone()
 
         if not row:
+
             conn.close()
 
             return RedirectResponse(
@@ -2281,13 +2577,17 @@ async def create_weighment(
             )
 
         net = calculate_net_weight(
-            row["first_weight"],
+            row[
+                "first_weight"
+            ],
             actual_weight,
         )
 
-        cargo_value = calculate_cargo_value(
-            net,
-            unit_price_value,
+        cargo_value = (
+            calculate_cargo_value(
+                net,
+                unit_price_value,
+            )
         )
 
         conn.execute(
@@ -2365,7 +2665,10 @@ async def create_weighment(
                 now,
 
                 scale_id,
-                row["id"],
+
+                row[
+                    "id"
+                ],
             ),
         )
 
@@ -2383,10 +2686,20 @@ async def create_weighment(
             status_code=303,
         )
 
-    if weighing_mode == "DOUBLE":
 
-        existing = get_open_double_by_plate(
-            plate
+    # ========================================================
+    # DUPLICATE DOUBLE
+    # ========================================================
+
+    if (
+        weighing_mode
+        == "DOUBLE"
+    ):
+
+        existing = (
+            get_open_double_by_plate(
+                plate
+            )
         )
 
         if existing:
@@ -2395,11 +2708,17 @@ async def create_weighment(
                 status_code=303,
             )
 
+
     save_vehicle_profile(
         vehicle_type,
         fee,
         ref_vehicle_weight,
     )
+
+
+    # ========================================================
+    # PHOTOS
+    # ========================================================
 
     filenames = []
 
@@ -2430,11 +2749,17 @@ async def create_weighment(
                     status_code=303,
                 )
 
-            content = await upload.read()
+            content = (
+                await upload.read()
+            )
 
             if (
-                len(content)
-                > 10 * 1024 * 1024
+                len(
+                    content
+                )
+                > 10
+                * 1024
+                * 1024
             ):
                 return RedirectResponse(
                     "/weigh?error=photo_size",
@@ -2457,36 +2782,46 @@ async def create_weighment(
                 filename
             )
 
+
     first_photo = (
-        filenames[0]
+        filenames[
+            0
+        ]
         if filenames
         else None
     )
 
+
     status = (
         "SAVED"
-        if weighing_mode == "SINGLE"
+        if weighing_mode
+        == "SINGLE"
         else "WAITING_SECOND"
     )
+
 
     cargo_value = (
         calculate_cargo_value(
             actual_weight,
             unit_price_value,
         )
-        if weighing_mode == "SINGLE"
+        if weighing_mode
+        == "SINGLE"
         else None
     )
+
 
     record_uuid = str(
         uuid.uuid4()
     )
+
 
     conn = db()
 
     ticket = next_ticket(
         conn
     )
+
 
     cursor = conn.execute(
         """
@@ -2539,7 +2874,11 @@ async def create_weighment(
             record_uuid,
             sync_status,
             synced_at,
-            record_updated_at
+            record_updated_at,
+
+            cancelled_at,
+            cancelled_by,
+            cancel_reason
         )
 
         VALUES
@@ -2567,7 +2906,9 @@ async def create_weighment(
 
             ?, ?, ?,
 
-            ?, ?, ?, ?
+            ?, ?, ?, ?,
+
+            ?, ?, ?
         )
         """,
         (
@@ -2621,10 +2962,18 @@ async def create_weighment(
             "PENDING",
             None,
             now,
+
+            None,
+            None,
+            None,
         ),
     )
 
-    weighment_id = cursor.lastrowid
+
+    weighment_id = (
+        cursor.lastrowid
+    )
+
 
     for filename in filenames:
 
@@ -2646,14 +2995,20 @@ async def create_weighment(
             ),
         )
 
+
     conn.commit()
     conn.close()
 
-    if weighing_mode == "DOUBLE":
+
+    if (
+        weighing_mode
+        == "DOUBLE"
+    ):
         return RedirectResponse(
             f"/weighments/{ticket}?first_saved=1",
             status_code=303,
         )
+
 
     return RedirectResponse(
         f"/weighments/{ticket}?saved=1",
@@ -2686,14 +3041,18 @@ async def second_weigh(
 
     require_local_operation()
 
-    is_manual_weight = form_bool(
-        manual_weight
+    is_manual_weight = (
+        form_bool(
+            manual_weight
+        )
     )
 
     if is_manual_weight:
 
-        second_weight = validate_manual_weight(
-            weight
+        second_weight = (
+            validate_manual_weight(
+                weight
+            )
         )
 
         if second_weight is None:
@@ -2706,8 +3065,10 @@ async def second_weigh(
 
         scale = get_scale_state()
 
-        scale_error = validate_live_scale(
-            scale
+        scale_error = (
+            validate_live_scale(
+                scale
+            )
         )
 
         if scale_error:
@@ -2717,14 +3078,18 @@ async def second_weigh(
             )
 
         second_weight = float(
-            scale["weight"]
+            scale[
+                "weight"
+            ]
         )
 
     second_at = now_iso()
 
-    second_operator = request.session[
-        "user"
-    ]
+    second_operator = (
+        request.session[
+            "user"
+        ]
+    )
 
     conn = db()
 
@@ -2745,21 +3110,31 @@ async def second_weigh(
     ).fetchone()
 
     if not row:
+
         conn.close()
 
         raise HTTPException(
             status_code=404,
-            detail="Open double weighment not found",
+            detail=(
+                "Open double "
+                "weighment not found"
+            ),
         )
 
     net = calculate_net_weight(
-        row["first_weight"],
+        row[
+            "first_weight"
+        ],
         second_weight,
     )
 
-    cargo_value = calculate_cargo_value(
-        net,
-        row["unit_price"],
+    cargo_value = (
+        calculate_cargo_value(
+            net,
+            row[
+                "unit_price"
+            ],
+        )
     )
 
     conn.execute(
@@ -2799,7 +3174,9 @@ async def second_weigh(
 
             second_at,
 
-            row["id"],
+            row[
+                "id"
+            ],
         ),
     )
 
@@ -2832,10 +3209,13 @@ async def detail(
         APP_MODE == "cloud"
         and cloud_db_available()
     ):
+
         try:
 
-            row = cloud_get_by_ticket(
-                ticket
+            row = (
+                cloud_get_by_ticket(
+                    ticket
+                )
             )
 
             if row:
@@ -2870,14 +3250,20 @@ async def detail(
                 )
 
         except Exception as exc:
+
             print(
                 "Cloud detail error:",
-                repr(exc),
+                repr(
+                    exc
+                ),
             )
 
         raise HTTPException(
             status_code=404,
-            detail="Cloud ticket not found",
+            detail=(
+                "Cloud ticket "
+                "not found"
+            ),
         )
 
     conn = db()
@@ -2902,35 +3288,51 @@ async def detail(
             detail="Ticket not found",
         )
 
-    photo_rows = conn.execute(
-        """
-        SELECT filename
-        FROM weighment_photos
+    photo_rows = (
+        conn.execute(
+            """
+            SELECT filename
+            FROM weighment_photos
 
-        WHERE weighment_id=?
+            WHERE weighment_id=?
 
-        ORDER BY id ASC
-        """,
-        (
-            row["id"],
-        ),
-    ).fetchall()
+            ORDER BY id ASC
+            """,
+            (
+                row[
+                    "id"
+                ],
+            ),
+        ).fetchall()
+    )
 
     photos = [
-        p["filename"]
-        for p in photo_rows
+        p[
+            "filename"
+        ]
+
+        for p
+        in photo_rows
     ]
 
     if (
         not photos
-        and row["photo_filename"]
+        and row[
+            "photo_filename"
+        ]
     ):
         photos = [
-            row["photo_filename"]
+            row[
+                "photo_filename"
+            ]
         ]
 
-    plate_parts = parse_iran_plate(
-        row["plate"]
+    plate_parts = (
+        parse_iran_plate(
+            row[
+                "plate"
+            ]
+        )
     )
 
     conn.close()
@@ -2983,10 +3385,13 @@ async def records(
         APP_MODE == "cloud"
         and cloud_db_available()
     ):
+
         try:
 
-            rows = cloud_list_weighments(
-                q
+            rows = (
+                cloud_list_weighments(
+                    q
+                )
             )
 
             cloud_rows = []
@@ -2995,30 +3400,40 @@ async def records(
                 rows,
                 start=1,
             ):
+
                 item = dict(
                     row
                 )
 
-                item["id"] = (
+                item[
+                    "id"
+                ] = (
                     item.get(
                         "record_uuid"
                     )
                     or f"cloud-{index}"
                 )
 
+                item[
+                    "sync_status"
+                ] = "SYNCED"
+
                 cloud_rows.append(
                     item
                 )
 
             plate_parts_map = {
-                row["id"]:
+                row[
+                    "id"
+                ]:
                     parse_iran_plate(
                         row[
                             "plate"
                         ]
                     )
 
-                for row in cloud_rows
+                for row
+                in cloud_rows
             }
 
             return templates.TemplateResponse(
@@ -3047,12 +3462,13 @@ async def records(
             )
 
         except Exception as exc:
+
             print(
                 "Cloud records error:",
-                repr(exc),
+                repr(
+                    exc
+                ),
             )
-
-            rows = []
 
             return templates.TemplateResponse(
                 "records.html",
@@ -3061,7 +3477,7 @@ async def records(
                         request,
 
                     "rows":
-                        rows,
+                        [],
 
                     "q":
                         q,
@@ -3083,7 +3499,9 @@ async def records(
 
     if q:
 
-        like = f"%{q}%"
+        like = (
+            f"%{q}%"
+        )
 
         normalized_like = (
             "%"
@@ -3165,12 +3583,17 @@ async def records(
     conn.close()
 
     plate_parts_map = {
-        row["id"]:
+        row[
+            "id"
+        ]:
             parse_iran_plate(
-                row["plate"]
+                row[
+                    "plate"
+                ]
             )
 
-        for row in rows
+        for row
+        in rows
     }
 
     return templates.TemplateResponse(
@@ -3200,15 +3623,19 @@ async def records(
 
 
 # ============================================================
-# DELETE
+# CANCEL WEIGHMENT
 # ============================================================
 
 @app.post(
-    "/weighments/{ticket}/delete"
+    "/weighments/{ticket}/cancel"
 )
-async def delete_weighment(
+async def cancel_weighment(
     request: Request,
     ticket: int,
+
+    cancel_reason: str = Form(
+        ""
+    ),
 
     next: str = Form(
         "/records"
@@ -3224,6 +3651,19 @@ async def delete_weighment(
         "/"
     ):
         next = "/records"
+
+    reason = clean_text(
+        cancel_reason
+    )
+
+    if not reason:
+        return RedirectResponse(
+            (
+                f"/weighments/{ticket}"
+                "?error=cancel_reason"
+            ),
+            status_code=303,
+        )
 
     conn = db()
 
@@ -3242,69 +3682,91 @@ async def delete_weighment(
 
         conn.close()
 
+        raise HTTPException(
+            status_code=404,
+            detail="Ticket not found",
+        )
+
+    if (
+        row[
+            "status"
+        ]
+        == "CANCELLED"
+    ):
+
+        conn.close()
+
         return RedirectResponse(
             next,
             status_code=303,
         )
 
-    filenames = [
-        p["filename"]
-
-        for p in conn.execute(
-            """
-            SELECT filename
-            FROM weighment_photos
-            WHERE weighment_id=?
-            """,
-            (
-                row["id"],
-            ),
-        ).fetchall()
-    ]
+    now = now_iso()
 
     conn.execute(
         """
-        DELETE
-        FROM weighment_photos
-        WHERE weighment_id=?
-        """,
-        (
-            row["id"],
-        ),
-    )
+        UPDATE weighments
 
-    conn.execute(
-        """
-        DELETE
-        FROM weighments
+        SET
+            status='CANCELLED',
+
+            cancelled_at=?,
+            cancelled_by=?,
+            cancel_reason=?,
+
+            record_updated_at=?,
+            sync_status='PENDING',
+            synced_at=NULL
+
         WHERE id=?
         """,
         (
-            row["id"],
+            now,
+
+            request.session[
+                "user"
+            ],
+
+            reason,
+
+            now,
+
+            row[
+                "id"
+            ],
         ),
     )
 
     conn.commit()
     conn.close()
 
-    for filename in filenames:
-
-        try:
-
-            path = (
-                UPLOAD_DIR
-                / filename
-            )
-
-            if path.exists():
-                path.unlink()
-
-        except Exception:
-            pass
-
     return RedirectResponse(
         next,
         status_code=303,
+    )
+
+
+# ============================================================
+# OLD DELETE ROUTE - DISABLED
+# ============================================================
+
+@app.post(
+    "/weighments/{ticket}/delete"
+)
+async def delete_weighment(
+    request: Request,
+    ticket: int,
+):
+    require_login(
+        request
+    )
+
+    raise HTTPException(
+        status_code=405,
+        detail=(
+            "Physical deletion is disabled. "
+            "Cancel the ticket instead."
+        ),
     )
 
 
@@ -3329,15 +3791,26 @@ async def device_page(
             status_code=303,
         )
 
-    if SERIAL_MODE == "agent":
+    if (
+        SERIAL_MODE
+        == "agent"
+    ):
 
-        cfg = load_device_config()
+        cfg = (
+            load_device_config()
+        )
+
         ports = []
 
     else:
 
-        cfg = serial_mgr.get_config()
-        ports = serial_mgr.list_ports()
+        cfg = (
+            serial_mgr.get_config()
+        )
+
+        ports = (
+            serial_mgr.list_ports()
+        )
 
     return templates.TemplateResponse(
         "device.html",
@@ -3362,7 +3835,9 @@ async def device_page(
     )
 
 
-@app.post("/device/save")
+@app.post(
+    "/device/save"
+)
 async def device_save(
     request: Request,
 
@@ -3410,7 +3885,8 @@ async def device_save(
 
     cfg = DeviceConfig(
         enabled=(
-            enabled == "1"
+            enabled
+            == "1"
         ),
 
         port=(
@@ -3444,17 +3920,28 @@ async def device_save(
         ).strip(),
     )
 
-    if action == "stop":
+    if (
+        action
+        == "stop"
+    ):
         cfg.enabled = False
 
-    elif action == "start":
+    elif (
+        action
+        == "start"
+    ):
         cfg.enabled = True
 
     elif (
-        action == "autodetect"
-        and SERIAL_MODE == "local"
+        action
+        == "autodetect"
+        and SERIAL_MODE
+        == "local"
     ):
-        cfg.port = serial_mgr.auto_detect_port()
+
+        cfg.port = (
+            serial_mgr.auto_detect_port()
+        )
 
     save_device_config(
         cfg
@@ -3464,11 +3951,15 @@ async def device_save(
         cfg
     )
 
-    if SERIAL_MODE == "local":
+    if (
+        SERIAL_MODE
+        == "local"
+    ):
 
         serial_mgr.stop()
 
         if cfg.enabled:
+
             serial_mgr.start(
                 update_scale_state
             )
@@ -3483,7 +3974,9 @@ async def device_save(
 # DEVICE STATUS
 # ============================================================
 
-@app.get("/api/device/status")
+@app.get(
+    "/api/device/status"
+)
 async def device_status(
     request: Request,
 ):
@@ -3492,6 +3985,7 @@ async def device_status(
     )
 
     if APP_MODE == "cloud":
+
         return JSONResponse(
             {
                 "mode":
@@ -3523,9 +4017,14 @@ async def device_status(
             }
         )
 
-    if SERIAL_MODE == "agent":
+    if (
+        SERIAL_MODE
+        == "agent"
+    ):
 
-        cfg = load_device_config()
+        cfg = (
+            load_device_config()
+        )
 
         age = (
             time.time()
@@ -3552,10 +4051,12 @@ async def device_status(
                     "agent",
 
                 "running":
-                    online
-                    and agent_state[
-                        "running"
-                    ],
+                    (
+                        online
+                        and agent_state[
+                            "running"
+                        ]
+                    ),
 
                 "agent_online":
                     online,
@@ -3618,7 +4119,9 @@ async def device_status(
             }
         )
 
-    cfg = serial_mgr.get_config()
+    cfg = (
+        serial_mgr.get_config()
+    )
 
     return JSONResponse(
         {
@@ -3687,18 +4190,27 @@ async def device_status(
 def require_device_token(
     request: Request,
 ):
-    token = request.headers.get(
-        "X-Device-Token"
+    token = (
+        request.headers.get(
+            "X-Device-Token"
+        )
     )
 
-    if token != DEVICE_TOKEN:
+    if (
+        token
+        != DEVICE_TOKEN
+    ):
         raise HTTPException(
             status_code=401,
-            detail="Invalid device token",
+            detail=(
+                "Invalid device token"
+            ),
         )
 
 
-@app.get("/api/agent/config")
+@app.get(
+    "/api/agent/config"
+)
 async def agent_config(
     request: Request,
 ):
@@ -3706,7 +4218,9 @@ async def agent_config(
         request
     )
 
-    cfg = load_device_config()
+    cfg = (
+        load_device_config()
+    )
 
     return {
         "enabled":
@@ -3735,7 +4249,9 @@ async def agent_config(
     }
 
 
-@app.post("/api/agent/status")
+@app.post(
+    "/api/agent/status"
+)
 async def agent_status(
     request: Request,
 ):
@@ -3743,7 +4259,9 @@ async def agent_status(
         request
     )
 
-    body = await request.json()
+    body = (
+        await request.json()
+    )
 
     agent_state[
         "running"
@@ -3801,14 +4319,19 @@ async def agent_status(
 
         if (
             not lines
-            or lines[0] != raw
+            or lines[
+                0
+            ] != raw
         ):
+
             lines.insert(
                 0,
                 raw,
             )
 
-        del lines[80:]
+        del lines[
+            80:
+        ]
 
     return {
         "ok":
@@ -3823,18 +4346,24 @@ async def agent_status(
 def require_sync_token(
     request: Request,
 ):
-    token = request.headers.get(
-        "X-Sync-Token",
-        "",
+    token = (
+        request.headers.get(
+            "X-Sync-Token",
+            "",
+        )
     )
 
     if (
         not SYNC_TOKEN
-        or token != SYNC_TOKEN
+        or token
+        != SYNC_TOKEN
     ):
+
         raise HTTPException(
             status_code=401,
-            detail="Invalid sync token",
+            detail=(
+                "Invalid sync token"
+            ),
         )
 
 
@@ -3848,27 +4377,42 @@ async def sync_health(
         request
     )
 
-    if APP_MODE != "cloud":
+    if (
+        APP_MODE
+        != "cloud"
+    ):
         raise HTTPException(
             status_code=404,
-            detail="Cloud sync endpoint unavailable",
+            detail=(
+                "Cloud sync "
+                "endpoint unavailable"
+            ),
         )
 
     if not cloud_db_available():
+
         raise HTTPException(
             status_code=503,
-            detail="Cloud database unavailable",
+            detail=(
+                "Cloud database "
+                "unavailable"
+            ),
         )
 
     try:
 
-        total = count_weighments()
+        total = (
+            count_weighments()
+        )
 
     except Exception as exc:
 
         raise HTTPException(
             status_code=503,
-            detail="Cloud database unavailable",
+            detail=(
+                "Cloud database "
+                "unavailable"
+            ),
         ) from exc
 
     return {
@@ -3893,21 +4437,34 @@ async def sync_weighment(
         request
     )
 
-    if APP_MODE != "cloud":
+    if (
+        APP_MODE
+        != "cloud"
+    ):
+
         raise HTTPException(
             status_code=404,
-            detail="Cloud sync endpoint unavailable",
+            detail=(
+                "Cloud sync "
+                "endpoint unavailable"
+            ),
         )
 
     if not cloud_db_available():
+
         raise HTTPException(
             status_code=503,
-            detail="Cloud database unavailable",
+            detail=(
+                "Cloud database "
+                "unavailable"
+            ),
         )
 
     try:
 
-        payload = await request.json()
+        payload = (
+            await request.json()
+        )
 
         if not isinstance(
             payload,
@@ -3925,14 +4482,18 @@ async def sync_weighment(
 
         raise HTTPException(
             status_code=400,
-            detail=str(exc),
+            detail=str(
+                exc
+            ),
         )
 
     except Exception as exc:
 
         raise HTTPException(
             status_code=500,
-            detail="Cloud database error",
+            detail=(
+                "Cloud database error"
+            ),
         ) from exc
 
     return {
@@ -3956,7 +4517,10 @@ async def sync_status(
         request
     )
 
-    if APP_MODE == "local":
+    if (
+        APP_MODE
+        == "local"
+    ):
 
         return JSONResponse(
             sync_mgr.status()
@@ -3969,10 +4533,14 @@ async def sync_status(
 
         try:
 
-            cloud_count = count_weighments()
+            cloud_count = (
+                count_weighments()
+            )
+
             cloud_ok = True
 
         except Exception:
+
             cloud_ok = False
 
     return JSONResponse(
@@ -4002,10 +4570,96 @@ async def sync_status(
 
 
 # ============================================================
+# BACKUP API
+# ============================================================
+
+@app.get(
+    "/api/backup/status"
+)
+async def backup_status(
+    request: Request,
+):
+    require_login(
+        request
+    )
+
+    if (
+        APP_MODE
+        != "local"
+    ):
+        return JSONResponse(
+            {
+                "mode":
+                    "cloud",
+
+                "running":
+                    False,
+
+                "available":
+                    False,
+            }
+        )
+
+    data = (
+        backup_mgr.status()
+    )
+
+    data[
+        "mode"
+    ] = "local"
+
+    data[
+        "available"
+    ] = True
+
+    return JSONResponse(
+        data
+    )
+
+
+@app.post(
+    "/api/backup/run"
+)
+async def backup_run(
+    request: Request,
+):
+    require_login(
+        request
+    )
+
+    require_local_operation()
+
+    try:
+
+        path = (
+            backup_mgr.create_backup()
+        )
+
+    except Exception as exc:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(
+                exc
+            ),
+        )
+
+    return {
+        "ok":
+            True,
+
+        "file":
+            path.name,
+    }
+
+
+# ============================================================
 # SCALE API
 # ============================================================
 
-@app.get("/api/scale/weight")
+@app.get(
+    "/api/scale/weight"
+)
 async def get_scale_weight(
     request: Request,
 ):
@@ -4024,26 +4678,36 @@ async def get_scale_weight(
     return JSONResponse(
         {
             "scale_id":
-                row["scale_id"],
+                row[
+                    "scale_id"
+                ],
 
             "weight":
-                row["weight"],
+                row[
+                    "weight"
+                ],
 
             "unit":
                 "kg",
 
             "stable":
                 bool(
-                    row["stable"]
+                    row[
+                        "stable"
+                    ]
                 ),
 
             "updated_at":
-                row["updated_at"],
+                row[
+                    "updated_at"
+                ],
         }
     )
 
 
-@app.post("/api/scale/weight")
+@app.post(
+    "/api/scale/weight"
+)
 async def set_scale_weight(
     request: Request,
 ):
@@ -4051,13 +4715,22 @@ async def set_scale_weight(
         request
     )
 
-    if APP_MODE == "cloud":
+    if (
+        APP_MODE
+        == "cloud"
+    ):
+
         raise HTTPException(
             status_code=403,
-            detail="Scale writes are disabled on cloud.",
+            detail=(
+                "Scale writes are "
+                "disabled on cloud."
+            ),
         )
 
-    body = await request.json()
+    body = (
+        await request.json()
+    )
 
     try:
 
@@ -4086,6 +4759,7 @@ async def set_scale_weight(
         TypeError,
         ValueError,
     ):
+
         raise HTTPException(
             status_code=400,
             detail="Invalid JSON",
@@ -4096,9 +4770,12 @@ async def set_scale_weight(
         <= weight
         <= 1000000
     ):
+
         raise HTTPException(
             status_code=400,
-            detail="Invalid weight",
+            detail=(
+                "Invalid weight"
+            ),
         )
 
     update_scale_state(

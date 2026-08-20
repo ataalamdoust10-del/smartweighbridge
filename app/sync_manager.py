@@ -1,5 +1,4 @@
 import os
-import time
 import threading
 from datetime import datetime, timezone
 
@@ -309,6 +308,10 @@ class SyncManager:
             "cargo_value",
 
             "record_updated_at",
+
+            "cancelled_at",
+            "cancelled_by",
+            "cancel_reason",
         ]
 
         result = {}

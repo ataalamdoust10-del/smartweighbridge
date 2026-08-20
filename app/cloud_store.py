@@ -1,9 +1,20 @@
 import os
-from datetime import datetime, timezone
+
+from datetime import (
+    datetime,
+    timezone,
+)
 
 import psycopg
-from psycopg.rows import dict_row
 
+from psycopg.rows import (
+    dict_row,
+)
+
+
+# ============================================================
+# CONFIG
+# ============================================================
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -16,13 +27,16 @@ DATABASE_URL = os.getenv(
 # ============================================================
 
 def available():
+
     return bool(
         DATABASE_URL
     )
 
 
 def connect():
+
     if not DATABASE_URL:
+
         raise RuntimeError(
             "DATABASE_URL is not configured"
         )
@@ -35,14 +49,94 @@ def connect():
 
 
 # ============================================================
+# HELPERS
+# ============================================================
+
+def table_columns(
+    conn,
+    table_name,
+):
+
+    with conn.cursor() as cur:
+
+        cur.execute(
+            """
+            SELECT column_name
+
+            FROM information_schema.columns
+
+            WHERE
+                table_schema='public'
+                AND table_name=%s
+            """,
+            (
+                table_name,
+            ),
+        )
+
+        return {
+            row[
+                "column_name"
+            ]
+
+            for row
+            in cur.fetchall()
+        }
+
+
+def ensure_cloud_columns(
+    conn
+):
+
+    existing = table_columns(
+        conn,
+        "cloud_weighments",
+    )
+
+
+    additions = {
+        "cancelled_at":
+            "TEXT",
+
+        "cancelled_by":
+            "TEXT",
+
+        "cancel_reason":
+            "TEXT",
+    }
+
+
+    with conn.cursor() as cur:
+
+        for name, ddl in (
+            additions.items()
+        ):
+
+            if name not in existing:
+
+                cur.execute(
+                    f"""
+                    ALTER TABLE
+                        cloud_weighments
+
+                    ADD COLUMN
+                        {name} {ddl}
+                    """
+                )
+
+
+# ============================================================
 # INIT
 # ============================================================
 
 def init_cloud_db():
+
     if not available():
         return
 
+
     conn = connect()
+
 
     try:
 
@@ -50,15 +144,19 @@ def init_cloud_db():
 
             cur.execute(
                 """
-                CREATE TABLE IF NOT EXISTS cloud_weighments
+                CREATE TABLE IF NOT EXISTS
+                    cloud_weighments
                 (
-                    record_uuid TEXT PRIMARY KEY,
+                    record_uuid TEXT
+                        PRIMARY KEY,
 
                     ticket_number BIGINT,
 
-                    plate TEXT NOT NULL,
+                    plate TEXT
+                        NOT NULL,
 
-                    weight DOUBLE PRECISION,
+                    weight
+                        DOUBLE PRECISION,
 
                     unit TEXT,
 
@@ -72,9 +170,11 @@ def init_cloud_db():
 
                     vehicle_type TEXT,
 
-                    weighing_fee DOUBLE PRECISION,
+                    weighing_fee
+                        DOUBLE PRECISION,
 
-                    vehicle_weight DOUBLE PRECISION,
+                    vehicle_weight
+                        DOUBLE PRECISION,
 
                     driver_name TEXT,
 
@@ -94,39 +194,63 @@ def init_cloud_db():
 
                     weighing_mode TEXT,
 
-                    first_weight DOUBLE PRECISION,
+                    first_weight
+                        DOUBLE PRECISION,
 
                     first_weighed_at TEXT,
 
                     first_operator TEXT,
 
-                    second_weight DOUBLE PRECISION,
+                    second_weight
+                        DOUBLE PRECISION,
 
                     second_weighed_at TEXT,
 
                     second_operator TEXT,
 
-                    net_weight DOUBLE PRECISION,
+                    net_weight
+                        DOUBLE PRECISION,
 
-                    first_weight_manual INTEGER
-                        NOT NULL DEFAULT 0,
+                    first_weight_manual
+                        INTEGER
+                        NOT NULL
+                        DEFAULT 0,
 
-                    second_weight_manual INTEGER
-                        NOT NULL DEFAULT 0,
+                    second_weight_manual
+                        INTEGER
+                        NOT NULL
+                        DEFAULT 0,
 
-                    density DOUBLE PRECISION,
+                    density
+                        DOUBLE PRECISION,
 
-                    unit_price DOUBLE PRECISION,
+                    unit_price
+                        DOUBLE PRECISION,
 
-                    cargo_value DOUBLE PRECISION,
+                    cargo_value
+                        DOUBLE PRECISION,
 
                     record_updated_at TEXT,
 
-                    received_at TEXT NOT NULL
+                    cancelled_at TEXT,
+
+                    cancelled_by TEXT,
+
+                    cancel_reason TEXT,
+
+                    received_at TEXT
+                        NOT NULL
                 )
                 """
             )
 
+
+        ensure_cloud_columns(
+            conn
+        )
+
+
+        with conn.cursor() as cur:
 
             cur.execute(
                 """
@@ -175,9 +299,24 @@ def init_cloud_db():
                 """
             )
 
+
+            cur.execute(
+                """
+                CREATE INDEX IF NOT EXISTS
+                    idx_cloud_weighments_updated
+
+                ON cloud_weighments(
+                    record_updated_at
+                )
+                """
+            )
+
+
         conn.commit()
 
+
     finally:
+
         conn.close()
 
 
@@ -188,29 +327,36 @@ def init_cloud_db():
 def upsert_weighment(
     data,
 ):
+
     record_uuid = str(
         data.get(
             "record_uuid",
-            ""
+            "",
         )
     ).strip()
 
+
     if not record_uuid:
+
         raise ValueError(
             "record_uuid is required"
         )
 
+
     plate = str(
         data.get(
             "plate",
-            ""
+            "",
         )
     ).strip()
 
+
     if not plate:
+
         raise ValueError(
             "plate is required"
         )
+
 
     now = datetime.now(
         timezone.utc
@@ -218,6 +364,7 @@ def upsert_weighment(
 
 
     values = {
+
         "record_uuid":
             record_uuid,
 
@@ -355,18 +502,22 @@ def upsert_weighment(
             ),
 
         "first_weight_manual":
-            1
-            if data.get(
-                "first_weight_manual"
-            )
-            else 0,
+            (
+                1
+                if data.get(
+                    "first_weight_manual"
+                )
+                else 0
+            ),
 
         "second_weight_manual":
-            1
-            if data.get(
-                "second_weight_manual"
-            )
-            else 0,
+            (
+                1
+                if data.get(
+                    "second_weight_manual"
+                )
+                else 0
+            ),
 
         "density":
             data.get(
@@ -388,12 +539,28 @@ def upsert_weighment(
                 "record_updated_at"
             ),
 
+        "cancelled_at":
+            data.get(
+                "cancelled_at"
+            ),
+
+        "cancelled_by":
+            data.get(
+                "cancelled_by"
+            ),
+
+        "cancel_reason":
+            data.get(
+                "cancel_reason"
+            ),
+
         "received_at":
             now,
     }
 
 
     conn = connect()
+
 
     try:
 
@@ -448,6 +615,11 @@ def upsert_weighment(
                     cargo_value,
 
                     record_updated_at,
+
+                    cancelled_at,
+                    cancelled_by,
+                    cancel_reason,
+
                     received_at
                 )
 
@@ -498,6 +670,11 @@ def upsert_weighment(
                     %(cargo_value)s,
 
                     %(record_updated_at)s,
+
+                    %(cancelled_at)s,
+                    %(cancelled_by)s,
+                    %(cancel_reason)s,
+
                     %(received_at)s
                 )
 
@@ -606,15 +783,27 @@ def upsert_weighment(
                     record_updated_at =
                         EXCLUDED.record_updated_at,
 
+                    cancelled_at =
+                        EXCLUDED.cancelled_at,
+
+                    cancelled_by =
+                        EXCLUDED.cancelled_by,
+
+                    cancel_reason =
+                        EXCLUDED.cancel_reason,
+
                     received_at =
                         EXCLUDED.received_at
                 """,
                 values,
             )
 
+
         conn.commit()
 
+
     finally:
+
         conn.close()
 
 
@@ -623,10 +812,13 @@ def upsert_weighment(
 # ============================================================
 
 def count_weighments():
+
     if not available():
         return 0
 
+
     conn = connect()
+
 
     try:
 
@@ -639,13 +831,21 @@ def count_weighments():
                 """
             )
 
-            row = cur.fetchone()
 
-            return int(
-                row["c"]
+            row = (
+                cur.fetchone()
             )
 
+
+            return int(
+                row[
+                    "c"
+                ]
+            )
+
+
     finally:
+
         conn.close()
 
 
@@ -656,7 +856,9 @@ def count_weighments():
 def dashboard_data(
     limit=20,
 ):
+
     conn = connect()
+
 
     try:
 
@@ -668,17 +870,26 @@ def dashboard_data(
                 FROM cloud_weighments
 
                 ORDER BY
-                    created_at DESC NULLS LAST,
-                    received_at DESC
+                    created_at
+                        DESC
+                        NULLS LAST,
+
+                    received_at
+                        DESC
 
                 LIMIT %s
                 """,
                 (
-                    int(limit),
+                    int(
+                        limit
+                    ),
                 ),
             )
 
-            rows = cur.fetchall()
+
+            rows = (
+                cur.fetchall()
+            )
 
 
             cur.execute(
@@ -690,16 +901,19 @@ def dashboard_data(
                         SUM(
                             CASE
 
-                                WHEN weighing_mode='DOUBLE'
-                                THEN COALESCE(
-                                    net_weight,
-                                    0
-                                )
+                                WHEN
+                                    weighing_mode='DOUBLE'
+                                THEN
+                                    COALESCE(
+                                        net_weight,
+                                        0
+                                    )
 
-                                ELSE COALESCE(
-                                    weight,
-                                    0
-                                )
+                                ELSE
+                                    COALESCE(
+                                        weight,
+                                        0
+                                    )
 
                             END
                         ),
@@ -709,15 +923,25 @@ def dashboard_data(
                 FROM cloud_weighments
 
                 WHERE
-                    status != 'WAITING_SECOND'
+                    (
+                        status
+                        NOT IN (
+                            'WAITING_SECOND',
+                            'CANCELLED'
+                        )
+                    )
                     OR status IS NULL
                 """
             )
 
-            summary = cur.fetchone()
+
+            summary = (
+                cur.fetchone()
+            )
 
 
             return {
+
                 "rows":
                     rows,
 
@@ -737,7 +961,9 @@ def dashboard_data(
                     ),
             }
 
+
     finally:
+
         conn.close()
 
 
@@ -748,16 +974,20 @@ def dashboard_data(
 def list_weighments(
     query="",
 ):
+
     query = str(
         query
         or ""
     ).strip()
 
+
     conn = connect()
+
 
     try:
 
         with conn.cursor() as cur:
+
 
             if query:
 
@@ -767,73 +997,102 @@ def list_weighments(
                     + "%"
                 )
 
+
                 cur.execute(
                     """
                     SELECT *
                     FROM cloud_weighments
 
                     WHERE
-                        plate ILIKE %(q)s
+                        plate
+                            ILIKE %(q)s
 
                         OR CAST(
                             ticket_number
                             AS TEXT
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
 
                         OR COALESCE(
                             vehicle_type,
                             ''
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
 
                         OR COALESCE(
                             driver_name,
                             ''
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
 
                         OR COALESCE(
                             driver_phone,
                             ''
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
 
                         OR COALESCE(
                             cargo_type,
                             ''
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
 
                         OR COALESCE(
                             cargo_owner,
                             ''
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
 
                         OR COALESCE(
                             origin,
                             ''
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
 
                         OR COALESCE(
                             destination,
                             ''
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
 
                         OR COALESCE(
                             document_no,
                             ''
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
 
                         OR COALESCE(
                             notes,
                             ''
-                        ) ILIKE %(q)s
+                        )
+                            ILIKE %(q)s
+
+                        OR COALESCE(
+                            cancel_reason,
+                            ''
+                        )
+                            ILIKE %(q)s
+
+                        OR COALESCE(
+                            cancelled_by,
+                            ''
+                        )
+                            ILIKE %(q)s
 
                     ORDER BY
-                        created_at DESC NULLS LAST,
-                        received_at DESC
+                        created_at
+                            DESC
+                            NULLS LAST,
+
+                        received_at
+                            DESC
                     """,
                     {
                         "q":
                             like
                     },
                 )
+
 
             else:
 
@@ -843,15 +1102,23 @@ def list_weighments(
                     FROM cloud_weighments
 
                     ORDER BY
-                        created_at DESC NULLS LAST,
-                        received_at DESC
+                        created_at
+                            DESC
+                            NULLS LAST,
+
+                        received_at
+                            DESC
                     """
                 )
 
 
-            return cur.fetchall()
+            return (
+                cur.fetchall()
+            )
+
 
     finally:
+
         conn.close()
 
 
@@ -862,7 +1129,9 @@ def list_weighments(
 def get_by_ticket(
     ticket_number,
 ):
+
     conn = connect()
+
 
     try:
 
@@ -873,7 +1142,8 @@ def get_by_ticket(
                 SELECT *
                 FROM cloud_weighments
 
-                WHERE ticket_number=%s
+                WHERE
+                    ticket_number=%s
 
                 ORDER BY
                     received_at DESC
@@ -887,20 +1157,27 @@ def get_by_ticket(
                 ),
             )
 
-            return cur.fetchone()
+
+            return (
+                cur.fetchone()
+            )
+
 
     finally:
+
         conn.close()
 
 
 # ============================================================
-# GET BY UUID
+# UUID
 # ============================================================
 
 def get_by_uuid(
     record_uuid,
 ):
+
     conn = connect()
+
 
     try:
 
@@ -911,7 +1188,8 @@ def get_by_uuid(
                 SELECT *
                 FROM cloud_weighments
 
-                WHERE record_uuid=%s
+                WHERE
+                    record_uuid=%s
 
                 LIMIT 1
                 """,
@@ -922,7 +1200,12 @@ def get_by_uuid(
                 ),
             )
 
-            return cur.fetchone()
+
+            return (
+                cur.fetchone()
+            )
+
 
     finally:
+
         conn.close()
