@@ -3,6 +3,8 @@ import re
 import time
 import sqlite3
 import uuid
+import secrets
+import string
 
 from pathlib import Path
 from datetime import datetime, timezone
@@ -26,6 +28,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from jinja2 import pass_context
+from passlib.context import CryptContext
 
 try:
     from .i18n import translate, get_dir
@@ -64,10 +67,7 @@ SERIAL_MODE = os.getenv(
 ).strip().lower()
 
 MAX_SCALE_AGE_SEC = float(
-    os.getenv(
-        "SWB_MAX_SCALE_AGE_SEC",
-        "5",
-    )
+    os.getenv("SWB_MAX_SCALE_AGE_SEC", "5")
 )
 
 TEST_MODE = os.getenv(
@@ -83,6 +83,73 @@ TEST_MODE = os.getenv(
 SUPPORTED_LANGS = {"fa", "en", "hy"}
 DEFAULT_LANG = "fa"
 
+# این نسخه Local است.
+APP_MODE = "local"
+
+# هر مرورگر/دستگاه یک شناسه مستقل دریافت می‌کند.
+DEVICE_COOKIE = "swb_device_id"
+
+# اگر در این تعداد ثانیه heartbeat دریافت شده باشد دستگاه آنلاین است.
+ONLINE_SEC = 35
+
+pwd_ctx = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+)
+
+LICENSE_ALPHABET = (
+    string.ascii_uppercase
+    + string.digits
+)
+
+
+def now_iso():
+    return datetime.now(
+        timezone.utc
+    ).isoformat()
+
+
+def parse_datetime(value):
+    dt = datetime.fromisoformat(
+        str(value).replace(
+            "Z",
+            "+00:00",
+        )
+    )
+
+    if dt.tzinfo is None:
+        dt = dt.replace(
+            tzinfo=timezone.utc
+        )
+
+    return dt
+
+
+def hash_password(password: str) -> str:
+    return pwd_ctx.hash(password)
+
+
+def verify_password(
+    password: str,
+    password_hash: str,
+) -> bool:
+    try:
+        return pwd_ctx.verify(
+            password,
+            password_hash,
+        )
+    except Exception:
+        return False
+
+
+def make_license(length: int = 10) -> str:
+    return "".join(
+        secrets.choice(
+            LICENSE_ALPHABET
+        )
+        for _ in range(length)
+    )
+
 
 # ============================================================
 # APP
@@ -96,6 +163,7 @@ app.add_middleware(
     SessionMiddleware,
     secret_key=SECRET,
     max_age=60 * 60 * 12,
+    same_site="lax",
 )
 
 app.mount(
@@ -117,6 +185,8 @@ app.mount(
 templates = Jinja2Templates(
     directory=BASE_DIR / "app" / "templates"
 )
+
+templates.env.globals["APP_MODE"] = APP_MODE
 
 serial_mgr = SerialManager()
 
@@ -157,6 +227,39 @@ async def set_language(
     request.state.dir = get_dir(lang)
 
     return await call_next(request)
+
+
+@app.middleware("http")
+async def ensure_device_id(
+    request: Request,
+    call_next,
+):
+    device_id = request.cookies.get(
+        DEVICE_COOKIE
+    )
+
+    created = False
+
+    if not device_id:
+        device_id = uuid.uuid4().hex
+        created = True
+
+    request.state.device_id = device_id
+
+    response = await call_next(
+        request
+    )
+
+    if created:
+        response.set_cookie(
+            DEVICE_COOKIE,
+            device_id,
+            max_age=60 * 60 * 24 * 365 * 5,
+            samesite="lax",
+            httponly=True,
+        )
+
+    return response
 
 
 @app.get("/lang/{lang_code}")
@@ -201,7 +304,10 @@ def _(ctx, key: str) -> str:
         else DEFAULT_LANG
     )
 
-    return translate(lang, key)
+    return translate(
+        lang,
+        key,
+    )
 
 
 templates.env.globals["_"] = _
@@ -221,6 +327,10 @@ def db():
 
     conn.execute(
         "PRAGMA foreign_keys = ON"
+    )
+
+    conn.execute(
+        "PRAGMA busy_timeout = 30000"
     )
 
     return conn
@@ -351,6 +461,7 @@ def init_db():
             weighment_id INTEGER NOT NULL,
             filename TEXT NOT NULL,
             created_at TEXT NOT NULL,
+
             FOREIGN KEY(weighment_id)
                 REFERENCES weighments(id)
                 ON DELETE CASCADE
@@ -384,13 +495,17 @@ def init_db():
             enabled INTEGER NOT NULL DEFAULT 0,
             port TEXT NOT NULL DEFAULT '',
             baud INTEGER NOT NULL DEFAULT 2400,
+
             indicator TEXT NOT NULL
                 DEFAULT 'GENERIC_SIGNED_5_6',
+
             stable_tol REAL NOT NULL DEFAULT 1.0,
             stable_seconds REAL NOT NULL DEFAULT 1.2,
             send_every_sec REAL NOT NULL DEFAULT 0.3,
             scale_id TEXT NOT NULL DEFAULT 'SCALE-01',
-            updated_at TEXT NOT NULL DEFAULT(datetime('now'))
+
+            updated_at TEXT NOT NULL
+                DEFAULT(datetime('now'))
         );
 
         INSERT OR IGNORE INTO device_config(id)
@@ -404,15 +519,102 @@ def init_db():
             vehicle_weight REAL,
             updated_at TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            username TEXT NOT NULL UNIQUE,
+
+            password_hash TEXT NOT NULL,
+
+            role TEXT NOT NULL
+                CHECK(role IN ('admin','operator')),
+
+            is_active INTEGER NOT NULL DEFAULT 1,
+
+            created_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS user_devices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            user_id INTEGER NOT NULL,
+
+            device_id TEXT NOT NULL,
+
+            device_name TEXT,
+
+            is_active INTEGER NOT NULL DEFAULT 1,
+
+            activated_at TEXT NOT NULL,
+
+            last_seen_at TEXT,
+
+            last_ip TEXT,
+
+            last_user_agent TEXT,
+
+            revoked_at TEXT,
+
+            UNIQUE(user_id, device_id),
+
+            FOREIGN KEY(user_id)
+                REFERENCES users(id)
+                ON DELETE CASCADE
+        );
+
+        CREATE TABLE IF NOT EXISTS activation_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            user_id INTEGER NOT NULL,
+
+            device_id TEXT NOT NULL,
+
+            license_code TEXT NOT NULL UNIQUE,
+
+            created_at TEXT NOT NULL,
+
+            used_at TEXT,
+
+            status TEXT NOT NULL DEFAULT 'PENDING'
+                CHECK(
+                    status IN (
+                        'PENDING',
+                        'USED',
+                        'REVOKED'
+                    )
+                ),
+
+            FOREIGN KEY(user_id)
+                REFERENCES users(id)
+                ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS
+            idx_users_username
+        ON users(username);
+
+        CREATE INDEX IF NOT EXISTS
+            idx_user_devices_user
+        ON user_devices(user_id);
+
+        CREATE INDEX IF NOT EXISTS
+            idx_user_devices_last_seen
+        ON user_devices(last_seen_at);
+
+        CREATE INDEX IF NOT EXISTS
+            idx_activation_requests_user
+        ON activation_requests(user_id);
         """
     )
 
-    ensure_weighment_columns(conn)
+    ensure_weighment_columns(
+        conn
+    )
 
     conn.execute(
         """
         UPDATE weighments
-
         SET
             weighing_mode =
                 COALESCE(
@@ -452,7 +654,7 @@ def init_db():
 
         WHERE
             weighing_mode IS NULL
-            OR weighing_mode = ''
+            OR weighing_mode=''
             OR first_weight IS NULL
             OR first_weight_manual IS NULL
             OR second_weight_manual IS NULL
@@ -463,29 +665,311 @@ def init_db():
     conn.close()
 
 
+def ensure_admin_seed():
+    conn = db()
+
+    try:
+        row = conn.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE username=?
+            """,
+            (USERNAME,),
+        ).fetchone()
+
+        if not row:
+            conn.execute(
+                """
+                INSERT INTO users(
+                    username,
+                    password_hash,
+                    role,
+                    is_active,
+                    created_at
+                )
+                VALUES(
+                    ?,
+                    ?,
+                    'admin',
+                    1,
+                    ?
+                )
+                """,
+                (
+                    USERNAME,
+                    hash_password(PASSWORD),
+                    now_iso(),
+                ),
+            )
+
+            conn.commit()
+            return
+
+        if row["role"] != "admin":
+            raise RuntimeError(
+                "SWB_USERNAME belongs to a non-admin user."
+            )
+
+        updates = []
+        params = []
+
+        if not bool(
+            row["is_active"]
+        ):
+            updates.append(
+                "is_active=1"
+            )
+
+        if not verify_password(
+            PASSWORD,
+            row["password_hash"],
+        ):
+            updates.append(
+                "password_hash=?"
+            )
+
+            params.append(
+                hash_password(PASSWORD)
+            )
+
+        if updates:
+            params.append(
+                int(row["id"])
+            )
+
+            conn.execute(
+                f"""
+                UPDATE users
+                SET {", ".join(updates)}
+                WHERE id=?
+                """,
+                tuple(params),
+            )
+
+            conn.commit()
+
+    finally:
+        conn.close()
+
+
 init_db()
+ensure_admin_seed()
 
 
 # ============================================================
-# AUTH
+# AUTH HELPERS
 # ============================================================
+
+def get_user_by_username(
+    conn,
+    username,
+):
+    return conn.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username=?
+        """,
+        (
+            str(username).strip(),
+        ),
+    ).fetchone()
+
+
+def get_user_by_id(
+    conn,
+    user_id,
+):
+    return conn.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE id=?
+        """,
+        (
+            int(user_id),
+        ),
+    ).fetchone()
+
 
 def logged_in(request):
     return bool(
-        request.session.get("user")
+        request.session.get(
+            "user_id"
+        )
+    )
+
+
+def device_is_activated(
+    conn,
+    user_id,
+    device_id,
+):
+    row = conn.execute(
+        """
+        SELECT 1
+        FROM user_devices
+
+        WHERE
+            user_id=?
+            AND device_id=?
+            AND is_active=1
+        """,
+        (
+            int(user_id),
+            str(device_id),
+        ),
+    ).fetchone()
+
+    return bool(row)
+
+
+def touch_operator_device(
+    conn,
+    user_id,
+    device_id,
+    request,
+):
+    ip = (
+        request.client.host
+        if request.client
+        else None
+    )
+
+    user_agent = request.headers.get(
+        "user-agent",
+        "",
+    )
+
+    conn.execute(
+        """
+        UPDATE user_devices
+
+        SET
+            last_seen_at=?,
+            last_ip=?,
+            last_user_agent=?
+
+        WHERE
+            user_id=?
+            AND device_id=?
+            AND is_active=1
+        """,
+        (
+            now_iso(),
+            ip,
+            user_agent,
+            int(user_id),
+            str(device_id),
+        ),
     )
 
 
 def require_login(request):
-    if not logged_in(request):
+    user_id = request.session.get(
+        "user_id"
+    )
+
+    if not user_id:
         raise HTTPException(
             status_code=401,
             detail="Login required",
         )
 
+    conn = db()
+
+    user = get_user_by_id(
+        conn,
+        user_id,
+    )
+
+    if (
+        not user
+        or not bool(
+            user["is_active"]
+        )
+    ):
+        conn.close()
+
+        request.session.clear()
+
+        raise HTTPException(
+            status_code=401,
+            detail="Inactive user",
+        )
+
+    if user["role"] == "operator":
+
+        if not device_is_activated(
+            conn,
+            user["id"],
+            request.state.device_id,
+        ):
+            conn.close()
+
+            request.session.clear()
+
+            raise HTTPException(
+                status_code=401,
+                detail="Device authorization revoked",
+            )
+
+        touch_operator_device(
+            conn,
+            user["id"],
+            request.state.device_id,
+            request,
+        )
+
+        conn.commit()
+
+    conn.close()
+
+    request.state.user = user
+
+    return user
+
+
+def require_roles(
+    request,
+    *roles,
+):
+    user = require_login(
+        request
+    )
+
+    if user["role"] not in roles:
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden",
+        )
+
+    return user
+
+
+def is_online(last_seen_at):
+    if not last_seen_at:
+        return False
+
+    try:
+        age = (
+            datetime.now(
+                timezone.utc
+            )
+            - parse_datetime(
+                last_seen_at
+            )
+        ).total_seconds()
+
+        return age <= ONLINE_SEC
+
+    except Exception:
+        return False
+
 
 # ============================================================
-# HELPERS
+# GENERAL HELPERS
 # ============================================================
 
 def next_ticket(conn):
@@ -496,20 +980,29 @@ def next_ticket(conn):
                 MAX(ticket_number),
                 0
             ) + 1 AS n
+
         FROM weighments
         """
     ).fetchone()
 
-    return int(row["n"])
+    return int(
+        row["n"]
+    )
 
 
 def clean_text(value):
     if value is None:
         return None
 
-    value = str(value).strip()
+    value = str(
+        value
+    ).strip()
 
-    return value if value else None
+    return (
+        value
+        if value
+        else None
+    )
 
 
 def clean_optional_float(value):
@@ -527,6 +1020,7 @@ def clean_optional_float(value):
 
     try:
         return float(value)
+
     except ValueError:
         return None
 
@@ -543,22 +1037,6 @@ def form_bool(value):
             "on",
         }
     )
-
-
-def parse_datetime(value):
-    dt = datetime.fromisoformat(
-        value.replace(
-            "Z",
-            "+00:00",
-        )
-    )
-
-    if dt.tzinfo is None:
-        dt = dt.replace(
-            tzinfo=timezone.utc
-        )
-
-    return dt
 
 
 def calculate_net_weight(
@@ -609,35 +1087,8 @@ def validate_manual_weight(value):
     return number
 
 
-def get_open_double_by_plate(
-    plate,
-):
-    conn = db()
-
-    row = conn.execute(
-        """
-        SELECT *
-        FROM weighments
-
-        WHERE
-            plate=?
-            AND weighing_mode='DOUBLE'
-            AND status='WAITING_SECOND'
-            AND second_weight IS NULL
-
-        ORDER BY id DESC
-        LIMIT 1
-        """,
-        (str(plate).strip(),),
-    ).fetchone()
-
-    conn.close()
-
-    return row
-
-
 # ============================================================
-# VEHICLE PROFILES
+# VEHICLE PROFILES HELPERS
 # ============================================================
 
 def normalize_vehicle_type(value):
@@ -659,7 +1110,9 @@ def normalize_vehicle_type(value):
     return value.casefold()
 
 
-def get_vehicle_profile(vehicle_type):
+def get_vehicle_profile(
+    vehicle_type,
+):
     key = normalize_vehicle_type(
         vehicle_type
     )
@@ -702,10 +1155,6 @@ def save_vehicle_profile(
     if not key:
         return
 
-    now = datetime.now(
-        timezone.utc
-    ).isoformat()
-
     conn = db()
 
     existing = conn.execute(
@@ -716,6 +1165,8 @@ def save_vehicle_profile(
         """,
         (key,),
     ).fetchone()
+
+    now = now_iso()
 
     if existing:
         fee_value = (
@@ -754,15 +1205,13 @@ def save_vehicle_profile(
     else:
         conn.execute(
             """
-            INSERT INTO vehicle_profiles
-            (
+            INSERT INTO vehicle_profiles(
                 vehicle_type,
                 vehicle_key,
                 weighing_fee,
                 vehicle_weight,
                 updated_at
             )
-
             VALUES (?, ?, ?, ?, ?)
             """,
             (
@@ -776,6 +1225,39 @@ def save_vehicle_profile(
 
     conn.commit()
     conn.close()
+
+
+def maybe_save_vehicle_profile(
+    request,
+    vehicle_type,
+    fee,
+    vehicle_weight,
+):
+    role = request.session.get(
+        "role"
+    )
+
+    if role == "admin":
+        save_vehicle_profile(
+            vehicle_type,
+            fee,
+            vehicle_weight,
+        )
+
+        return
+
+    if (
+        role == "operator"
+        and vehicle_type
+        and not get_vehicle_profile(
+            vehicle_type
+        )
+    ):
+        save_vehicle_profile(
+            vehicle_type,
+            fee,
+            vehicle_weight,
+        )
 
 
 # ============================================================
@@ -795,10 +1277,17 @@ def parse_iran_plate(plate):
         return None
 
     return {
-        "first": match.group(1),
-        "letter": match.group(2),
-        "middle": match.group(3),
-        "city": match.group(4),
+        "first":
+            match.group(1),
+
+        "letter":
+            match.group(2),
+
+        "middle":
+            match.group(3),
+
+        "city":
+            match.group(4),
     }
 
 
@@ -860,9 +1349,7 @@ def validate_live_scale(state):
                 timezone.utc
             )
             - parse_datetime(
-                str(
-                    state["updated_at"]
-                )
+                state["updated_at"]
             )
         ).total_seconds()
 
@@ -876,7 +1363,7 @@ def validate_live_scale(state):
 
 
 # ============================================================
-# DEVICE
+# DEVICE CONFIG
 # ============================================================
 
 def load_device_config():
@@ -958,9 +1445,7 @@ def save_device_config(cfg):
             cfg.stable_seconds,
             cfg.send_every_sec,
             cfg.scale_id,
-            datetime.now(
-                timezone.utc
-            ).isoformat(),
+            now_iso(),
         ),
     )
 
@@ -991,9 +1476,7 @@ def update_scale_state(
             scale_id,
             float(weight),
             1 if stable else 0,
-            datetime.now(
-                timezone.utc
-            ).isoformat(),
+            now_iso(),
         ),
     )
 
@@ -1002,14 +1485,16 @@ def update_scale_state(
 
 
 # ============================================================
-# STARTUP
+# STARTUP / SHUTDOWN
 # ============================================================
 
 @app.on_event("startup")
 def startup():
     cfg = load_device_config()
 
-    serial_mgr.set_config(cfg)
+    serial_mgr.set_config(
+        cfg
+    )
 
     if (
         SERIAL_MODE == "local"
@@ -1027,12 +1512,16 @@ def shutdown():
 
 
 # ============================================================
-# AUTH PAGES
+# AUTH ROUTES
 # ============================================================
 
 @app.get("/")
-async def home(request: Request):
-    if not logged_in(request):
+async def home(
+    request: Request,
+):
+    if not logged_in(
+        request
+    ):
         return RedirectResponse(
             "/login",
             status_code=303,
@@ -1066,27 +1555,442 @@ async def login(
     username: str = Form(...),
     password: str = Form(...),
 ):
+    # هر Login قبلی را پاک می‌کنیم.
+    request.session.clear()
+
+    conn = db()
+
+    user = get_user_by_username(
+        conn,
+        username,
+    )
+
     if (
-        username == USERNAME
-        and password == PASSWORD
+        not user
+        or not bool(
+            user["is_active"]
+        )
+        or not verify_password(
+            password,
+            user["password_hash"],
+        )
     ):
-        request.session["user"] = username
+        conn.close()
+
+        return templates.TemplateResponse(
+            "login.html",
+            {
+                "request": request,
+
+                "error": translate(
+                    request.state.lang,
+                    "login_error",
+                ),
+            },
+            status_code=401,
+        )
+
+    # Admin هیچ Activation لازم ندارد.
+    if user["role"] == "admin":
+        request.session[
+            "user_id"
+        ] = int(
+            user["id"]
+        )
+
+        request.session[
+            "user"
+        ] = str(
+            user["username"]
+        )
+
+        request.session[
+            "role"
+        ] = "admin"
+
+        conn.close()
 
         return RedirectResponse(
             "/dashboard",
             status_code=303,
         )
 
+    device_id = (
+        request.state.device_id
+    )
+
+    # اگر این دستگاه قبلاً فعال شده، مستقیم Login.
+    if device_is_activated(
+        conn,
+        user["id"],
+        device_id,
+    ):
+        touch_operator_device(
+            conn,
+            user["id"],
+            device_id,
+            request,
+        )
+
+        conn.commit()
+        conn.close()
+
+        request.session[
+            "user_id"
+        ] = int(
+            user["id"]
+        )
+
+        request.session[
+            "user"
+        ] = str(
+            user["username"]
+        )
+
+        request.session[
+            "role"
+        ] = "operator"
+
+        return RedirectResponse(
+            "/dashboard",
+            status_code=303,
+        )
+
+    # دستگاه جدید:
+    # یک درخواست Pending موجود را دوباره استفاده می‌کنیم.
+    pending = conn.execute(
+        """
+        SELECT *
+        FROM activation_requests
+
+        WHERE
+            user_id=?
+            AND device_id=?
+            AND status='PENDING'
+
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (
+            int(user["id"]),
+            str(device_id),
+        ),
+    ).fetchone()
+
+    if not pending:
+
+        # احتمال collision تقریباً صفر است؛
+        # با این حال uniqueness دیتابیس هم داریم.
+        while True:
+            code = make_license(10)
+
+            exists = conn.execute(
+                """
+                SELECT 1
+                FROM activation_requests
+                WHERE license_code=?
+                """,
+                (code,),
+            ).fetchone()
+
+            if not exists:
+                break
+
+        conn.execute(
+            """
+            INSERT INTO activation_requests(
+                user_id,
+                device_id,
+                license_code,
+                created_at,
+                status
+            )
+
+            VALUES(
+                ?,
+                ?,
+                ?,
+                ?,
+                'PENDING'
+            )
+            """,
+            (
+                int(user["id"]),
+                str(device_id),
+                code,
+                now_iso(),
+            ),
+        )
+
+        conn.commit()
+
+    conn.close()
+
+    request.session[
+        "preauth_user_id"
+    ] = int(
+        user["id"]
+    )
+
+    request.session[
+        "preauth_username"
+    ] = str(
+        user["username"]
+    )
+
+    return RedirectResponse(
+        "/activate",
+        status_code=303,
+    )
+
+
+@app.get(
+    "/activate",
+    response_class=HTMLResponse,
+)
+async def activate_page(
+    request: Request,
+):
+    if not request.session.get(
+        "preauth_user_id"
+    ):
+        return RedirectResponse(
+            "/login",
+            status_code=303,
+        )
+
     return templates.TemplateResponse(
-        "login.html",
+        "activate.html",
         {
             "request": request,
-            "error": translate(
-                request.state.lang,
-                "login_error",
-            ),
+
+            "error": None,
+
+            "username":
+                request.session.get(
+                    "preauth_username"
+                ),
         },
-        status_code=401,
+    )
+
+
+@app.post("/activate")
+async def activate_submit(
+    request: Request,
+
+    license_code: str = Form(...),
+
+    device_name: str = Form(""),
+):
+    user_id = request.session.get(
+        "preauth_user_id"
+    )
+
+    if not user_id:
+        return RedirectResponse(
+            "/login",
+            status_code=303,
+        )
+
+    code = (
+        str(license_code)
+        .strip()
+        .upper()
+    )
+
+    device_id = (
+        request.state.device_id
+    )
+
+    device_name = clean_text(
+        device_name
+    )
+
+    conn = db()
+
+    user = get_user_by_id(
+        conn,
+        user_id,
+    )
+
+    if (
+        not user
+        or user["role"] != "operator"
+        or not bool(
+            user["is_active"]
+        )
+    ):
+        conn.close()
+
+        request.session.clear()
+
+        return RedirectResponse(
+            "/login",
+            status_code=303,
+        )
+
+    reqrow = conn.execute(
+        """
+        SELECT *
+        FROM activation_requests
+
+        WHERE
+            user_id=?
+            AND device_id=?
+            AND license_code=?
+            AND status='PENDING'
+
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (
+            int(user_id),
+            str(device_id),
+            code,
+        ),
+    ).fetchone()
+
+    if not reqrow:
+        conn.close()
+
+        return templates.TemplateResponse(
+            "activate.html",
+            {
+                "request": request,
+
+                "error":
+                    "کد فعال‌سازی نامعتبر است.",
+
+                "username":
+                    request.session.get(
+                        "preauth_username"
+                    ),
+            },
+            status_code=400,
+        )
+
+    now = now_iso()
+
+    ip = (
+        request.client.host
+        if request.client
+        else None
+    )
+
+    user_agent = request.headers.get(
+        "user-agent",
+        "",
+    )
+
+    conn.execute(
+        """
+        INSERT INTO user_devices(
+            user_id,
+            device_id,
+            device_name,
+            is_active,
+            activated_at,
+            last_seen_at,
+            last_ip,
+            last_user_agent,
+            revoked_at
+        )
+
+        VALUES(
+            ?,
+            ?,
+            ?,
+            1,
+            ?,
+            ?,
+            ?,
+            ?,
+            NULL
+        )
+
+        ON CONFLICT(user_id, device_id)
+        DO UPDATE SET
+            device_name=
+                COALESCE(
+                    excluded.device_name,
+                    user_devices.device_name
+                ),
+
+            is_active=1,
+
+            activated_at=
+                excluded.activated_at,
+
+            last_seen_at=
+                excluded.last_seen_at,
+
+            last_ip=
+                excluded.last_ip,
+
+            last_user_agent=
+                excluded.last_user_agent,
+
+            revoked_at=NULL
+        """,
+        (
+            int(user_id),
+            str(device_id),
+            device_name,
+            now,
+            now,
+            ip,
+            user_agent,
+        ),
+    )
+
+    conn.execute(
+        """
+        UPDATE activation_requests
+
+        SET
+            status='USED',
+            used_at=?
+
+        WHERE id=?
+        """,
+        (
+            now,
+            int(reqrow["id"]),
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    request.session.pop(
+        "preauth_user_id",
+        None,
+    )
+
+    request.session.pop(
+        "preauth_username",
+        None,
+    )
+
+    request.session[
+        "user_id"
+    ] = int(
+        user["id"]
+    )
+
+    request.session[
+        "user"
+    ] = str(
+        user["username"]
+    )
+
+    request.session[
+        "role"
+    ] = "operator"
+
+    return RedirectResponse(
+        "/dashboard",
+        status_code=303,
     )
 
 
@@ -1102,7 +2006,578 @@ async def logout(
     )
 
 
+@app.post("/api/heartbeat")
+async def heartbeat(
+    request: Request,
+):
+    user = require_login(
+        request
+    )
+
+    return {
+        "ok": True,
+        "role": user["role"],
+    }
+
+
+# base.html فعلی این Endpoint را صدا می‌زند.
+# Sync در این نسخه عمداً غیرفعال است.
+@app.get("/api/sync/status")
+async def local_sync_status(
+    request: Request,
+):
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
+
+    return JSONResponse(
+        {
+            "mode": "local",
+            "running": True,
+            "cloud_online": False,
+            "pending": 0,
+            "last_success": None,
+            "last_error": "",
+            "cloud_records": 0,
+        }
+    )
+
+
 # ============================================================
+# ADMIN / OPERATOR MANAGEMENT
+# ============================================================
+
+@app.get("/admin")
+async def admin_home(
+    request: Request,
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    return RedirectResponse(
+        "/admin/operators",
+        status_code=303,
+    )
+
+
+@app.get(
+    "/admin/operators",
+    response_class=HTMLResponse,
+)
+async def admin_operators(
+    request: Request,
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    conn = db()
+
+    operators = conn.execute(
+        """
+        SELECT
+            id,
+            username,
+            is_active,
+            created_at
+
+        FROM users
+
+        WHERE role='operator'
+
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    devices = conn.execute(
+        """
+        SELECT *
+        FROM user_devices
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    pending = conn.execute(
+        """
+        SELECT *
+        FROM activation_requests
+
+        WHERE status='PENDING'
+
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    conn.close()
+
+    devices_by_user = {}
+
+    for device in devices:
+
+        item = {
+            "device_id":
+                device["device_id"],
+
+            "device_name":
+                device["device_name"],
+
+            "is_active":
+                bool(
+                    device["is_active"]
+                ),
+
+            "activated_at":
+                device["activated_at"],
+
+            "last_seen_at":
+                device["last_seen_at"],
+
+            "online":
+                (
+                    bool(
+                        device["is_active"]
+                    )
+                    and is_online(
+                        device["last_seen_at"]
+                    )
+                ),
+
+            "revoked_at":
+                device["revoked_at"],
+        }
+
+        devices_by_user.setdefault(
+            int(
+                device["user_id"]
+            ),
+            [],
+        ).append(item)
+
+    pending_by_user = {}
+
+    for req in pending:
+        pending_by_user.setdefault(
+            int(
+                req["user_id"]
+            ),
+            [],
+        ).append(
+            {
+                "id":
+                    int(req["id"]),
+
+                "device_id":
+                    req["device_id"],
+
+                "license_code":
+                    req["license_code"],
+
+                "created_at":
+                    req["created_at"],
+            }
+        )
+
+    online_map = {}
+
+    for operator in operators:
+        uid = int(
+            operator["id"]
+        )
+
+        online_map[uid] = any(
+            item["online"]
+            for item in devices_by_user.get(
+                uid,
+                [],
+            )
+        )
+
+    return templates.TemplateResponse(
+        "admin_operators.html",
+        {
+            "request": request,
+
+            "ops": operators,
+
+            "devices_by_user":
+                devices_by_user,
+
+            "pending_by_user":
+                pending_by_user,
+
+            "online_map":
+                online_map,
+
+            # برای compatibility با template.
+            # محدودیت تعداد دستگاه نداریم.
+            "max_devices": None,
+
+            "user":
+                request.session.get(
+                    "user"
+                ),
+
+            "role":
+                request.session.get(
+                    "role"
+                ),
+        },
+    )
+
+
+@app.post(
+    "/admin/operators/create"
+)
+async def admin_create_operator(
+    request: Request,
+
+    username: str = Form(...),
+
+    password: str = Form(...),
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    username = (
+        str(username)
+        .strip()
+    )
+
+    if (
+        len(username) < 3
+        or len(username) > 50
+        or len(password) < 4
+    ):
+        return RedirectResponse(
+            "/admin/operators?error=invalid",
+            status_code=303,
+        )
+
+    conn = db()
+
+    try:
+        conn.execute(
+            """
+            INSERT INTO users(
+                username,
+                password_hash,
+                role,
+                is_active,
+                created_at
+            )
+
+            VALUES(
+                ?,
+                ?,
+                'operator',
+                1,
+                ?
+            )
+            """,
+            (
+                username,
+                hash_password(
+                    password
+                ),
+                now_iso(),
+            ),
+        )
+
+        conn.commit()
+
+    except sqlite3.IntegrityError:
+        conn.close()
+
+        return RedirectResponse(
+            "/admin/operators?error=username_exists",
+            status_code=303,
+        )
+
+    conn.close()
+
+    return RedirectResponse(
+        "/admin/operators?created=1",
+        status_code=303,
+    )
+
+
+@app.post(
+    "/admin/operators/{user_id}/disable"
+)
+async def admin_disable_operator(
+    request: Request,
+    user_id: int,
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    now = now_iso()
+
+    conn = db()
+
+    conn.execute(
+        """
+        UPDATE users
+
+        SET is_active=0
+
+        WHERE
+            id=?
+            AND role='operator'
+        """,
+        (int(user_id),),
+    )
+
+    # Disable شدن اپراتور تمام دستگاه‌های فعلی‌اش را هم باطل می‌کند.
+    conn.execute(
+        """
+        UPDATE user_devices
+
+        SET
+            is_active=0,
+            revoked_at=?
+
+        WHERE user_id=?
+        """,
+        (
+            now,
+            int(user_id),
+        ),
+    )
+
+    conn.execute(
+        """
+        UPDATE activation_requests
+
+        SET status='REVOKED'
+
+        WHERE
+            user_id=?
+            AND status='PENDING'
+        """,
+        (int(user_id),),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return RedirectResponse(
+        "/admin/operators",
+        status_code=303,
+    )
+
+
+@app.post(
+    "/admin/operators/{user_id}/enable"
+)
+async def admin_enable_operator(
+    request: Request,
+    user_id: int,
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    conn = db()
+
+    conn.execute(
+        """
+        UPDATE users
+
+        SET is_active=1
+
+        WHERE
+            id=?
+            AND role='operator'
+        """,
+        (int(user_id),),
+    )
+
+    conn.commit()
+    conn.close()
+
+    # دستگاه‌های revoke شده خودکار برنمی‌گردند.
+    # ورود بعدی درخواست Activation جدید می‌سازد.
+    return RedirectResponse(
+        "/admin/operators",
+        status_code=303,
+    )
+
+
+@app.post(
+    "/admin/operators/{user_id}/delete"
+)
+async def admin_delete_operator(
+    request: Request,
+    user_id: int,
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    conn = db()
+
+    conn.execute(
+        """
+        DELETE FROM users
+
+        WHERE
+            id=?
+            AND role='operator'
+        """,
+        (int(user_id),),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return RedirectResponse(
+        "/admin/operators",
+        status_code=303,
+    )
+
+
+@app.post(
+    "/admin/operators/{user_id}/devices/{device_id}/revoke"
+)
+async def admin_revoke_device(
+    request: Request,
+    user_id: int,
+    device_id: str,
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    now = now_iso()
+
+    conn = db()
+
+    conn.execute(
+        """
+        UPDATE user_devices
+
+        SET
+            is_active=0,
+            revoked_at=?
+
+        WHERE
+            user_id=?
+            AND device_id=?
+        """,
+        (
+            now,
+            int(user_id),
+            str(device_id),
+        ),
+    )
+
+    conn.execute(
+        """
+        UPDATE activation_requests
+
+        SET status='REVOKED'
+
+        WHERE
+            user_id=?
+            AND device_id=?
+            AND status='PENDING'
+        """,
+        (
+            int(user_id),
+            str(device_id),
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return RedirectResponse(
+        "/admin/operators",
+        status_code=303,
+    )
+
+
+@app.post(
+    "/admin/activation/{req_id}/revoke"
+)
+async def admin_revoke_activation(
+    request: Request,
+    req_id: int,
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    conn = db()
+
+    conn.execute(
+        """
+        UPDATE activation_requests
+
+        SET status='REVOKED'
+
+        WHERE
+            id=?
+            AND status='PENDING'
+        """,
+        (int(req_id),),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return RedirectResponse(
+        "/admin/operators",
+        status_code=303,
+    )
+
+
+# ============================================================
+# OPEN DOUBLE HELPERS
+# ============================================================
+
+def get_open_double_by_plate(
+    plate,
+):
+    conn = db()
+
+    row = conn.execute(
+        """
+        SELECT *
+        FROM weighments
+
+        WHERE
+            plate=?
+            AND weighing_mode='DOUBLE'
+            AND status='WAITING_SECOND'
+            AND second_weight IS NULL
+
+        ORDER BY id DESC
+        LIMIT 1
+        """,
+        (
+            str(plate).strip(),
+        ),
+    ).fetchone()
+
+    conn.close()
+
+    return row
+  # ============================================================
 # DASHBOARD
 # ============================================================
 
@@ -1113,7 +2588,11 @@ async def logout(
 async def dashboard(
     request: Request,
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     conn = db()
 
@@ -1149,7 +2628,7 @@ async def dashboard(
                 SUM(
                     CASE
                         WHEN weighing_mode='DOUBLE'
-                            THEN COALESCE(net_weight,0)
+                        THEN COALESCE(net_weight,0)
                         ELSE weight
                     END
                 ),
@@ -1171,18 +2650,25 @@ async def dashboard(
             "rows": rows,
             "state": state,
             "total": total,
+
             "total_weight": round(
-                total_weight,
+                float(
+                    total_weight or 0
+                ),
                 2,
             ),
+
             "user":
                 request.session["user"],
+
+            "app_mode":
+                APP_MODE,
         },
     )
 
 
 # ============================================================
-# VEHICLE PROFILE MANAGEMENT
+# VEHICLE PROFILES
 # ============================================================
 
 @app.get(
@@ -1192,7 +2678,11 @@ async def dashboard(
 async def vehicle_profiles_page(
     request: Request,
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     conn = db()
 
@@ -1211,6 +2701,7 @@ async def vehicle_profiles_page(
         {
             "request": request,
             "profiles": profiles,
+
             "user":
                 request.session["user"],
         },
@@ -1225,15 +2716,15 @@ async def vehicle_profile_save(
 
     vehicle_type: str = Form(...),
 
-    weighing_fee: str = Form(
-        ""
-    ),
+    weighing_fee: str = Form(""),
 
-    vehicle_weight: str = Form(
-        ""
-    ),
+    vehicle_weight: str = Form(""),
 ):
-    require_login(request)
+    user = require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     vehicle_type = clean_text(
         vehicle_type
@@ -1245,6 +2736,19 @@ async def vehicle_profile_save(
             status_code=303,
         )
 
+    # Operator فقط اجازه افزودن پروفایل جدید دارد.
+    if user["role"] == "operator":
+
+        existing = get_vehicle_profile(
+            vehicle_type
+        )
+
+        if existing:
+            return RedirectResponse(
+                "/vehicle-profiles?error=no_edit_permission",
+                status_code=303,
+            )
+
     fee = clean_optional_float(
         weighing_fee
     )
@@ -1254,7 +2758,7 @@ async def vehicle_profile_save(
     )
 
     if (
-        weighing_fee.strip()
+        str(weighing_fee).strip()
         and fee is None
     ):
         return RedirectResponse(
@@ -1263,7 +2767,7 @@ async def vehicle_profile_save(
         )
 
     if (
-        vehicle_weight.strip()
+        str(vehicle_weight).strip()
         and ref_weight is None
     ):
         return RedirectResponse(
@@ -1308,7 +2812,11 @@ async def vehicle_profile_delete(
     request: Request,
     profile_id: int,
 ):
-    require_login(request)
+    # حذف تعرفه فقط Admin.
+    require_roles(
+        request,
+        "admin",
+    )
 
     conn = db()
 
@@ -1318,7 +2826,9 @@ async def vehicle_profile_delete(
         FROM vehicle_profiles
         WHERE id=?
         """,
-        (profile_id,),
+        (
+            int(profile_id),
+        ),
     )
 
     conn.commit()
@@ -1337,7 +2847,11 @@ async def vehicle_profile_api(
     request: Request,
     vehicle_type: str = "",
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     row = get_vehicle_profile(
         vehicle_type
@@ -1350,17 +2864,20 @@ async def vehicle_profile_api(
 
     return {
         "found": True,
+
         "vehicle_type":
             row["vehicle_type"],
+
         "weighing_fee":
             row["weighing_fee"],
+
         "vehicle_weight":
             row["vehicle_weight"],
     }
 
 
 # ============================================================
-# OPEN DOUBLE WEIGHMENT API
+# OPEN DOUBLE API
 # ============================================================
 
 @app.get(
@@ -1370,7 +2887,11 @@ async def open_weighment_api(
     request: Request,
     plate: str = "",
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     plate = str(
         plate
@@ -1465,7 +2986,11 @@ async def open_weighment_api(
 async def weigh_page(
     request: Request,
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     conn = db()
 
@@ -1515,31 +3040,43 @@ async def weigh_page(
                     row["plate"]
                 ),
         }
+
         for row in waiting_rows
     ]
 
     vehicle_profiles = [
         {
             "vehicle_type":
-                p["vehicle_type"],
+                profile[
+                    "vehicle_type"
+                ],
 
             "weighing_fee":
-                p["weighing_fee"],
+                profile[
+                    "weighing_fee"
+                ],
 
             "vehicle_weight":
-                p["vehicle_weight"],
+                profile[
+                    "vehicle_weight"
+                ],
         }
-        for p in profiles
+
+        for profile in profiles
     ]
 
     return templates.TemplateResponse(
         "weigh.html",
         {
             "request": request,
+
             "state": state,
+
             "waiting": waiting,
+
             "vehicle_profiles":
                 vehicle_profiles,
+
             "user":
                 request.session["user"],
         },
@@ -1547,7 +3084,7 @@ async def weigh_page(
 
 
 # ============================================================
-# CREATE WEIGHMENT / COMPLETE SECOND FROM MAIN FORM
+# CREATE / COMPLETE WEIGHMENT
 # ============================================================
 
 @app.post("/weigh")
@@ -1629,7 +3166,11 @@ async def create_weighment(
         None
     ),
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     plate = str(
         plate
@@ -1723,41 +3264,36 @@ async def create_weighment(
             status_code=303,
         )
 
-    if (
-        fee is not None
-        and fee < 0
+    for (
+        value,
+        error_name,
+    ) in (
+        (
+            fee,
+            "invalid_fee",
+        ),
+        (
+            ref_vehicle_weight,
+            "invalid_vehicle_weight",
+        ),
+        (
+            density_value,
+            "invalid_density",
+        ),
+        (
+            unit_price_value,
+            "invalid_unit_price",
+        ),
     ):
-        return RedirectResponse(
-            "/weigh?error=invalid_fee",
-            status_code=303,
-        )
 
-    if (
-        ref_vehicle_weight is not None
-        and ref_vehicle_weight < 0
-    ):
-        return RedirectResponse(
-            "/weigh?error=invalid_vehicle_weight",
-            status_code=303,
-        )
-
-    if (
-        density_value is not None
-        and density_value < 0
-    ):
-        return RedirectResponse(
-            "/weigh?error=invalid_density",
-            status_code=303,
-        )
-
-    if (
-        unit_price_value is not None
-        and unit_price_value < 0
-    ):
-        return RedirectResponse(
-            "/weigh?error=invalid_unit_price",
-            status_code=303,
-        )
+        if (
+            value is not None
+            and value < 0
+        ):
+            return RedirectResponse(
+                f"/weigh?error={error_name}",
+                status_code=303,
+            )
 
     is_manual_weight = form_bool(
         manual_weight
@@ -1780,7 +3316,9 @@ async def create_weighment(
             )
 
         scale_id = (
-            str(scale["scale_id"])
+            str(
+                scale["scale_id"]
+            )
             if scale
             else "SCALE-01"
         )
@@ -1807,9 +3345,7 @@ async def create_weighment(
             scale["scale_id"]
         )
 
-    now = datetime.now(
-        timezone.utc
-    ).isoformat()
+    now = now_iso()
 
     operator = (
         request.session["user"]
@@ -1851,19 +3387,26 @@ async def create_weighment(
         notes
     )
 
-    # ========================================================
-    # COMPLETE EXISTING DOUBLE WEIGHMENT
-    # ========================================================
-
     open_ticket_value = None
 
-    if str(open_ticket).strip():
+    if str(
+        open_ticket
+    ).strip():
+
         try:
             open_ticket_value = int(
-                str(open_ticket).strip()
+                str(
+                    open_ticket
+                ).strip()
             )
+
         except ValueError:
             open_ticket_value = None
+
+
+    # ========================================================
+    # COMPLETE EXISTING DOUBLE
+    # ========================================================
 
     if open_ticket_value is not None:
 
@@ -1888,6 +3431,7 @@ async def create_weighment(
         ).fetchone()
 
         if not row:
+
             conn.close()
 
             return RedirectResponse(
@@ -1948,7 +3492,12 @@ async def create_weighment(
                 actual_weight,
                 now,
                 operator,
-                1 if is_manual_weight else 0,
+
+                (
+                    1
+                    if is_manual_weight
+                    else 0
+                ),
 
                 net,
                 net,
@@ -1981,7 +3530,8 @@ async def create_weighment(
         conn.commit()
         conn.close()
 
-        save_vehicle_profile(
+        maybe_save_vehicle_profile(
+            request,
             vehicle_type,
             fee,
             ref_vehicle_weight,
@@ -1992,8 +3542,9 @@ async def create_weighment(
             status_code=303,
         )
 
+
     # ========================================================
-    # PROTECT AGAINST DUPLICATE OPEN DOUBLE
+    # PREVENT DUPLICATE OPEN DOUBLE
     # ========================================================
 
     if weighing_mode == "DOUBLE":
@@ -2006,15 +3557,24 @@ async def create_weighment(
 
         if existing:
             return RedirectResponse(
-                f"/weigh?error=open_double&ticket={existing['ticket_number']}",
+                (
+                    "/weigh"
+                    "?error=open_double"
+                    f"&ticket={existing['ticket_number']}"
+                ),
                 status_code=303,
             )
 
-    save_vehicle_profile(
+
+    # ذخیره خودکار تعرفه:
+    # Admin می‌تواند update کند، Operator فقط نوع جدید.
+    maybe_save_vehicle_profile(
+        request,
         vehicle_type,
         fee,
         ref_vehicle_weight,
     )
+
 
     # ========================================================
     # PHOTOS
@@ -2023,6 +3583,7 @@ async def create_weighment(
     filenames = []
 
     if photo:
+
         allowed = {
             ".jpg",
             ".jpeg",
@@ -2067,7 +3628,8 @@ async def create_weighment(
             )
 
             (
-                UPLOAD_DIR / filename
+                UPLOAD_DIR
+                / filename
             ).write_bytes(
                 content
             )
@@ -2075,6 +3637,7 @@ async def create_weighment(
             filenames.append(
                 filename
             )
+
 
     first_photo = (
         filenames[0]
@@ -2111,7 +3674,9 @@ async def create_weighment(
             plate,
             weight,
             unit,
+
             photo_filename,
+
             scale_id,
             operator,
             created_at,
@@ -2123,10 +3688,13 @@ async def create_weighment(
 
             driver_name,
             driver_phone,
+
             cargo_type,
             cargo_owner,
+
             origin,
             destination,
+
             document_no,
             notes,
 
@@ -2153,11 +3721,20 @@ async def create_weighment(
         VALUES
         (
             ?, ?, ?, 'kg',
-            ?, ?, ?, ?, ?,
+
+            ?,
+
+            ?, ?, ?, ?,
 
             ?, ?, ?,
 
-            ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?,
+
+            ?, ?,
+
+            ?, ?,
+
+            ?, ?,
 
             ?,
 
@@ -2176,7 +3753,9 @@ async def create_weighment(
             ticket,
             plate,
             actual_weight,
+
             first_photo,
+
             scale_id,
             operator,
             now,
@@ -2188,10 +3767,13 @@ async def create_weighment(
 
             driver_name,
             driver_phone,
+
             cargo_type,
             cargo_owner,
+
             origin,
             destination,
+
             document_no,
             notes,
 
@@ -2207,7 +3789,12 @@ async def create_weighment(
 
             None,
 
-            1 if is_manual_weight else 0,
+            (
+                1
+                if is_manual_weight
+                else 0
+            ),
+
             0,
 
             density_value,
@@ -2224,14 +3811,17 @@ async def create_weighment(
 
         conn.execute(
             """
-            INSERT INTO weighment_photos
-            (
+            INSERT INTO weighment_photos(
                 weighment_id,
                 filename,
                 created_at
             )
 
-            VALUES (?, ?, ?)
+            VALUES(
+                ?,
+                ?,
+                ?
+            )
             """,
             (
                 weighment_id,
@@ -2244,6 +3834,7 @@ async def create_weighment(
     conn.close()
 
     if weighing_mode == "DOUBLE":
+
         return RedirectResponse(
             f"/weighments/{ticket}?first_saved=1",
             status_code=303,
@@ -2256,7 +3847,7 @@ async def create_weighment(
 
 
 # ============================================================
-# SECOND WEIGH - EXISTING BOTTOM BUTTON
+# SECOND WEIGH
 # ============================================================
 
 @app.post(
@@ -2274,10 +3865,16 @@ async def second_weigh(
         None
     ),
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
-    is_manual_weight = form_bool(
-        manual_weight
+    is_manual_weight = (
+        form_bool(
+            manual_weight
+        )
     )
 
     if is_manual_weight:
@@ -2289,6 +3886,7 @@ async def second_weigh(
         )
 
         if second_weight is None:
+
             return RedirectResponse(
                 f"/weigh?error=invalid_manual_weight&ticket={ticket}",
                 status_code=303,
@@ -2305,6 +3903,7 @@ async def second_weigh(
         )
 
         if scale_error:
+
             return RedirectResponse(
                 f"/weigh?error={scale_error}&ticket={ticket}",
                 status_code=303,
@@ -2314,9 +3913,7 @@ async def second_weigh(
             scale["weight"]
         )
 
-    second_at = datetime.now(
-        timezone.utc
-    ).isoformat()
+    second_at = now_iso()
 
     second_operator = (
         request.session["user"]
@@ -2335,15 +3932,20 @@ async def second_weigh(
             AND status='WAITING_SECOND'
             AND second_weight IS NULL
         """,
-        (ticket,),
+        (
+            ticket,
+        ),
     ).fetchone()
 
     if not row:
+
         conn.close()
 
         raise HTTPException(
             status_code=404,
-            detail="Open double weighment not found",
+            detail=(
+                "Open double weighment not found"
+            ),
         )
 
     net = calculate_net_weight(
@@ -2367,9 +3969,11 @@ async def second_weigh(
             second_weighed_at=?,
             second_operator=?,
             second_weight_manual=?,
+
             net_weight=?,
             cargo_value=?,
             weight=?,
+
             status='SAVED'
 
         WHERE id=?
@@ -2378,10 +3982,17 @@ async def second_weigh(
             second_weight,
             second_at,
             second_operator,
-            1 if is_manual_weight else 0,
+
+            (
+                1
+                if is_manual_weight
+                else 0
+            ),
+
             net,
             cargo_value,
             net,
+
             row["id"],
         ),
     )
@@ -2407,7 +4018,11 @@ async def detail(
     request: Request,
     ticket: int,
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     conn = db()
 
@@ -2417,10 +4032,13 @@ async def detail(
         FROM weighments
         WHERE ticket_number=?
         """,
-        (ticket,),
+        (
+            ticket,
+        ),
     ).fetchone()
 
     if not row:
+
         conn.close()
 
         raise HTTPException(
@@ -2432,15 +4050,19 @@ async def detail(
         """
         SELECT filename
         FROM weighment_photos
+
         WHERE weighment_id=?
+
         ORDER BY id ASC
         """,
-        (row["id"],),
+        (
+            row["id"],
+        ),
     ).fetchall()
 
     photos = [
-        p["filename"]
-        for p in photo_rows
+        photo["filename"]
+        for photo in photo_rows
     ]
 
     if (
@@ -2463,12 +4085,19 @@ async def detail(
         "detail.html",
         {
             "request": request,
+
             "row": row,
+
             "photos": photos,
+
             "plate_parts":
                 plate_parts,
+
             "user":
                 request.session["user"],
+
+            "app_mode":
+                APP_MODE,
         },
     )
 
@@ -2485,18 +4114,29 @@ async def records(
     request: Request,
     q: str = "",
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     conn = db()
 
-    q = q.strip()
+    q = str(
+        q
+    ).strip()
 
     if q:
-        like = f"%{q}%"
+
+        like = (
+            f"%{q}%"
+        )
 
         normalized_like = (
             "%"
-            + normalize_plate_search(q)
+            + normalize_plate_search(
+                q
+            )
             + "%"
         )
 
@@ -2560,6 +4200,7 @@ async def records(
         ).fetchall()
 
     else:
+
         rows = conn.execute(
             """
             SELECT *
@@ -2575,6 +4216,7 @@ async def records(
             parse_iran_plate(
                 row["plate"]
             )
+
         for row in rows
     }
 
@@ -2582,18 +4224,25 @@ async def records(
         "records.html",
         {
             "request": request,
+
             "rows": rows,
+
             "q": q,
+
             "plate_parts_map":
                 plate_parts_map,
+
             "user":
                 request.session["user"],
+
+            "app_mode":
+                APP_MODE,
         },
     )
 
 
 # ============================================================
-# DELETE WEIGHMENT
+# DELETE WEIGHMENT - ADMIN ONLY
 # ============================================================
 
 @app.post(
@@ -2602,13 +4251,21 @@ async def records(
 async def delete_weighment(
     request: Request,
     ticket: int,
+
     next: str = Form(
         "/records"
     ),
 ):
-    require_login(request)
+    # مهم:
+    # حتی با URL مستقیم Operator نمی‌تواند حذف کند.
+    require_roles(
+        request,
+        "admin",
+    )
 
-    if not next.startswith("/"):
+    if not str(
+        next
+    ).startswith("/"):
         next = "/records"
 
     conn = db()
@@ -2619,10 +4276,13 @@ async def delete_weighment(
         FROM weighments
         WHERE ticket_number=?
         """,
-        (ticket,),
+        (
+            ticket,
+        ),
     ).fetchone()
 
     if not row:
+
         conn.close()
 
         return RedirectResponse(
@@ -2631,40 +4291,62 @@ async def delete_weighment(
         )
 
     filenames = [
-        p["filename"]
-        for p in conn.execute(
+        photo["filename"]
+
+        for photo in conn.execute(
             """
             SELECT filename
             FROM weighment_photos
             WHERE weighment_id=?
             """,
-            (row["id"],),
+            (
+                row["id"],
+            ),
         ).fetchall()
     ]
 
+    # تصویر قدیمی ممکن است فقط در photo_filename باشد.
+    if (
+        row["photo_filename"]
+        and row["photo_filename"]
+        not in filenames
+    ):
+        filenames.append(
+            row["photo_filename"]
+        )
+
     conn.execute(
         """
-        DELETE FROM weighment_photos
+        DELETE
+        FROM weighment_photos
         WHERE weighment_id=?
         """,
-        (row["id"],),
+        (
+            row["id"],
+        ),
     )
 
     conn.execute(
         """
-        DELETE FROM weighments
+        DELETE
+        FROM weighments
         WHERE id=?
         """,
-        (row["id"],),
+        (
+            row["id"],
+        ),
     )
 
     conn.commit()
     conn.close()
 
     for filename in filenames:
+
         try:
+
             path = (
-                UPLOAD_DIR / filename
+                UPLOAD_DIR
+                / filename
             )
 
             if path.exists():
@@ -2680,7 +4362,7 @@ async def delete_weighment(
 
 
 # ============================================================
-# DEVICE PAGE
+# DEVICE PAGE - ADMIN ONLY
 # ============================================================
 
 @app.get(
@@ -2690,56 +4372,92 @@ async def delete_weighment(
 async def device_page(
     request: Request,
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+    )
 
     if SERIAL_MODE == "agent":
+
         cfg = load_device_config()
+
         ports = []
 
     else:
-        cfg = serial_mgr.get_config()
-        ports = serial_mgr.list_ports()
+
+        cfg = (
+            serial_mgr.get_config()
+        )
+
+        ports = (
+            serial_mgr.list_ports()
+        )
 
     return templates.TemplateResponse(
         "device.html",
         {
             "request": request,
+
             "cfg": cfg,
+
             "ports": ports,
+
             "serial_mode":
                 SERIAL_MODE,
+
             "user":
                 request.session["user"],
         },
     )
 
 
-@app.post("/device/save")
+@app.post(
+    "/device/save"
+)
 async def device_save(
+
     request: Request,
-    enabled: str = Form("0"),
-    port: str = Form(""),
-    baud: int = Form(2400),
+
+    enabled: str = Form(
+        "0"
+    ),
+
+    port: str = Form(
+        ""
+    ),
+
+    baud: int = Form(
+        2400
+    ),
+
     indicator: str = Form(
         "GENERIC_SIGNED_5_6"
     ),
+
     stable_tol: float = Form(
         1.0
     ),
+
     stable_seconds: float = Form(
         1.2
     ),
+
     send_every_sec: float = Form(
         0.3
     ),
+
     scale_id: str = Form(
         "SCALE-01"
     ),
+
     action: str = Form(
         "save"
     ),
 ):
-    require_login(request)
+    require_roles(
+        request,
+        "admin",
+    )
 
     cfg = DeviceConfig(
         enabled=(
@@ -2747,7 +4465,8 @@ async def device_save(
         ),
 
         port=(
-            port or ""
+            port
+            or ""
         ).strip(),
 
         baud=int(
@@ -2777,15 +4496,18 @@ async def device_save(
     )
 
     if action == "stop":
+
         cfg.enabled = False
 
     elif action == "start":
+
         cfg.enabled = True
 
     elif (
         action == "autodetect"
         and SERIAL_MODE == "local"
     ):
+
         cfg.port = (
             serial_mgr.auto_detect_port()
         )
@@ -2803,6 +4525,7 @@ async def device_save(
         serial_mgr.stop()
 
         if cfg.enabled:
+
             serial_mgr.start(
                 update_scale_state
             )
@@ -2817,23 +4540,36 @@ async def device_save(
 # DEVICE STATUS
 # ============================================================
 
-@app.get("/api/device/status")
+@app.get(
+    "/api/device/status"
+)
 async def device_status(
     request: Request,
 ):
-    require_login(request)
+    # Operator برای صفحه ثبت وزن نیاز دارد وضعیت باسکول را بخواند.
+    # این Endpoint تنظیمات را تغییر نمی‌دهد.
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
 
     if SERIAL_MODE == "agent":
-        cfg = load_device_config()
+
+        cfg = (
+            load_device_config()
+        )
 
         age = (
             time.time()
             - agent_state[
                 "last_seen_ts"
             ]
+
             if agent_state[
                 "last_seen_ts"
             ]
+
             else None
         )
 
@@ -2844,13 +4580,16 @@ async def device_status(
 
         return JSONResponse(
             {
-                "mode": "agent",
+                "mode":
+                    "agent",
 
                 "running":
-                    online
-                    and agent_state[
-                        "running"
-                    ],
+                    (
+                        online
+                        and agent_state[
+                            "running"
+                        ]
+                    ),
 
                 "agent_online":
                     online,
@@ -2858,18 +4597,25 @@ async def device_status(
                 "cfg": {
                     "enabled":
                         cfg.enabled,
+
                     "port":
                         cfg.port,
+
                     "baud":
                         cfg.baud,
+
                     "indicator":
                         cfg.indicator,
+
                     "stable_tol":
                         cfg.stable_tol,
+
                     "stable_seconds":
                         cfg.stable_seconds,
+
                     "send_every_sec":
                         cfg.send_every_sec,
+
                     "scale_id":
                         cfg.scale_id,
                 },
@@ -2906,11 +4652,15 @@ async def device_status(
             }
         )
 
-    cfg = serial_mgr.get_config()
+
+    cfg = (
+        serial_mgr.get_config()
+    )
 
     return JSONResponse(
         {
-            "mode": "local",
+            "mode":
+                "local",
 
             "running":
                 serial_mgr.is_running(),
@@ -2921,18 +4671,25 @@ async def device_status(
             "cfg": {
                 "enabled":
                     cfg.enabled,
+
                 "port":
                     cfg.port,
+
                 "baud":
                     cfg.baud,
+
                 "indicator":
                     cfg.indicator,
+
                 "stable_tol":
                     cfg.stable_tol,
+
                 "stable_seconds":
                     cfg.stable_seconds,
+
                 "send_every_sec":
                     cfg.send_every_sec,
+
                 "scale_id":
                     cfg.scale_id,
             },
@@ -2972,13 +4729,18 @@ def require_device_token(
     )
 
     if token != DEVICE_TOKEN:
+
         raise HTTPException(
             status_code=401,
-            detail="Invalid device token",
+            detail=(
+                "Invalid device token"
+            ),
         )
 
 
-@app.get("/api/agent/config")
+@app.get(
+    "/api/agent/config"
+)
 async def agent_config(
     request: Request,
 ):
@@ -3015,7 +4777,9 @@ async def agent_config(
     }
 
 
-@app.post("/api/agent/status")
+@app.post(
+    "/api/agent/status"
+)
 async def agent_status(
     request: Request,
 ):
@@ -3027,14 +4791,18 @@ async def agent_status(
         await request.json()
     )
 
-    agent_state["running"] = bool(
+    agent_state[
+        "running"
+    ] = bool(
         body.get(
             "running",
             False,
         )
     )
 
-    agent_state["last_error"] = str(
+    agent_state[
+        "last_error"
+    ] = str(
         body.get(
             "error",
             "",
@@ -3048,30 +4816,36 @@ async def agent_status(
         )
     )
 
-    agent_state["last_raw"] = raw
+    agent_state[
+        "last_raw"
+    ] = raw
 
-    agent_state["last_weight"] = (
-        body.get(
-            "weight"
-        )
+    agent_state[
+        "last_weight"
+    ] = body.get(
+        "weight"
     )
 
-    agent_state["last_stable"] = bool(
+    agent_state[
+        "last_stable"
+    ] = bool(
         body.get(
             "stable",
             False,
         )
     )
 
-    agent_state["last_seen_ts"] = (
-        time.time()
-    )
+    agent_state[
+        "last_seen_ts"
+    ] = time.time()
 
     if raw:
 
-        lines = agent_state[
-            "raw_lines"
-        ]
+        lines = (
+            agent_state[
+                "raw_lines"
+            ]
+        )
 
         if (
             not lines
@@ -3085,7 +4859,7 @@ async def agent_status(
         del lines[80:]
 
     return {
-        "ok": True
+        "ok": True,
     }
 
 
@@ -3093,10 +4867,18 @@ async def agent_status(
 # SCALE API
 # ============================================================
 
-@app.get("/api/scale/weight")
+@app.get(
+    "/api/scale/weight"
+)
 async def get_scale_weight(
     request: Request,
 ):
+    require_roles(
+        request,
+        "admin",
+        "operator",
+    )
+
     conn = db()
 
     row = conn.execute(
@@ -3131,7 +4913,9 @@ async def get_scale_weight(
     )
 
 
-@app.post("/api/scale/weight")
+@app.post(
+    "/api/scale/weight"
+)
 async def set_scale_weight(
     request: Request,
 ):
@@ -3146,9 +4930,7 @@ async def set_scale_weight(
     try:
 
         weight = float(
-            body[
-                "weight"
-            ]
+            body["weight"]
         )
 
         stable = bool(
@@ -3170,6 +4952,7 @@ async def set_scale_weight(
         TypeError,
         ValueError,
     ):
+
         raise HTTPException(
             status_code=400,
             detail="Invalid JSON",
@@ -3180,6 +4963,7 @@ async def set_scale_weight(
         <= weight
         <= 1000000
     ):
+
         raise HTTPException(
             status_code=400,
             detail="Invalid weight",
@@ -3203,4 +4987,4 @@ async def set_scale_weight(
 
         "scale_id":
             scale_id,
-    }
+    }  

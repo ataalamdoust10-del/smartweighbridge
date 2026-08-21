@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}فعال‌سازی دستگاه{% endblock %}
+
+{% block content %}
+
+<style>
+.activation-wrap{
+  max-width:560px;
+  margin:45px auto;
+}
+
+.activation-card{
+  background:#fff;
+  border:1px solid #e4e7ec;
+  border-radius:18px;
+  padding:28px;
+  box-shadow:0 8px 30px rgba(16,24,40,.06);
+}
+
+.activation-icon{
+  width:64px;
+  height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto 18px;
+  border-radius:18px;
+  background:#eff6ff;
+  color:#2563eb;
+  font-size:30px;
+}
+
+.activation-card h1{
+  text-align:center;
+  margin:0 0 8px;
+  color:#101828;
+}
+
+.activation-desc{
+  text-align:center;
+  color:#667085;
+  line-height:1.9;
+  margin-bottom:22px;
+}
+
+.operator-box{
+  background:#f9fafb;
+  border:1px solid #eaecf0;
+  border-radius:12px;
+  padding:12px 15px;
+  margin-bottom:20px;
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+}
+
+.activation-card label{
+  display:block;
+  font-weight:800;
+  margin:14px 0 7px;
+}
+
+.activation-card input{
+  box-sizing:border-box;
+  width:100%;
+  padding:12px 14px;
+  border:1px solid #d0d5dd;
+  border-radius:11px;
+  font-size:15px;
+}
+
+.activation-card input:focus{
+  outline:none;
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,.10);
+}
+
+.license-input{
+  direction:ltr;
+  text-align:center;
+  font-family:monospace;
+  font-weight:900;
+  font-size:22px !important;
+  letter-spacing:4px;
+  text-transform:uppercase;
+}
+
+.activate-button{
+  width:100%;
+  margin-top:20px;
+}
+
+.activation-help{
+  margin-top:18px;
+  padding:13px;
+  border-radius:11px;
+  background:#fffaeb;
+  border:1px solid #fedf89;
+  color:#7a2e0e;
+  line-height:1.8;
+  font-size:13px;
+}
+
+.back-login{
+  display:block;
+  text-align:center;
+  margin-top:18px;
+  color:#475467;
+  text-decoration:none;
+}
+</style>
+
+
+<div class="activation-wrap">
+
+  <div class="activation-card">
+
+    <div class="activation-icon">🔐</div>
+
+    <h1>فعال‌سازی دستگاه</h1>
+
+    <div class="activation-desc">
+      نام کاربری و رمز عبور صحیح است، اما این دستگاه هنوز
+      برای حساب شما فعال نشده است.
+    </div>
+
+
+    {% if error %}
+      <div class="alert danger">
+        {{ error }}
+      </div>
+    {% endif %}
+
+
+    <div class="operator-box">
+      <span>حساب اپراتور</span>
+      <strong>{{ username }}</strong>
+    </div>
+
+
+    <form method="post" action="/activate">
+
+      <label>
+        نام این دستگاه
+      </label>
+
+      <input
+        type="text"
+        name="device_name"
+        maxlength="80"
+        placeholder="مثلاً کامپیوتر باسکول اصلی"
+        autocomplete="off"
+      >
+
+
+      <label>
+        کد فعال‌سازی ۱۰ کاراکتری
+      </label>
+
+      <input
+        class="license-input"
+        type="text"
+        name="license_code"
+        minlength="10"
+        maxlength="10"
+        required
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="XXXXXXXXXX"
+      >
+
+
+      <button
+        class="btn primary activate-button"
+        type="submit"
+      >
+        فعال‌سازی و ورود
+      </button>
+
+    </form>
+
+
+    <div class="activation-help">
+      درخواست فعال‌سازی این دستگاه برای مدیر سیستم ارسال شده است.
+      کد نمایش‌داده‌شده در پنل مدیر را دریافت کرده و در کادر بالا وارد کنید.
+      این کد فقط برای فعال‌سازی دستگاه استفاده می‌شود.
+    </div>
+
+
+    <a class="back-login" href="/logout">
+      بازگشت به صفحه ورود
+    </a>
+
+  </div>
+
+</div>
+
+{% endblock %}

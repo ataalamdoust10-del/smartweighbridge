@@ -7,6 +7,8 @@
 
 {% block content %}
 
+{% set role = request.session.get('role', '') %}
+
 <style>
 
 .profile-grid{
@@ -25,22 +27,16 @@
 .profile-form input{
   width:100%;
   box-sizing:border-box;
-
   border:1px solid #e4e7ec;
   border-radius:12px;
-
   padding:11px 13px;
-
   font-size:15px;
 }
 
 .profile-form input:focus{
   outline:none;
   border-color:#2563eb;
-
-  box-shadow:
-    0 0 0 3px
-    rgba(37,99,235,.10);
+  box-shadow:0 0 0 3px rgba(37,99,235,.10);
 }
 
 .field-unit{
@@ -53,16 +49,11 @@
 
 .field-unit .unit{
   position:absolute;
-
   top:50%;
   transform:translateY(-50%);
-
   inset-inline-end:12px;
-
   color:#667085;
-
   font-size:12px;
-
   pointer-events:none;
 }
 
@@ -123,36 +114,46 @@
 
 .profile-note{
   margin-top:12px;
-
   padding:10px 12px;
-
   border-radius:10px;
-
   background:#f9fafb;
-
   color:#667085;
-
   font-size:13px;
+  line-height:1.8;
+}
 
+.operator-note{
+  margin-top:12px;
+  padding:11px 13px;
+  border-radius:10px;
+  background:#eff6ff;
+  border:1px solid #bfdbfe;
+  color:#1d4ed8;
+  font-size:13px;
   line-height:1.8;
 }
 
 .edit-banner{
   display:none;
-
   margin-bottom:12px;
-
   padding:9px 11px;
-
   border-radius:10px;
-
   background:#eff6ff;
-
   border:1px solid #bfdbfe;
-
   color:#1d4ed8;
-
   font-weight:800;
+}
+
+.permission-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#f2f4f7;
+  color:#475467;
+  font-size:11px;
+  font-weight:800;
+  margin-top:5px;
 }
 
 @media(max-width:900px){
@@ -166,7 +167,7 @@
   }
 
   .profiles-table{
-    min-width:700px;
+    min-width:620px;
   }
 
 }
@@ -186,6 +187,12 @@
       {{ _('vehicle_profiles_subtitle') }}
     </p>
 
+    {% if role == 'operator' %}
+    <span class="permission-badge">
+      دسترسی اپراتور: فقط افزودن تعرفه جدید
+    </span>
+    {% endif %}
+
   </div>
 
 </div>
@@ -201,9 +208,15 @@
 <section class="card">
 
 <h3>
-  {{ _('vehicle_profile_form_title') }}
+  {% if role == 'operator' %}
+    افزودن تعرفه خودرو
+  {% else %}
+    {{ _('vehicle_profile_form_title') }}
+  {% endif %}
 </h3>
 
+
+{% if role == 'admin' %}
 
 <div
   id="editBanner"
@@ -211,6 +224,8 @@
 >
   {{ _('editing_vehicle_profile') }}
 </div>
+
+{% endif %}
 
 
 <form
@@ -285,9 +300,15 @@
   class="btn primary save-profile"
   type="submit"
 >
-  {{ _('save_vehicle_profile') }}
+  {% if role == 'operator' %}
+    افزودن تعرفه
+  {% else %}
+    {{ _('save_vehicle_profile') }}
+  {% endif %}
 </button>
 
+
+{% if role == 'admin' %}
 
 <button
   id="cancelEdit"
@@ -298,15 +319,26 @@
   {{ _('cancel_edit') }}
 </button>
 
+{% endif %}
+
 
 </form>
 
 
-<div class="profile-note">
+{% if role == 'operator' %}
 
-  {{ _('vehicle_profile_note') }}
-
+<div class="operator-note">
+  شما می‌توانید تعرفه خودروی جدید اضافه کنید.
+  ویرایش یا حذف تعرفه‌های ثبت‌شده فقط توسط مدیر سیستم انجام می‌شود.
 </div>
+
+{% else %}
+
+<div class="profile-note">
+  {{ _('vehicle_profile_note') }}
+</div>
+
+{% endif %}
 
 </section>
 
@@ -347,9 +379,13 @@
     {{ _('last_update') }}
   </th>
 
+  {% if role == 'admin' %}
+
   <th>
     {{ _('actions') }}
   </th>
+
+  {% endif %}
 
 </tr>
 
@@ -438,6 +474,8 @@
 </td>
 
 
+{% if role == 'admin' %}
+
 <td>
 
 <div class="profile-actions">
@@ -481,6 +519,8 @@
 
 </td>
 
+{% endif %}
+
 
 </tr>
 
@@ -491,7 +531,7 @@
 <tr>
 
 <td
-  colspan="5"
+  colspan="{% if role == 'admin' %}5{% else %}4{% endif %}"
   class="empty-profiles"
 >
 
@@ -517,6 +557,8 @@
 
 </div>
 
+
+{% if role == 'admin' %}
 
 <script>
 
@@ -619,6 +661,8 @@ document.addEventListener(
 );
 
 </script>
+
+{% endif %}
 
 
 {% endblock %}

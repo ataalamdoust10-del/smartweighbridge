@@ -25,16 +25,70 @@
     href="/static/style.css"
   >
 
+  <style>
+
+  .user-role-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+
+    padding:5px 9px;
+
+    border-radius:999px;
+
+    font-size:10px;
+    font-weight:900;
+
+    white-space:nowrap;
+
+    background:#f2f4f7;
+    color:#475467;
+  }
+
+  .user-role-badge.admin{
+    color:#93c5fd;
+
+    background:
+      rgba(59,130,246,.12);
+
+    border:
+      1px solid
+      rgba(59,130,246,.3);
+  }
+
+  .user-role-badge.operator{
+    color:#86efac;
+
+    background:
+      rgba(34,197,94,.10);
+
+    border:
+      1px solid
+      rgba(34,197,94,.3);
+  }
+
+  .operator-nav-link{
+    color:#93c5fd !important;
+    font-weight:900 !important;
+  }
+
+  </style>
+
 </head>
 
 
 <body>
 
+{% set role = request.session.get('role', '') %}
+{% set current_user = request.session.get('user', '') %}
+
 
 <header class="topbar">
 
   <div class="brand">
+
     {{ _('app_name') }}
+
   </div>
 
 
@@ -43,11 +97,43 @@
       display:flex;
       align-items:center;
       gap:14px;
+      flex-wrap:wrap;
     "
   >
 
 
-    <!-- Languages -->
+    <!-- ==========================================
+         CURRENT USER / ROLE
+    =========================================== -->
+
+    {% if current_user %}
+
+      {% if role == 'admin' %}
+
+      <span
+        class="user-role-badge admin"
+        title="{{ current_user }}"
+      >
+        مدیر
+      </span>
+
+      {% elif role == 'operator' %}
+
+      <span
+        class="user-role-badge operator"
+        title="{{ current_user }}"
+      >
+        اپراتور: {{ current_user }}
+      </span>
+
+      {% endif %}
+
+    {% endif %}
+
+
+    <!-- ==========================================
+         LANGUAGES
+    =========================================== -->
 
     <div class="lang-switch">
 
@@ -75,7 +161,11 @@
     </div>
 
 
-    {% if user %}
+    <!-- ==========================================
+         NAVIGATION
+    =========================================== -->
+
+    {% if current_user %}
 
     <nav>
 
@@ -83,22 +173,39 @@
         {{ _('dashboard') }}
       </a>
 
+
       <a href="/weigh">
         {{ _('weigh') }}
       </a>
+
 
       <a href="/records">
         {{ _('records') }}
       </a>
 
-      <!-- Vehicle tariffs -->
+
       <a href="/vehicle-profiles">
         {{ _('vehicle_profiles') }}
       </a>
 
-      <a href="/device">
-        {{ _('device') }}
-      </a>
+
+      <!-- ADMIN ONLY -->
+
+      {% if role == 'admin' %}
+
+        <a
+          href="/admin/operators"
+          class="operator-nav-link"
+        >
+          مدیریت اپراتورها
+        </a>
+
+        <a href="/device">
+          {{ _('device') }}
+        </a>
+
+      {% endif %}
+
 
       <a href="/logout">
         {{ _('logout') }}
@@ -108,11 +215,14 @@
 
     {% endif %}
 
-
   </div>
 
 </header>
 
+
+<!-- =========================================================
+     CONTENT
+========================================================= -->
 
 <main class="container">
 
@@ -120,6 +230,70 @@
   {% endblock %}
 
 </main>
+
+
+<!-- =========================================================
+     OPERATOR HEARTBEAT
+========================================================= -->
+
+{% if current_user and role == 'operator' %}
+
+<script>
+
+(function(){
+
+  async function heartbeat(){
+
+    try{
+
+      const response =
+        await fetch(
+          '/api/heartbeat',
+          {
+            method:'POST',
+            cache:'no-store'
+          }
+        );
+
+      /*
+       اگر Admin دسترسی این دستگاه را لغو کند،
+       Heartbeat دیگر موفق نخواهد بود.
+      */
+
+      if(
+        response.status === 401
+        ||
+        response.status === 403
+      ){
+
+        window.location.href =
+          '/login';
+
+      }
+
+    }
+    catch(error){
+      /*
+       قطع موقت شبکه نباید باعث Logout شود.
+      */
+    }
+
+  }
+
+
+  heartbeat();
+
+
+  setInterval(
+    heartbeat,
+    10000
+  );
+
+})();
+
+</script>
+
+{% endif %}
 
 
 </body>

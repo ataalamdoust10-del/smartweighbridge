@@ -1,0 +1,642 @@
+{% extends "base.html" %}
+
+{% block title %}مدیریت اپراتورها{% endblock %}
+
+{% block content %}
+
+<style>
+
+.admin-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
+  margin-bottom:20px;
+}
+
+.admin-head h1{
+  margin-bottom:5px;
+}
+
+.admin-head p{
+  margin:0;
+  color:#667085;
+}
+
+.operator-layout{
+  display:grid;
+  grid-template-columns:340px minmax(0,1fr);
+  gap:18px;
+  align-items:start;
+}
+
+.create-form label{
+  display:block;
+  margin:13px 0 7px;
+  font-weight:800;
+}
+
+.create-form input{
+  width:100%;
+  box-sizing:border-box;
+  padding:11px 13px;
+  border:1px solid #d0d5dd;
+  border-radius:11px;
+}
+
+.create-form input:focus{
+  outline:none;
+  border-color:#2563eb;
+  box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+
+.create-btn{
+  width:100%;
+  margin-top:16px;
+}
+
+.security-note{
+  margin-top:15px;
+  padding:11px;
+  border-radius:10px;
+  background:#f9fafb;
+  color:#667085;
+  line-height:1.8;
+  font-size:12px;
+}
+
+
+.operator-card{
+  border:1px solid #e4e7ec;
+  border-radius:16px;
+  margin-bottom:14px;
+  overflow:hidden;
+  background:#fff;
+}
+
+.operator-main{
+  padding:17px;
+}
+
+.operator-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:15px;
+  flex-wrap:wrap;
+}
+
+.operator-name{
+  font-size:18px;
+  font-weight:900;
+  color:#101828;
+}
+
+.operator-meta{
+  color:#667085;
+  font-size:12px;
+  margin-top:6px;
+}
+
+.operator-status{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+}
+
+.operator-status.online{
+  background:#ecfdf3;
+  color:#027a48;
+  border:1px solid #abefc6;
+}
+
+.operator-status.offline{
+  background:#f2f4f7;
+  color:#475467;
+  border:1px solid #e4e7ec;
+}
+
+.operator-status.disabled{
+  background:#fef3f2;
+  color:#b42318;
+  border:1px solid #fecdca;
+}
+
+.operator-actions{
+  display:flex;
+  gap:7px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+
+.danger-btn{
+  color:#b42318!important;
+  background:#fef3f2!important;
+  border-color:#fecdca!important;
+}
+
+.success-btn{
+  color:#027a48!important;
+  background:#ecfdf3!important;
+  border-color:#abefc6!important;
+}
+
+
+.pending-section{
+  padding:14px 17px;
+  background:#fffaeb;
+  border-top:1px solid #fedf89;
+}
+
+.pending-title{
+  font-weight:900;
+  color:#93370d;
+  margin-bottom:10px;
+}
+
+.pending-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:10px;
+  background:#fff;
+  border:1px solid #fedf89;
+  border-radius:10px;
+  margin-top:8px;
+}
+
+.license-code{
+  direction:ltr;
+  display:inline-block;
+  font-family:monospace;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:3px;
+  color:#1d4ed8;
+  padding:6px 10px;
+  border-radius:8px;
+  background:#eff6ff;
+  user-select:all;
+}
+
+
+.devices{
+  padding:14px 17px;
+  border-top:1px solid #eaecf0;
+  background:#fcfcfd;
+}
+
+.devices-title{
+  font-weight:900;
+  margin-bottom:10px;
+}
+
+.device-row{
+  display:grid;
+  grid-template-columns:minmax(160px,1fr) minmax(150px,1fr) auto;
+  align-items:center;
+  gap:12px;
+
+  border:1px solid #eaecf0;
+  background:#fff;
+  border-radius:11px;
+  padding:11px;
+  margin-top:8px;
+}
+
+.device-name{
+  font-weight:800;
+}
+
+.device-id{
+  direction:ltr;
+  color:#98a2b3;
+  font-family:monospace;
+  font-size:10px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.device-online{
+  color:#027a48;
+  font-weight:900;
+}
+
+.device-offline{
+  color:#667085;
+  font-weight:800;
+}
+
+.last-seen{
+  font-size:11px;
+  color:#667085;
+  margin-top:4px;
+}
+
+.no-items{
+  color:#98a2b3;
+  font-size:13px;
+  padding:5px 0;
+}
+
+.operator-count{
+  padding:5px 10px;
+  border-radius:999px;
+  background:#eff6ff;
+  color:#1d4ed8;
+  font-size:12px;
+  font-weight:900;
+}
+
+@media(max-width:900px){
+  .operator-layout{
+    grid-template-columns:1fr;
+  }
+
+  .device-row{
+    grid-template-columns:1fr;
+  }
+}
+
+</style>
+
+
+<div class="admin-head">
+
+  <div>
+    <h1>مدیریت اپراتورها</h1>
+
+    <p>
+      ساخت حساب اپراتور، فعال‌سازی دستگاه‌ها و مشاهده وضعیت آنلاین
+    </p>
+  </div>
+
+  <div class="operator-count">
+    {{ ops|length }} اپراتور
+  </div>
+
+</div>
+
+
+<div class="operator-layout">
+
+  <!-- CREATE OPERATOR -->
+
+  <section class="card">
+
+    <h3>اپراتور جدید</h3>
+
+    <form
+      class="create-form"
+      method="post"
+      action="/admin/operators/create"
+    >
+
+      <label>نام کاربری</label>
+
+      <input
+        name="username"
+        required
+        autocomplete="off"
+        minlength="3"
+        maxlength="50"
+      >
+
+
+      <label>رمز عبور</label>
+
+      <input
+        type="password"
+        name="password"
+        required
+        autocomplete="new-password"
+        minlength="4"
+      >
+
+
+      <button
+        class="btn primary create-btn"
+        type="submit"
+      >
+        ساخت اپراتور
+      </button>
+
+    </form>
+
+
+    <div class="security-note">
+      پس از ساخت حساب، نام کاربری و رمز را به اپراتور بدهید.
+      اولین دستگاهی که با حساب وارد شود، در همین صفحه یک درخواست
+      فعال‌سازی ایجاد خواهد کرد.
+    </div>
+
+  </section>
+
+
+  <!-- OPERATORS -->
+
+  <section>
+
+  {% for op in ops %}
+
+    {% set op_devices = devices_by_user.get(op.id, []) %}
+    {% set op_pending = pending_by_user.get(op.id, []) %}
+
+
+    <div class="operator-card">
+
+      <div class="operator-main">
+
+        <div class="operator-top">
+
+          <div>
+
+            <div class="operator-name">
+              {{ op.username }}
+            </div>
+
+            <div class="operator-meta">
+              ایجاد:
+              {{ (op.created_at|string)[:19].replace('T',' ') }}
+              &nbsp; • &nbsp;
+              {{ op_devices|selectattr('is_active')|list|length }}
+              دستگاه فعال
+            </div>
+
+          </div>
+
+
+          {% if not op.is_active %}
+
+            <span class="operator-status disabled">
+              ● غیرفعال
+            </span>
+
+          {% elif online_map.get(op.id) %}
+
+            <span class="operator-status online">
+              ● آنلاین
+            </span>
+
+          {% else %}
+
+            <span class="operator-status offline">
+              ● آفلاین
+            </span>
+
+          {% endif %}
+
+        </div>
+
+
+        <div class="operator-actions">
+
+          {% if op.is_active %}
+
+          <form
+            method="post"
+            action="/admin/operators/{{ op.id }}/disable"
+          >
+            <button
+              type="submit"
+              class="btn danger-btn"
+            >
+              غیرفعال کردن
+            </button>
+          </form>
+
+          {% else %}
+
+          <form
+            method="post"
+            action="/admin/operators/{{ op.id }}/enable"
+          >
+            <button
+              type="submit"
+              class="btn success-btn"
+            >
+              فعال کردن حساب
+            </button>
+          </form>
+
+          {% endif %}
+
+
+          <form
+            method="post"
+            action="/admin/operators/{{ op.id }}/delete"
+            onsubmit="return confirm('اپراتور و تمام دستگاه‌های آن حذف شود؟');"
+          >
+            <button
+              type="submit"
+              class="btn danger-btn"
+            >
+              حذف اپراتور
+            </button>
+          </form>
+
+        </div>
+
+      </div>
+
+
+      <!-- PENDING ACTIVATION -->
+
+      {% if op_pending %}
+
+      <div class="pending-section">
+
+        <div class="pending-title">
+          🔑 درخواست فعال‌سازی دستگاه
+        </div>
+
+
+        {% for req in op_pending %}
+
+        <div class="pending-item">
+
+          <div>
+
+            <div>
+              کد فعال‌سازی:
+            </div>
+
+            <div
+              class="license-code"
+              title="برای انتخاب کد کلیک کنید"
+            >
+              {{ req.license_code }}
+            </div>
+
+            <div class="last-seen">
+              درخواست:
+              {{ (req.created_at|string)[:19].replace('T',' ') }}
+            </div>
+
+          </div>
+
+
+          <form
+            method="post"
+            action="/admin/activation/{{ req.id }}/revoke"
+          >
+            <button
+              class="btn danger-btn"
+              type="submit"
+            >
+              لغو درخواست
+            </button>
+          </form>
+
+        </div>
+
+        {% endfor %}
+
+      </div>
+
+      {% endif %}
+
+
+      <!-- DEVICES -->
+
+      <div class="devices">
+
+        <div class="devices-title">
+          دستگاه‌ها
+        </div>
+
+
+        {% for device in op_devices %}
+
+        <div class="device-row">
+
+          <div>
+
+            <div class="device-name">
+              {{ device.device_name or 'دستگاه بدون نام' }}
+            </div>
+
+            <div
+              class="device-id"
+              title="{{ device.device_id }}"
+            >
+              {{ device.device_id }}
+            </div>
+
+          </div>
+
+
+          <div>
+
+            {% if device.is_active and device.online %}
+
+            <div class="device-online">
+              ● آنلاین
+            </div>
+
+            {% elif device.is_active %}
+
+            <div class="device-offline">
+              ● آفلاین
+            </div>
+
+            {% else %}
+
+            <div class="device-offline">
+              ● دسترسی لغو شده
+            </div>
+
+            {% endif %}
+
+
+            {% if device.last_seen_at %}
+
+            <div class="last-seen">
+              آخرین فعالیت:
+              {{ (device.last_seen_at|string)[:19].replace('T',' ') }}
+            </div>
+
+            {% endif %}
+
+          </div>
+
+
+          <div>
+
+            {% if device.is_active %}
+
+            <form
+              method="post"
+              action="/admin/operators/{{ op.id }}/devices/{{ device.device_id }}/revoke"
+              onsubmit="return confirm('دسترسی این دستگاه لغو شود؟');"
+            >
+              <button
+                type="submit"
+                class="btn danger-btn"
+              >
+                خروج دستگاه
+              </button>
+            </form>
+
+            {% endif %}
+
+          </div>
+
+        </div>
+
+        {% else %}
+
+        <div class="no-items">
+          هنوز دستگاهی برای این اپراتور فعال نشده است.
+        </div>
+
+        {% endfor %}
+
+      </div>
+
+    </div>
+
+
+  {% else %}
+
+    <div class="card">
+      هنوز هیچ اپراتوری ساخته نشده است.
+    </div>
+
+  {% endfor %}
+
+  </section>
+
+</div>
+
+
+<script>
+document.querySelectorAll('.license-code').forEach(function(el){
+  el.addEventListener('click', async function(){
+    const code = this.textContent.trim();
+
+    try{
+      await navigator.clipboard.writeText(code);
+
+      const old = this.textContent;
+      this.textContent = 'کپی شد ✓';
+
+      setTimeout(() => {
+        this.textContent = old;
+      }, 1000);
+
+    }catch(e){
+      // browser may block clipboard; text remains selectable
+    }
+  });
+});
+</script>
+
+{% endblock %}
