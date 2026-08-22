@@ -66,7 +66,6 @@
   font-size:12px;
 }
 
-
 .operator-card{
   border:1px solid #e4e7ec;
   border-radius:16px;
@@ -97,6 +96,7 @@
   color:#667085;
   font-size:12px;
   margin-top:6px;
+  line-height:1.9;
 }
 
 .operator-status{
@@ -146,7 +146,6 @@
   border-color:#abefc6!important;
 }
 
-
 .pending-section{
   padding:14px 17px;
   background:#fffaeb;
@@ -184,8 +183,8 @@
   border-radius:8px;
   background:#eff6ff;
   user-select:all;
+  cursor:pointer;
 }
-
 
 .devices{
   padding:14px 17px;
@@ -200,10 +199,9 @@
 
 .device-row{
   display:grid;
-  grid-template-columns:minmax(160px,1fr) minmax(150px,1fr) auto;
+  grid-template-columns:minmax(160px,1fr) minmax(200px,1fr) auto;
   align-items:center;
   gap:12px;
-
   border:1px solid #eaecf0;
   background:#fff;
   border-radius:11px;
@@ -238,6 +236,13 @@
   font-size:11px;
   color:#667085;
   margin-top:4px;
+  line-height:1.8;
+}
+
+.iran-time{
+  direction:rtl;
+  unicode-bidi:plaintext;
+  white-space:nowrap;
 }
 
 .no-items{
@@ -253,6 +258,18 @@
   color:#1d4ed8;
   font-size:12px;
   font-weight:900;
+}
+
+.time-note{
+  display:inline-flex;
+  align-items:center;
+  margin-top:8px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#f2f4f7;
+  color:#667085;
+  font-size:10px;
+  font-weight:800;
 }
 
 @media(max-width:900px){
@@ -271,12 +288,21 @@
 <div class="admin-head">
 
   <div>
-    <h1>مدیریت اپراتورها</h1>
+
+    <h1>
+      مدیریت اپراتورها
+    </h1>
 
     <p>
       ساخت حساب اپراتور، فعال‌سازی دستگاه‌ها و مشاهده وضعیت آنلاین
     </p>
+
+    <span class="time-note">
+      تاریخ شمسی • ساعت ایران
+    </span>
+
   </div>
+
 
   <div class="operator-count">
     {{ ops|length }} اپراتور
@@ -287,356 +313,464 @@
 
 <div class="operator-layout">
 
-  <!-- CREATE OPERATOR -->
 
-  <section class="card">
+<!-- =========================================================
+     CREATE OPERATOR
+========================================================= -->
 
-    <h3>اپراتور جدید</h3>
+<section class="card">
 
-    <form
-      class="create-form"
-      method="post"
-      action="/admin/operators/create"
+  <h3>
+    اپراتور جدید
+  </h3>
+
+  <form
+    class="create-form"
+    method="post"
+    action="/admin/operators/create"
+  >
+
+    <label>
+      نام کاربری
+    </label>
+
+    <input
+      name="username"
+      required
+      autocomplete="off"
+      minlength="3"
+      maxlength="50"
     >
 
-      <label>نام کاربری</label>
 
-      <input
-        name="username"
-        required
-        autocomplete="off"
-        minlength="3"
-        maxlength="50"
-      >
+    <label>
+      رمز عبور
+    </label>
 
-
-      <label>رمز عبور</label>
-
-      <input
-        type="password"
-        name="password"
-        required
-        autocomplete="new-password"
-        minlength="4"
-      >
+    <input
+      type="password"
+      name="password"
+      required
+      autocomplete="new-password"
+      minlength="4"
+    >
 
 
-      <button
-        class="btn primary create-btn"
-        type="submit"
-      >
-        ساخت اپراتور
-      </button>
+    <button
+      class="btn primary create-btn"
+      type="submit"
+    >
+      ساخت اپراتور
+    </button>
 
-    </form>
+  </form>
 
 
-    <div class="security-note">
-      پس از ساخت حساب، نام کاربری و رمز را به اپراتور بدهید.
-      اولین دستگاهی که با حساب وارد شود، در همین صفحه یک درخواست
-      فعال‌سازی ایجاد خواهد کرد.
+  <div class="security-note">
+
+    پس از ساخت حساب، نام کاربری و رمز را به اپراتور بدهید.
+
+    اولین دستگاهی که با این حساب وارد شود، یک درخواست
+    فعال‌سازی ایجاد خواهد کرد.
+
+  </div>
+
+</section>
+
+
+<!-- =========================================================
+     OPERATORS
+========================================================= -->
+
+<section>
+
+
+{% for op in ops %}
+
+  {% set op_devices = devices_by_user.get(op.id, []) %}
+  {% set op_pending = pending_by_user.get(op.id, []) %}
+
+
+  <div class="operator-card">
+
+
+    <!-- OPERATOR HEADER -->
+
+    <div class="operator-main">
+
+      <div class="operator-top">
+
+        <div>
+
+          <div class="operator-name">
+            {{ op.username }}
+          </div>
+
+          <div class="operator-meta">
+
+            ایجاد حساب:
+
+            <span class="iran-time">
+              {{ jalali_datetime(op.created_at) }}
+            </span>
+
+            <br>
+
+            دستگاه فعال:
+
+            {{ op_devices|selectattr('is_active')|list|length }}
+
+          </div>
+
+        </div>
+
+
+        {% if not op.is_active %}
+
+          <span class="operator-status disabled">
+            ● غیرفعال
+          </span>
+
+        {% elif online_map.get(op.id) %}
+
+          <span class="operator-status online">
+            ● آنلاین
+          </span>
+
+        {% else %}
+
+          <span class="operator-status offline">
+            ● آفلاین
+          </span>
+
+        {% endif %}
+
+      </div>
+
+
+      <div class="operator-actions">
+
+        {% if op.is_active %}
+
+        <form
+          method="post"
+          action="/admin/operators/{{ op.id }}/disable"
+        >
+
+          <button
+            type="submit"
+            class="btn danger-btn"
+          >
+            غیرفعال کردن
+          </button>
+
+        </form>
+
+        {% else %}
+
+        <form
+          method="post"
+          action="/admin/operators/{{ op.id }}/enable"
+        >
+
+          <button
+            type="submit"
+            class="btn success-btn"
+          >
+            فعال کردن حساب
+          </button>
+
+        </form>
+
+        {% endif %}
+
+
+        <form
+          method="post"
+          action="/admin/operators/{{ op.id }}/delete"
+
+          onsubmit="
+            return confirm(
+              'اپراتور و تمام دستگاه‌های آن حذف شود؟'
+            );
+          "
+        >
+
+          <button
+            type="submit"
+            class="btn danger-btn"
+          >
+            حذف اپراتور
+          </button>
+
+        </form>
+
+      </div>
+
     </div>
 
-  </section>
 
+    <!-- =====================================================
+         PENDING ACTIVATIONS
+    ====================================================== -->
 
-  <!-- OPERATORS -->
+    {% if op_pending %}
 
-  <section>
+    <div class="pending-section">
 
-  {% for op in ops %}
-
-    {% set op_devices = devices_by_user.get(op.id, []) %}
-    {% set op_pending = pending_by_user.get(op.id, []) %}
-
-
-    <div class="operator-card">
-
-      <div class="operator-main">
-
-        <div class="operator-top">
-
-          <div>
-
-            <div class="operator-name">
-              {{ op.username }}
-            </div>
-
-            <div class="operator-meta">
-              ایجاد:
-              {{ (op.created_at|string)[:19].replace('T',' ') }}
-              &nbsp; • &nbsp;
-              {{ op_devices|selectattr('is_active')|list|length }}
-              دستگاه فعال
-            </div>
-
-          </div>
-
-
-          {% if not op.is_active %}
-
-            <span class="operator-status disabled">
-              ● غیرفعال
-            </span>
-
-          {% elif online_map.get(op.id) %}
-
-            <span class="operator-status online">
-              ● آنلاین
-            </span>
-
-          {% else %}
-
-            <span class="operator-status offline">
-              ● آفلاین
-            </span>
-
-          {% endif %}
-
-        </div>
-
-
-        <div class="operator-actions">
-
-          {% if op.is_active %}
-
-          <form
-            method="post"
-            action="/admin/operators/{{ op.id }}/disable"
-          >
-            <button
-              type="submit"
-              class="btn danger-btn"
-            >
-              غیرفعال کردن
-            </button>
-          </form>
-
-          {% else %}
-
-          <form
-            method="post"
-            action="/admin/operators/{{ op.id }}/enable"
-          >
-            <button
-              type="submit"
-              class="btn success-btn"
-            >
-              فعال کردن حساب
-            </button>
-          </form>
-
-          {% endif %}
-
-
-          <form
-            method="post"
-            action="/admin/operators/{{ op.id }}/delete"
-            onsubmit="return confirm('اپراتور و تمام دستگاه‌های آن حذف شود؟');"
-          >
-            <button
-              type="submit"
-              class="btn danger-btn"
-            >
-              حذف اپراتور
-            </button>
-          </form>
-
-        </div>
-
+      <div class="pending-title">
+        🔑 درخواست فعال‌سازی دستگاه
       </div>
 
 
-      <!-- PENDING ACTIVATION -->
+      {% for req in op_pending %}
 
-      {% if op_pending %}
+      <div class="pending-item">
 
-      <div class="pending-section">
-
-        <div class="pending-title">
-          🔑 درخواست فعال‌سازی دستگاه
-        </div>
-
-
-        {% for req in op_pending %}
-
-        <div class="pending-item">
+        <div>
 
           <div>
+            کد فعال‌سازی:
+          </div>
 
-            <div>
-              کد فعال‌سازی:
-            </div>
+          <div
+            class="license-code"
+            title="برای کپی کد کلیک کنید"
+          >
+            {{ req.license_code }}
+          </div>
 
-            <div
-              class="license-code"
-              title="برای انتخاب کد کلیک کنید"
-            >
-              {{ req.license_code }}
-            </div>
+          <div class="last-seen">
 
-            <div class="last-seen">
-              درخواست:
-              {{ (req.created_at|string)[:19].replace('T',' ') }}
-            </div>
+            زمان درخواست:
+
+            <span class="iran-time">
+              {{ jalali_datetime(req.created_at) }}
+            </span>
 
           </div>
 
-
-          <form
-            method="post"
-            action="/admin/activation/{{ req.id }}/revoke"
-          >
-            <button
-              class="btn danger-btn"
-              type="submit"
-            >
-              لغو درخواست
-            </button>
-          </form>
-
         </div>
 
-        {% endfor %}
+
+        <form
+          method="post"
+          action="/admin/activation/{{ req.id }}/revoke"
+        >
+
+          <button
+            class="btn danger-btn"
+            type="submit"
+          >
+            لغو درخواست
+          </button>
+
+        </form>
 
       </div>
 
-      {% endif %}
+      {% endfor %}
+
+    </div>
+
+    {% endif %}
 
 
-      <!-- DEVICES -->
+    <!-- =====================================================
+         DEVICES
+    ====================================================== -->
 
-      <div class="devices">
+    <div class="devices">
 
-        <div class="devices-title">
-          دستگاه‌ها
+      <div class="devices-title">
+        دستگاه‌ها
+      </div>
+
+
+      {% for device in op_devices %}
+
+      <div class="device-row">
+
+
+        <div>
+
+          <div class="device-name">
+            {{ device.device_name or 'دستگاه بدون نام' }}
+          </div>
+
+          <div
+            class="device-id"
+            title="{{ device.device_id }}"
+          >
+            {{ device.device_id }}
+          </div>
+
         </div>
 
 
-        {% for device in op_devices %}
+        <div>
 
-        <div class="device-row">
-
-          <div>
-
-            <div class="device-name">
-              {{ device.device_name or 'دستگاه بدون نام' }}
-            </div>
-
-            <div
-              class="device-id"
-              title="{{ device.device_id }}"
-            >
-              {{ device.device_id }}
-            </div>
-
-          </div>
-
-
-          <div>
-
-            {% if device.is_active and device.online %}
+          {% if device.is_active and device.online %}
 
             <div class="device-online">
               ● آنلاین
             </div>
 
-            {% elif device.is_active %}
+          {% elif device.is_active %}
 
             <div class="device-offline">
               ● آفلاین
             </div>
 
-            {% else %}
+          {% else %}
 
             <div class="device-offline">
               ● دسترسی لغو شده
             </div>
 
-            {% endif %}
+          {% endif %}
 
 
-            {% if device.last_seen_at %}
+          {% if device.activated_at %}
 
-            <div class="last-seen">
-              آخرین فعالیت:
-              {{ (device.last_seen_at|string)[:19].replace('T',' ') }}
-            </div>
+          <div class="last-seen">
 
-            {% endif %}
+            فعال‌سازی:
+
+            <span class="iran-time">
+              {{ jalali_datetime(device.activated_at) }}
+            </span>
 
           </div>
 
+          {% endif %}
 
-          <div>
 
-            {% if device.is_active %}
+          {% if device.last_seen_at %}
 
-            <form
-              method="post"
-              action="/admin/operators/{{ op.id }}/devices/{{ device.device_id }}/revoke"
-              onsubmit="return confirm('دسترسی این دستگاه لغو شود؟');"
+          <div class="last-seen">
+
+            آخرین فعالیت:
+
+            <span class="iran-time">
+              {{ jalali_datetime(device.last_seen_at) }}
+            </span>
+
+          </div>
+
+          {% endif %}
+
+        </div>
+
+
+        <div>
+
+          {% if device.is_active %}
+
+          <form
+            method="post"
+            action="/admin/operators/{{ op.id }}/devices/{{ device.device_id }}/revoke"
+
+            onsubmit="
+              return confirm(
+                'دسترسی این دستگاه لغو شود؟'
+              );
+            "
+          >
+
+            <button
+              type="submit"
+              class="btn danger-btn"
             >
-              <button
-                type="submit"
-                class="btn danger-btn"
-              >
-                خروج دستگاه
-              </button>
-            </form>
+              خروج دستگاه
+            </button>
 
-            {% endif %}
+          </form>
 
-          </div>
+          {% endif %}
 
         </div>
 
-        {% else %}
-
-        <div class="no-items">
-          هنوز دستگاهی برای این اپراتور فعال نشده است.
-        </div>
-
-        {% endfor %}
 
       </div>
 
+      {% else %}
+
+      <div class="no-items">
+        هنوز دستگاهی برای این اپراتور فعال نشده است.
+      </div>
+
+      {% endfor %}
+
     </div>
 
 
-  {% else %}
+  </div>
 
-    <div class="card">
-      هنوز هیچ اپراتوری ساخته نشده است.
-    </div>
 
-  {% endfor %}
+{% else %}
 
-  </section>
+  <div class="card">
+    هنوز هیچ اپراتوری ساخته نشده است.
+  </div>
+
+{% endfor %}
+
+
+</section>
 
 </div>
 
 
 <script>
-document.querySelectorAll('.license-code').forEach(function(el){
-  el.addEventListener('click', async function(){
-    const code = this.textContent.trim();
 
-    try{
-      await navigator.clipboard.writeText(code);
+document
+  .querySelectorAll(
+    '.license-code'
+  )
+  .forEach(
+    function(element){
 
-      const old = this.textContent;
-      this.textContent = 'کپی شد ✓';
+      element.addEventListener(
+        'click',
+        async function(){
 
-      setTimeout(() => {
-        this.textContent = old;
-      }, 1000);
+          const code =
+            this.textContent.trim();
 
-    }catch(e){
-      // browser may block clipboard; text remains selectable
+          try{
+
+            await navigator
+              .clipboard
+              .writeText(code);
+
+            const original =
+              this.textContent;
+
+            this.textContent =
+              'کپی شد ✓';
+
+            setTimeout(
+              () => {
+                this.textContent =
+                  original;
+              },
+              1000
+            );
+
+          }
+          catch(error){
+            /*
+              متن همچنان قابل انتخاب است.
+            */
+          }
+
+        }
+      );
+
     }
-  });
-});
+  );
+
 </script>
 
 {% endblock %}

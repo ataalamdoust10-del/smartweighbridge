@@ -34,6 +34,18 @@ try:
     from .i18n import translate, get_dir
 except ImportError:
     from i18n import translate, get_dir
+try:
+    from .datetime_utils import (
+        jalali_datetime,
+        jalali_date,
+        iran_time,
+    )
+except ImportError:
+    from datetime_utils import (
+        jalali_datetime,
+        jalali_date,
+        iran_time,
+    )    
 
 from .serial_manager import SerialManager, DeviceConfig
 
@@ -311,6 +323,9 @@ def _(ctx, key: str) -> str:
 
 
 templates.env.globals["_"] = _
+templates.env.globals["jalali_datetime"] = jalali_datetime
+templates.env.globals["jalali_date"] = jalali_date
+templates.env.globals["iran_time"] = iran_time
 
 
 # ============================================================
@@ -4005,7 +4020,517 @@ async def second_weigh(
         status_code=303,
     )
 
+# ============================================================
+# EDIT WEIGHMENT - ADMIN ONLY
+# ============================================================
 
+@app.get(
+    "/weighments/{ticket}/edit",
+    response_class=HTMLResponse,
+)
+async def edit_weighment_page(
+    request: Request,
+    ticket: int,
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    conn = db()
+
+    row = conn.execute(
+        """
+        SELECT *
+        FROM weighments
+        WHERE ticket_number=?
+        """,
+        (ticket,),
+    ).fetchone()
+
+    conn.close()
+
+    if not row:
+        raise HTTPException(
+            status_code=404,
+            detail="Ticket not found",
+        )
+
+    return templates.TemplateResponse(
+        "edit_weighment.html",
+        {
+            "request": request,
+            "row": row,
+            "user":
+                request.session["user"],
+        },
+    )
+
+
+@app.post(
+    "/weighments/{ticket}/edit"
+)
+async def edit_weighment_submit(
+    request: Request,
+    ticket: int,
+
+    plate: str = Form(...),
+
+    single_weight: str = Form(""),
+
+    first_weight: str = Form(""),
+
+    second_weight: str = Form(""),
+
+    vehicle_type: str = Form(""),
+
+    weighing_fee: str = Form(""),
+
+    vehicle_weight: str = Form(""),
+
+    driver_name: str = Form(""),
+
+    driver_phone: str = Form(""),
+
+    cargo_type: str = Form(""),
+
+    cargo_owner: str = Form(""),
+
+    density: str = Form(""),
+
+    unit_price: str = Form(""),
+
+    origin: str = Form(""),
+
+    destination: str = Form(""),
+
+    document_no: str = Form(""),
+
+    notes: str = Form(""),
+):
+    require_roles(
+        request,
+        "admin",
+    )
+
+    plate = str(
+        plate
+    ).strip()
+
+    if not plate:
+        return RedirectResponse(
+            f"/weighments/{ticket}/edit?error=plate",
+            status_code=303,
+        )
+
+    fee_value = clean_optional_float(
+        weighing_fee
+    )
+
+    vehicle_weight_value = (
+        clean_optional_float(
+            vehicle_weight
+        )
+    )
+
+    density_value = (
+        clean_optional_float(
+            density
+        )
+    )
+
+    unit_price_value = (
+        clean_optional_float(
+            unit_price
+        )
+    )
+
+    for raw_value, parsed_value in (
+        (
+            weighing_fee,
+            fee_value,
+        ),
+        (
+            vehicle_weight,
+            vehicle_weight_value,
+        ),
+        (
+            density,
+            density_value,
+        ),
+        (
+            unit_price,
+            unit_price_value,
+        ),
+    ):
+        if (
+            str(raw_value).strip()
+            and parsed_value is None
+        ):
+            return RedirectResponse(
+                f"/weighments/{ticket}/edit?error=number",
+                status_code=303,
+            )
+
+        if (
+            parsed_value is not None
+            and parsed_value < 0
+        ):
+            return RedirectResponse(
+                f"/weighments/{ticket}/edit?error=number",
+                status_code=303,
+            )
+
+    conn = db()
+
+    row = conn.execute(
+        """
+        SELECT *
+        FROM weighments
+        WHERE ticket_number=?
+        """,
+        (ticket,),
+    ).fetchone()
+
+    if not row:
+
+        conn.close()
+
+        raise HTTPException(
+            status_code=404,
+            detail="Ticket not found",
+        )
+
+    mode = str(
+        row["weighing_mode"]
+        or "SINGLE"
+    ).upper()
+
+    now = now_iso()
+
+
+    # ========================================================
+    # SINGLE WEIGH
+    # ========================================================
+
+    if mode == "SINGLE":
+
+        new_weight = validate_manual_weight(
+            single_weight
+        )
+
+        if new_weight is None:
+
+            conn.close()
+
+            return RedirectResponse(
+                f"/weighments/{ticket}/edit?error=weight",
+                status_code=303,
+            )
+
+        cargo_value = (
+            calculate_cargo_value(
+                new_weight,
+                unit_price_value,
+            )
+        )
+
+        conn.execute(
+            """
+            UPDATE weighments
+
+            SET
+                plate=?,
+
+                weight=?,
+
+                first_weight=?,
+                first_weight_manual=1,
+
+                vehicle_type=?,
+                weighing_fee=?,
+                vehicle_weight=?,
+
+                driver_name=?,
+                driver_phone=?,
+
+                cargo_type=?,
+                cargo_owner=?,
+
+                density=?,
+                unit_price=?,
+                cargo_value=?,
+
+                origin=?,
+                destination=?,
+                document_no=?,
+                notes=?
+
+            WHERE id=?
+            """,
+            (
+                plate,
+
+                new_weight,
+
+                new_weight,
+
+                clean_text(
+                    vehicle_type
+                ),
+
+                fee_value,
+
+                vehicle_weight_value,
+
+                clean_text(
+                    driver_name
+                ),
+
+                clean_text(
+                    driver_phone
+                ),
+
+                clean_text(
+                    cargo_type
+                ),
+
+                clean_text(
+                    cargo_owner
+                ),
+
+                density_value,
+                unit_price_value,
+                cargo_value,
+
+                clean_text(
+                    origin
+                ),
+
+                clean_text(
+                    destination
+                ),
+
+                clean_text(
+                    document_no
+                ),
+
+                clean_text(
+                    notes
+                ),
+
+                row["id"],
+            ),
+        )
+
+
+    # ========================================================
+    # DOUBLE WEIGH
+    # ========================================================
+
+    else:
+
+        new_first_weight = (
+            validate_manual_weight(
+                first_weight
+            )
+        )
+
+        if new_first_weight is None:
+
+            conn.close()
+
+            return RedirectResponse(
+                f"/weighments/{ticket}/edit?error=first_weight",
+                status_code=303,
+            )
+
+        new_second_weight = None
+
+        if str(
+            second_weight
+        ).strip():
+
+            new_second_weight = (
+                validate_manual_weight(
+                    second_weight
+                )
+            )
+
+            if new_second_weight is None:
+
+                conn.close()
+
+                return RedirectResponse(
+                    f"/weighments/{ticket}/edit?error=second_weight",
+                    status_code=303,
+                )
+
+
+        if new_second_weight is not None:
+
+            net_weight = (
+                calculate_net_weight(
+                    new_first_weight,
+                    new_second_weight,
+                )
+            )
+
+            final_weight = net_weight
+
+            status = "SAVED"
+
+            cargo_value = (
+                calculate_cargo_value(
+                    net_weight,
+                    unit_price_value,
+                )
+            )
+
+        else:
+
+            net_weight = None
+
+            final_weight = (
+                new_first_weight
+            )
+
+            status = (
+                "WAITING_SECOND"
+            )
+
+            cargo_value = None
+
+
+        conn.execute(
+            """
+            UPDATE weighments
+
+            SET
+                plate=?,
+
+                weight=?,
+
+                first_weight=?,
+                first_weight_manual=1,
+
+                second_weight=?,
+                second_weight_manual=?,
+
+                net_weight=?,
+
+                status=?,
+
+                vehicle_type=?,
+                weighing_fee=?,
+                vehicle_weight=?,
+
+                driver_name=?,
+                driver_phone=?,
+
+                cargo_type=?,
+                cargo_owner=?,
+
+                density=?,
+                unit_price=?,
+                cargo_value=?,
+
+                origin=?,
+                destination=?,
+                document_no=?,
+                notes=?
+
+            WHERE id=?
+            """,
+            (
+                plate,
+
+                final_weight,
+
+                new_first_weight,
+
+                new_second_weight,
+
+                (
+                    1
+                    if new_second_weight is not None
+                    else 0
+                ),
+
+                net_weight,
+
+                status,
+
+                clean_text(
+                    vehicle_type
+                ),
+
+                fee_value,
+
+                vehicle_weight_value,
+
+                clean_text(
+                    driver_name
+                ),
+
+                clean_text(
+                    driver_phone
+                ),
+
+                clean_text(
+                    cargo_type
+                ),
+
+                clean_text(
+                    cargo_owner
+                ),
+
+                density_value,
+                unit_price_value,
+                cargo_value,
+
+                clean_text(
+                    origin
+                ),
+
+                clean_text(
+                    destination
+                ),
+
+                clean_text(
+                    document_no
+                ),
+
+                clean_text(
+                    notes
+                ),
+
+                row["id"],
+            ),
+        )
+
+
+    conn.commit()
+    conn.close()
+
+
+    # Admin می‌تواند تعرفه را نیز همگام با ویرایش قبض
+    # به‌روزرسانی کند.
+    if clean_text(
+        vehicle_type
+    ):
+        save_vehicle_profile(
+            vehicle_type,
+            fee_value,
+            vehicle_weight_value,
+        )
+
+
+    return RedirectResponse(
+        f"/weighments/{ticket}?edited=1",
+        status_code=303,
+    )
+    
 # ============================================================
 # DETAIL
 # ============================================================

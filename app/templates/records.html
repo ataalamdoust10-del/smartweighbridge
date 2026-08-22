@@ -6,6 +6,8 @@
 
 {% block content %}
 
+{% set role = request.session.get('role', '') %}
+
 <style>
 
 .table-wrap{
@@ -36,9 +38,6 @@
   text-decoration:none;
 }
 
-
-/* PLATE */
-
 .mini-plate{
   direction:ltr;
   width:230px;
@@ -63,7 +62,6 @@
 .mini-flag{
   width:20px;
   height:10px;
-
   background:
     linear-gradient(
       to bottom,
@@ -94,9 +92,6 @@
   font-size:6px;
   color:#667085;
 }
-
-
-/* DATA */
 
 .details{
   min-width:280px;
@@ -164,9 +159,6 @@
   white-space:nowrap;
 }
 
-
-/* CARGO */
-
 .cargo-info{
   min-width:240px;
   font-size:12.5px;
@@ -198,9 +190,6 @@
   background:#fffaeb;
 }
 
-
-/* STATUS */
-
 .status{
   display:inline-block;
   border-radius:999px;
@@ -222,18 +211,41 @@
   border:1px solid #fedf89;
 }
 
-
-/* ACTIONS */
-
 .actions{
   display:flex;
   flex-direction:column;
   gap:7px;
+  min-width:115px;
+}
+
+.edit-btn{
+  background:#eff6ff!important;
+  color:#1d4ed8!important;
+  border-color:#bfdbfe!important;
 }
 
 .delete-btn{
   background:#fee4e2!important;
   color:#b42318!important;
+  border-color:#fecdca!important;
+}
+
+.jalali-date{
+  white-space:nowrap;
+  direction:rtl;
+  unicode-bidi:plaintext;
+  font-weight:700;
+}
+
+.operator-permission{
+  display:inline-flex;
+  margin-top:7px;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#f2f4f7;
+  color:#667085;
+  font-size:11px;
+  font-weight:800;
 }
 
 </style>
@@ -250,6 +262,12 @@
   <p>
     {{ _('records_subtitle') }}
   </p>
+
+  {% if role == 'operator' %}
+  <span class="operator-permission">
+    دسترسی اپراتور: فقط مشاهده سوابق
+  </span>
+  {% endif %}
 
 </div>
 
@@ -276,7 +294,6 @@
   {{ _('search') }}
 </button>
 
-
 {% if q %}
 
 <a
@@ -301,45 +318,16 @@
 
 <tr>
 
-  <th>
-    {{ _('ticket') }}
-  </th>
-
-  <th>
-    {{ _('plate') }}
-  </th>
-
-  <th>
-    {{ _('weighing_mode') }}
-  </th>
-
-  <th>
-    {{ _('weight') }}
-  </th>
-
-  <th>
-    اطلاعات بار و ارزش کالا
-  </th>
-
-  <th>
-    {{ _('vehicle_information') }}
-  </th>
-
-  <th>
-    {{ _('date') }}
-  </th>
-
-  <th>
-    {{ _('weighment_details') }}
-  </th>
-
-  <th>
-    {{ _('status') }}
-  </th>
-
-  <th>
-    {{ _('actions') }}
-  </th>
+  <th>{{ _('ticket') }}</th>
+  <th>{{ _('plate') }}</th>
+  <th>{{ _('weighing_mode') }}</th>
+  <th>{{ _('weight') }}</th>
+  <th>اطلاعات بار و ارزش کالا</th>
+  <th>{{ _('vehicle_information') }}</th>
+  <th>{{ _('date') }}</th>
+  <th>{{ _('weighment_details') }}</th>
+  <th>{{ _('status') }}</th>
+  <th>{{ _('actions') }}</th>
 
 </tr>
 
@@ -354,9 +342,6 @@
 
 <tr>
 
-
-<!-- TICKET -->
-
 <td>
 
 <a
@@ -369,8 +354,6 @@
 </td>
 
 
-<!-- PLATE -->
-
 <td>
 
 {% if pp %}
@@ -378,43 +361,29 @@
 <div class="mini-plate">
 
   <div class="mini-iran">
-
     <div class="mini-flag"></div>
-
     <b>I.R.</b>
-
     <small>IRAN</small>
-
   </div>
-
 
   <div class="mini-cell">
     {{ pp.first }}
   </div>
 
-
   <div class="mini-cell">
     {{ pp.letter }}
   </div>
-
 
   <div class="mini-cell">
     {{ pp.middle }}
   </div>
 
-
   <div class="mini-cell mini-city">
-
-    <span class="city-label">
-      ایران
-    </span>
-
+    <span class="city-label">ایران</span>
     {{ pp.city }}
-
   </div>
 
 </div>
-
 
 {% else %}
 
@@ -427,20 +396,14 @@
 </td>
 
 
-<!-- MODE -->
-
 <td>
 
 <div class="mode">
 
 {% if r.weighing_mode == 'DOUBLE' %}
-
   {{ _('double_weigh') }}
-
 {% else %}
-
   {{ _('single_weigh') }}
-
 {% endif %}
 
 </div>
@@ -448,20 +411,15 @@
 </td>
 
 
-<!-- WEIGHTS -->
-
 <td>
 
 <div class="weight-lines">
 
 {% if r.weighing_mode == 'DOUBLE' %}
 
-
   <div class="weight-row">
 
-    <span>
-      {{ _('first_weight') }}:
-    </span>
+    <span>{{ _('first_weight') }}:</span>
 
     <span class="weight-value">
 
@@ -476,20 +434,15 @@
         kg
 
       {% else %}
-
         —
-
       {% endif %}
 
     </span>
 
-
     {% if r.first_weight_manual %}
-
     <span class="manual-badge">
       ✍ دستی وارد شده
     </span>
-
     {% endif %}
 
   </div>
@@ -497,9 +450,7 @@
 
   <div class="weight-row">
 
-    <span>
-      {{ _('second_weight') }}:
-    </span>
+    <span>{{ _('second_weight') }}:</span>
 
     <span class="weight-value">
 
@@ -514,18 +465,12 @@
         kg
 
       {% else %}
-
         —
-
       {% endif %}
 
     </span>
 
-
-    {% if
-      r.second_weight is not none
-      and r.second_weight_manual
-    %}
+    {% if r.second_weight is not none and r.second_weight_manual %}
 
     <span class="manual-badge">
       ✍ دستی وارد شده
@@ -538,9 +483,7 @@
 
   <div class="weight-row net">
 
-    <span>
-      {{ _('net_weight') }}:
-    </span>
+    <span>{{ _('net_weight') }}:</span>
 
     <span class="weight-value">
 
@@ -555,18 +498,14 @@
         kg
 
       {% else %}
-
         —
-
       {% endif %}
 
     </span>
 
   </div>
 
-
 {% else %}
-
 
   <div class="weight-row">
 
@@ -582,7 +521,6 @@
 
     </span>
 
-
     {% if r.first_weight_manual %}
 
     <span class="manual-badge">
@@ -593,7 +531,6 @@
 
   </div>
 
-
 {% endif %}
 
 </div>
@@ -601,48 +538,35 @@
 </td>
 
 
-<!-- CARGO / DENSITY / PRICE / VALUE -->
-
 <td>
 
 <div class="cargo-info">
 
-
   <div>
-
-    <b>
-      {{ _('cargo_type') }}:
-    </b>
-
+    <b>{{ _('cargo_type') }}:</b>
     {{ r.cargo_type or '—' }}
-
   </div>
 
-
   <div>
 
-    <b>
-      چگالی:
-    </b>
+    <b>چگالی:</b>
 
     {% if r.density is not none %}
 
-      <span class="numeric">
+    <span class="numeric">
 
-        {% if r.density == r.density|int %}
-          {{ "{:,}".format(r.density|int) }}
-        {% else %}
-          {{ r.density }}
-        {% endif %}
+      {% if r.density == r.density|int %}
+        {{ "{:,}".format(r.density|int) }}
+      {% else %}
+        {{ r.density }}
+      {% endif %}
 
-        kg/m³
+      kg/m³
 
-      </span>
+    </span>
 
     {% else %}
-
       —
-
     {% endif %}
 
   </div>
@@ -650,28 +574,24 @@
 
   <div>
 
-    <b>
-      قیمت واحد:
-    </b>
+    <b>قیمت واحد:</b>
 
     {% if r.unit_price is not none %}
 
-      <span class="numeric">
+    <span class="numeric">
 
-        {% if r.unit_price == r.unit_price|int %}
-          {{ "{:,}".format(r.unit_price|int) }}
-        {% else %}
-          {{ r.unit_price }}
-        {% endif %}
+      {% if r.unit_price == r.unit_price|int %}
+        {{ "{:,}".format(r.unit_price|int) }}
+      {% else %}
+        {{ r.unit_price }}
+      {% endif %}
 
-        ریال/kg
+      ریال/kg
 
-      </span>
+    </span>
 
     {% else %}
-
       —
-
     {% endif %}
 
   </div>
@@ -679,28 +599,21 @@
 
   <div>
 
-    <b>
-      ارزش کل بار:
-    </b>
+    <b>ارزش کل بار:</b>
 
     {% if r.cargo_value is not none %}
 
-      <span class="cargo-total">
+    <span class="cargo-total">
 
-        {% if r.cargo_value == r.cargo_value|int %}
+      {% if r.cargo_value == r.cargo_value|int %}
+        {{ "{:,}".format(r.cargo_value|int) }}
+      {% else %}
+        {{ "{:,.2f}".format(r.cargo_value) }}
+      {% endif %}
 
-          {{ "{:,}".format(r.cargo_value|int) }}
+      ریال
 
-        {% else %}
-
-          {{ "{:,.2f}".format(r.cargo_value) }}
-
-        {% endif %}
-
-        ریال
-
-      </span>
-
+    </span>
 
     {% elif
       r.weighing_mode == 'DOUBLE'
@@ -708,69 +621,51 @@
       and r.unit_price is not none
     %}
 
-      <span class="cargo-total cargo-pending">
-        در انتظار وزن دوم
-      </span>
+    <span class="cargo-total cargo-pending">
+      در انتظار وزن دوم
+    </span>
 
     {% else %}
-
       —
-
     {% endif %}
 
   </div>
-
 
 </div>
 
 </td>
 
-
-<!-- VEHICLE / FEE -->
 
 <td>
 
 <div class="commercial">
 
   <div>
-
-    <b>
-      {{ _('vehicle_type') }}:
-    </b>
-
+    <b>{{ _('vehicle_type') }}:</b>
     {{ r.vehicle_type or '—' }}
-
   </div>
 
 
   <div>
 
-    <b>
-      {{ _('weighing_fee') }}:
-    </b>
+    <b>{{ _('weighing_fee') }}:</b>
 
     {% if r.weighing_fee is not none %}
 
-      <span class="money">
+    <span class="money">
 
-        {% if r.weighing_fee == r.weighing_fee|int %}
+      {% if r.weighing_fee == r.weighing_fee|int %}
+        {{ "{:,}".format(r.weighing_fee|int) }}
+      {% else %}
+        {{ r.weighing_fee }}
+      {% endif %}
 
-          {{ "{:,}".format(r.weighing_fee|int) }}
+      {{ _('rial') }}
 
-        {% else %}
-
-          {{ r.weighing_fee }}
-
-        {% endif %}
-
-        {{ _('rial') }}
-
-      </span>
+    </span>
 
     {% else %}
-
       —
-
     {% endif %}
 
   </div>
@@ -778,28 +673,24 @@
 
   <div>
 
-    <b>
-      {{ _('vehicle_weight') }}:
-    </b>
+    <b>{{ _('vehicle_weight') }}:</b>
 
     {% if r.vehicle_weight is not none %}
 
-      <span class="weight-value">
+    <span class="weight-value">
 
-        {% if r.vehicle_weight == r.vehicle_weight|int %}
-          {{ "{:,}".format(r.vehicle_weight|int) }}
-        {% else %}
-          {{ r.vehicle_weight }}
-        {% endif %}
+      {% if r.vehicle_weight == r.vehicle_weight|int %}
+        {{ "{:,}".format(r.vehicle_weight|int) }}
+      {% else %}
+        {{ r.vehicle_weight }}
+      {% endif %}
 
-        kg
+      kg
 
-      </span>
+    </span>
 
     {% else %}
-
       —
-
     {% endif %}
 
   </div>
@@ -809,152 +700,98 @@
 </td>
 
 
-<!-- DATE -->
+<!-- JALALI / IRAN DATE -->
 
-<td style="white-space:nowrap;">
+<td>
 
-  {{ (r.created_at|string)[:19].replace('T',' ') }}
+  <div class="jalali-date">
+    {{ jalali_datetime(r.created_at) }}
+  </div>
 
 </td>
 
-
-<!-- DETAILS -->
 
 <td>
 
 <div class="details">
 
-
 {% if r.driver_name %}
-
   <div>
     <b>{{ _('driver_name') }}:</b>
     {{ r.driver_name }}
   </div>
-
 {% endif %}
-
 
 {% if r.driver_phone %}
-
   <div>
-
-    <b>
-      {{ _('driver_phone') }}:
-    </b>
-
-    <span dir="ltr">
-      {{ r.driver_phone }}
-    </span>
-
+    <b>{{ _('driver_phone') }}:</b>
+    <span dir="ltr">{{ r.driver_phone }}</span>
   </div>
-
 {% endif %}
 
-
 {% if r.cargo_owner %}
-
   <div>
     <b>{{ _('cargo_owner') }}:</b>
     {{ r.cargo_owner }}
   </div>
-
 {% endif %}
 
-
 {% if r.origin or r.destination %}
-
   <div>
 
     {% if r.origin %}
-
-      <b>
-        {{ _('origin') }}:
-      </b>
-
+      <b>{{ _('origin') }}:</b>
       {{ r.origin }}
-
     {% endif %}
-
 
     {% if r.origin and r.destination %}
       →
     {% endif %}
 
-
     {% if r.destination %}
-
-      <b>
-        {{ _('destination') }}:
-      </b>
-
+      <b>{{ _('destination') }}:</b>
       {{ r.destination }}
-
     {% endif %}
 
   </div>
-
 {% endif %}
 
-
 {% if r.document_no %}
-
   <div>
     <b>{{ _('document_no') }}:</b>
     {{ r.document_no }}
   </div>
-
 {% endif %}
 
-
 {% if r.notes %}
-
   <div>
     <b>{{ _('notes') }}:</b>
     {{ r.notes }}
   </div>
-
 {% endif %}
-
 
 {% if r.weighing_mode == 'DOUBLE' %}
 
-
   {% if r.first_operator %}
-
   <div>
-    <b>
-      اپراتور وزن اول:
-    </b>
-
+    <b>اپراتور وزن اول:</b>
     {{ r.first_operator }}
   </div>
-
   {% endif %}
-
 
   {% if r.second_operator %}
-
   <div>
-    <b>
-      اپراتور وزن دوم:
-    </b>
-
+    <b>اپراتور وزن دوم:</b>
     {{ r.second_operator }}
   </div>
-
   {% endif %}
 
-
 {% endif %}
-
 
 </div>
 
 </td>
 
-
-<!-- STATUS -->
 
 <td>
 
@@ -989,6 +826,16 @@
 </a>
 
 
+{% if role == 'admin' %}
+
+<a
+  class="btn edit-btn"
+  href="/weighments/{{ r.ticket_number }}/edit"
+>
+  ویرایش
+</a>
+
+
 <form
   method="post"
   action="/weighments/{{ r.ticket_number }}/delete"
@@ -1010,10 +857,11 @@
 
 </form>
 
+{% endif %}
+
 </div>
 
 </td>
-
 
 </tr>
 

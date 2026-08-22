@@ -6,6 +6,8 @@
 
 {% block content %}
 
+{% set role = request.session.get('role', '') %}
+
 <style>
 
 .photo-grid{
@@ -66,6 +68,41 @@
   white-space:pre-wrap;
 }
 
+.page-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.edit-ticket{
+  color:#1d4ed8!important;
+  background:#eff6ff!important;
+  border-color:#bfdbfe!important;
+}
+
+.delete-ticket{
+  color:#b42318!important;
+  background:#fef3f2!important;
+  border-color:#fecdca!important;
+}
+
+.operator-note{
+  padding:8px 11px;
+  margin-bottom:14px;
+  border-radius:10px;
+  color:#475467;
+  background:#f9fafb;
+  border:1px solid #eaecf0;
+  font-size:12px;
+  font-weight:700;
+}
+
+.jalali-time{
+  direction:rtl;
+  unicode-bidi:plaintext;
+}
+
 
 /* PLATE */
 
@@ -97,7 +134,6 @@
   width:40px;
   height:21px;
   border:1px solid #fff;
-
   background:
     linear-gradient(
       to bottom,
@@ -163,6 +199,14 @@
   direction:ltr;
 }
 
+.weight-time{
+  display:block;
+  margin-top:8px;
+  color:#667085;
+  font-size:11px;
+  font-weight:700;
+}
+
 .manual-badge{
   display:inline-block!important;
   margin-top:8px;
@@ -185,7 +229,7 @@
 }
 
 
-/* CARGO COMMERCIAL */
+/* CARGO */
 
 .cargo-commercial-panel{
   grid-column:1/-1;
@@ -212,10 +256,6 @@
   background:#fff;
   border-radius:12px;
   padding:12px;
-}
-
-.cargo-data-item span{
-  margin-bottom:5px;
 }
 
 .cargo-value-box{
@@ -247,7 +287,7 @@
 }
 
 
-/* VEHICLE PROFILE */
+/* VEHICLE */
 
 .vehicle-commercial{
   grid-column:1/-1;
@@ -301,8 +341,6 @@
 }
 
 
-/* RESPONSIVE */
-
 @media(max-width:760px){
 
   .ticket-info{
@@ -336,12 +374,11 @@
 }
 
 
-/* PRINT */
-
 @media print{
 
-  .page-head button,
-  nav{
+  .page-actions,
+  nav,
+  .operator-note{
     display:none!important;
   }
 
@@ -387,21 +424,65 @@
 </div>
 
 
-<button
-  class="btn"
-  type="button"
-  onclick="window.print()"
->
-  🖨 {{ _('print') }}
-</button>
+<div class="page-actions">
+
+  <button
+    class="btn"
+    type="button"
+    onclick="window.print()"
+  >
+    🖨 {{ _('print') }}
+  </button>
+
+
+  {% if role == 'admin' %}
+
+  <a
+    class="btn edit-ticket"
+    href="/weighments/{{ row.ticket_number }}/edit"
+  >
+    ✏ ویرایش قبض
+  </a>
+
+
+  <form
+    method="post"
+    action="/weighments/{{ row.ticket_number }}/delete"
+    onsubmit="return confirm('این قبض به صورت کامل حذف شود؟');"
+  >
+    <input
+      type="hidden"
+      name="next"
+      value="/records"
+    >
+
+    <button
+      class="btn delete-ticket"
+      type="submit"
+    >
+      حذف قبض
+    </button>
+  </form>
+
+  {% endif %}
+
+</div>
 
 </div>
 
 
+{% if role == 'operator' %}
+
+<div class="operator-note">
+  شما دسترسی مشاهده و چاپ این قبض را دارید.
+  ویرایش و حذف قبض فقط توسط مدیر انجام می‌شود.
+</div>
+
+{% endif %}
+
+
 <div class="card">
 
-
-<!-- PHOTOS -->
 
 {% if photos %}
 
@@ -413,12 +494,10 @@
   href="/uploads/{{ fn }}"
   target="_blank"
 >
-
   <img
     src="/uploads/{{ fn }}"
     alt="photo"
   >
-
 </a>
 
 {% endfor %}
@@ -437,8 +516,6 @@
 <div class="ticket-info">
 
 
-<!-- PLATE -->
-
 <div class="plate-info">
 
 <span>
@@ -450,13 +527,9 @@
 <div class="saved-plate">
 
   <div class="saved-iran">
-
     <div class="saved-flag"></div>
-
     <b>I.R.</b>
-
     <small>IRAN</small>
-
   </div>
 
   <div class="saved-cell">
@@ -472,13 +545,8 @@
   </div>
 
   <div class="saved-cell saved-city">
-
-    <span class="city-label">
-      ایران
-    </span>
-
+    <span class="city-label">ایران</span>
     {{ plate_parts.city }}
-
   </div>
 
 </div>
@@ -494,8 +562,6 @@
 </div>
 
 
-<!-- MODE -->
-
 <div>
 
 <span>
@@ -505,21 +571,15 @@
 <strong>
 
 {% if row.weighing_mode == 'DOUBLE' %}
-
   {{ _('double_weigh') }}
-
 {% else %}
-
   {{ _('single_weigh') }}
-
 {% endif %}
 
 </strong>
 
 </div>
 
-
-<!-- STATUS -->
 
 <div>
 
@@ -548,8 +608,6 @@
 </div>
 
 
-<!-- WEIGHTS -->
-
 {% if row.weighing_mode == 'DOUBLE' %}
 
 <div class="weight-panel">
@@ -574,9 +632,7 @@
         kg
 
       {% else %}
-
         —
-
       {% endif %}
 
     </div>
@@ -593,8 +649,8 @@
 
     {% if row.first_weighed_at %}
 
-    <small>
-      {{ (row.first_weighed_at|string)[:19].replace('T',' ') }}
+    <small class="weight-time">
+      {{ jalali_datetime(row.first_weighed_at) }}
     </small>
 
     {% endif %}
@@ -610,29 +666,24 @@
 
     <div class="big">
 
-    {% if row.second_weight is not none %}
+      {% if row.second_weight is not none %}
 
-      {% if row.second_weight == row.second_weight|int %}
-        {{ "{:,}".format(row.second_weight|int) }}
+        {% if row.second_weight == row.second_weight|int %}
+          {{ "{:,}".format(row.second_weight|int) }}
+        {% else %}
+          {{ row.second_weight }}
+        {% endif %}
+
+        kg
+
       {% else %}
-        {{ row.second_weight }}
+        —
       {% endif %}
-
-      kg
-
-    {% else %}
-
-      —
-
-    {% endif %}
 
     </div>
 
 
-    {% if
-      row.second_weight is not none
-      and row.second_weight_manual
-    %}
+    {% if row.second_weight is not none and row.second_weight_manual %}
 
     <span class="manual-badge">
       ✍ دستی وارد شده
@@ -643,8 +694,8 @@
 
     {% if row.second_weighed_at %}
 
-    <small>
-      {{ (row.second_weighed_at|string)[:19].replace('T',' ') }}
+    <small class="weight-time">
+      {{ jalali_datetime(row.second_weighed_at) }}
     </small>
 
     {% endif %}
@@ -660,21 +711,19 @@
 
     <div class="big">
 
-    {% if row.net_weight is not none %}
+      {% if row.net_weight is not none %}
 
-      {% if row.net_weight == row.net_weight|int %}
-        {{ "{:,}".format(row.net_weight|int) }}
+        {% if row.net_weight == row.net_weight|int %}
+          {{ "{:,}".format(row.net_weight|int) }}
+        {% else %}
+          {{ row.net_weight }}
+        {% endif %}
+
+        kg
+
       {% else %}
-        {{ row.net_weight }}
+        —
       {% endif %}
-
-      kg
-
-    {% else %}
-
-      —
-
-    {% endif %}
 
     </div>
 
@@ -697,13 +746,9 @@
   <strong class="number-ltr">
 
   {% if row.weight == row.weight|int %}
-
     {{ "{:,}".format(row.weight|int) }}
-
   {% else %}
-
     {{ row.weight }}
-
   {% endif %}
 
   kg
@@ -726,10 +771,6 @@
 {% endif %}
 
 
-<!-- ======================================================
-     CARGO / PRODUCT / COMMERCIAL
-====================================================== -->
-
 <div class="cargo-commercial-panel">
 
   <div class="cargo-commercial-title">
@@ -739,29 +780,15 @@
 
   <div class="cargo-data-grid">
 
-
-    <!-- CARGO TYPE -->
-
     <div class="cargo-data-item">
-
-      <span>
-        {{ _('cargo_type') }}
-      </span>
-
-      <strong>
-        {{ row.cargo_type or '—' }}
-      </strong>
-
+      <span>{{ _('cargo_type') }}</span>
+      <strong>{{ row.cargo_type or '—' }}</strong>
     </div>
 
 
-    <!-- DENSITY -->
-
     <div class="cargo-data-item">
 
-      <span>
-        چگالی
-      </span>
+      <span>چگالی</span>
 
       <strong class="number-ltr">
 
@@ -776,9 +803,7 @@
         kg/m³
 
       {% else %}
-
         —
-
       {% endif %}
 
       </strong>
@@ -786,13 +811,9 @@
     </div>
 
 
-    <!-- UNIT PRICE -->
-
     <div class="cargo-data-item">
 
-      <span>
-        قیمت واحد
-      </span>
+      <span>قیمت واحد</span>
 
       <strong class="number-ltr">
 
@@ -807,20 +828,15 @@
         ریال/kg
 
       {% else %}
-
         —
-
       {% endif %}
 
       </strong>
 
     </div>
 
-
   </div>
 
-
-  <!-- TOTAL CARGO VALUE -->
 
   <div class="cargo-value-box">
 
@@ -828,25 +844,19 @@
       ارزش کل بار
     </span>
 
-
     {% if row.cargo_value is not none %}
 
     <strong>
 
       {% if row.cargo_value == row.cargo_value|int %}
-
         {{ "{:,}".format(row.cargo_value|int) }}
-
       {% else %}
-
         {{ "{:,.2f}".format(row.cargo_value) }}
-
       {% endif %}
 
       ریال
 
     </strong>
-
 
     {% elif row.weighing_mode == 'DOUBLE'
         and row.status == 'WAITING_SECOND' %}
@@ -855,12 +865,9 @@
       پس از ثبت وزن دوم محاسبه می‌شود
     </strong>
 
-
     {% else %}
 
-    <strong>
-      —
-    </strong>
+    <strong>—</strong>
 
     {% endif %}
 
@@ -869,29 +876,17 @@
 </div>
 
 
-<!-- VEHICLE / FEE / REFERENCE WEIGHT -->
-
 <div class="vehicle-commercial">
 
-
   <div>
-
-    <span>
-      {{ _('vehicle_type') }}
-    </span>
-
-    <strong>
-      {{ row.vehicle_type or '—' }}
-    </strong>
-
+    <span>{{ _('vehicle_type') }}</span>
+    <strong>{{ row.vehicle_type or '—' }}</strong>
   </div>
 
 
   <div>
 
-    <span>
-      {{ _('weighing_fee') }}
-    </span>
+    <span>{{ _('weighing_fee') }}</span>
 
     <strong class="number-ltr fee-value">
 
@@ -906,9 +901,7 @@
       {{ _('rial') }}
 
     {% else %}
-
       —
-
     {% endif %}
 
     </strong>
@@ -918,9 +911,7 @@
 
   <div>
 
-    <span>
-      {{ _('vehicle_weight') }}
-    </span>
+    <span>{{ _('vehicle_weight') }}</span>
 
     <strong class="number-ltr">
 
@@ -935,80 +926,61 @@
       kg
 
     {% else %}
-
       —
-
     {% endif %}
 
     </strong>
 
   </div>
 
-
 </div>
 
 
-<!-- OTHER DATA -->
-
 {% if row.driver_name %}
-
 <div>
   <span>{{ _('driver_name') }}</span>
   <strong>{{ row.driver_name }}</strong>
 </div>
-
 {% endif %}
 
 
 {% if row.driver_phone %}
-
 <div>
   <span>{{ _('driver_phone') }}</span>
-  <strong class="number-ltr">
-    {{ row.driver_phone }}
-  </strong>
+  <strong class="number-ltr">{{ row.driver_phone }}</strong>
 </div>
-
 {% endif %}
 
 
 {% if row.cargo_owner %}
-
 <div>
   <span>{{ _('cargo_owner') }}</span>
   <strong>{{ row.cargo_owner }}</strong>
 </div>
-
 {% endif %}
 
 
 {% if row.origin %}
-
 <div>
   <span>{{ _('origin') }}</span>
   <strong>{{ row.origin }}</strong>
 </div>
-
 {% endif %}
 
 
 {% if row.destination %}
-
 <div>
   <span>{{ _('destination') }}</span>
   <strong>{{ row.destination }}</strong>
 </div>
-
 {% endif %}
 
 
 {% if row.document_no %}
-
 <div>
   <span>{{ _('document_no') }}</span>
   <strong>{{ row.document_no }}</strong>
 </div>
-
 {% endif %}
 
 
@@ -1030,8 +1002,8 @@
     {{ _('datetime') }}
   </span>
 
-  <strong class="number-ltr">
-    {{ (row.created_at|string)[:19].replace('T',' ') }}
+  <strong class="jalali-time">
+    {{ jalali_datetime(row.created_at) }}
   </strong>
 
 </div>
@@ -1039,17 +1011,11 @@
 
 {% if row.weighing_mode == 'DOUBLE' %}
 
-
 {% if row.first_operator %}
 
 <div>
-  <span>
-    اپراتور وزن اول
-  </span>
-
-  <strong>
-    {{ row.first_operator }}
-  </strong>
+  <span>اپراتور وزن اول</span>
+  <strong>{{ row.first_operator }}</strong>
 </div>
 
 {% endif %}
@@ -1058,17 +1024,11 @@
 {% if row.second_operator %}
 
 <div>
-  <span>
-    اپراتور وزن دوم
-  </span>
-
-  <strong>
-    {{ row.second_operator }}
-  </strong>
+  <span>اپراتور وزن دوم</span>
+  <strong>{{ row.second_operator }}</strong>
 </div>
 
 {% endif %}
-
 
 {% endif %}
 
@@ -1077,9 +1037,7 @@
 
 <div class="full">
 
-  <span>
-    {{ _('notes') }}
-  </span>
+  <span>{{ _('notes') }}</span>
 
   <strong class="notes">
     {{ row.notes }}
